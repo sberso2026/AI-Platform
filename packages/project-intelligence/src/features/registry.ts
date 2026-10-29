@@ -1,15 +1,14 @@
 /**
- * Phase 8B — Project Intelligence feature registry.
+ * Phase 8B/8I — Project Intelligence feature registry (V1.0 freeze).
  * Features register under Engineering OS module project_intelligence.
  */
 import type { FeatureManifest, RouteRegistration, NavigationRegistration } from "@rtb/types";
+import {
+  PROJECT_INTELLIGENCE_VERSION,
+  type ProjectIntelligenceV1FeatureId,
+} from "../version";
 
-export type ProjectIntelligenceFeatureId =
-  | "document_intelligence"
-  | "meeting_intelligence"
-  | "findings_intelligence"
-  | "reporting_intelligence"
-  | "knowledge_intelligence";
+export type ProjectIntelligenceFeatureId = ProjectIntelligenceV1FeatureId;
 
 export const PROJECT_INTELLIGENCE_MODULE_KEY = "project_intelligence" as const;
 
@@ -30,7 +29,7 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
     moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
     name: "Document Intelligence",
     description: "Ingestion, retrieval, grounded answers, and document review",
-    version: "0.1.0",
+    version: PROJECT_INTELLIGENCE_VERSION,
     capabilities: [
       { id: "document.intelligence.read" },
       { id: "document.intelligence.write" },
@@ -74,7 +73,7 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
     moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
     name: "Meeting Intelligence",
     description: "Meeting capture, minutes, review, and provider integrations",
-    version: "0.1.0",
+    version: PROJECT_INTELLIGENCE_VERSION,
     capabilities: [
       { id: "meeting.intelligence.read" },
       { id: "meeting.intelligence.write" },
@@ -117,7 +116,7 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
     moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
     name: "Findings Intelligence",
     description: "Cross-document and meeting findings consolidation",
-    version: "0.1.0",
+    version: PROJECT_INTELLIGENCE_VERSION,
     capabilities: [
       { id: "findings.intelligence.read" },
       { id: "findings.intelligence.write" },
@@ -166,7 +165,7 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
     moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
     name: "Reporting Intelligence",
     description: "Module reports over shared Engineering reporting services",
-    version: "0.1.0",
+    version: PROJECT_INTELLIGENCE_VERSION,
     capabilities: [
       { id: "reporting.intelligence.read" },
       { id: "reporting.intelligence.write" },
@@ -211,7 +210,7 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
     moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
     name: "Knowledge Intelligence",
     description: "Unified knowledge graph and hybrid intelligence search with cited retrieval",
-    version: "0.1.0",
+    version: PROJECT_INTELLIGENCE_VERSION,
     capabilities: [
       { id: "knowledge.intelligence.read" },
       { id: "knowledge.intelligence.write" },
@@ -247,6 +246,52 @@ export const PROJECT_INTELLIGENCE_FEATURES: ProjectIntelligenceFeatureRegistrati
       "evidence_grounding",
       "citations",
       "prompt_registry",
+    ],
+    implementsOwnAiStack: false,
+  },
+  {
+    id: "engineering_reasoning_assistant",
+    moduleKey: PROJECT_INTELLIGENCE_MODULE_KEY,
+    name: "Engineering Reasoning Assistant",
+    description:
+      "Deterministic grounded reasoning over the knowledge graph with citations, confidence, and abstention",
+    version: PROJECT_INTELLIGENCE_VERSION,
+    capabilities: [
+      { id: "reasoning.assistant.read" },
+      { id: "reasoning.assistant.execute" },
+    ],
+    routes: [
+      {
+        path: "/engineering/apps/project-intelligence/reasoning",
+        title: "Engineering Reasoning Assistant",
+        component: "EngineeringReasoningAssistantHome",
+      },
+    ],
+    navigation: [
+      {
+        id: "pi-feature-reasoning",
+        label: "Reasoning Assistant",
+        path: "/engineering/apps/project-intelligence/reasoning",
+        icon: "Sparkles",
+        group: "engineering",
+        order: 6,
+      },
+    ],
+    sharedServices: [
+      "document_references",
+      "engineering_timelines",
+      "ai_context",
+      "audit",
+      "reporting",
+      "activity",
+      "approvals",
+    ],
+    sharedAiCapabilities: [
+      "knowledge_retrieval",
+      "evidence_grounding",
+      "citations",
+      "prompt_registry",
+      "cost_controls",
     ],
     implementsOwnAiStack: false,
   },

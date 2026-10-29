@@ -45,6 +45,10 @@ import {
   MessageSquare,
   BookOpen,
   History,
+  Home,
+  Compass,
+  UserRound,
+  AppWindow,
   type LucideIcon,
 } from "lucide-react";
 
@@ -95,6 +99,10 @@ const ICON_MAP: Record<string, LucideIcon> = {
   MessageSquare,
   BookOpen,
   History,
+  Home,
+  Compass,
+  UserRound,
+  AppWindow,
 };
 
 export function getIcon(name: string): LucideIcon {

@@ -1,0 +1,5 @@
+# CalculiX fixture companion notes (not a solver binary)
+# Expected analytical axial displacement: δ = PL/(AE) = 1000*1/(2.1e11*0.01) ≈ 4.7619e-7 m
+max_displacement_m=4.761904761904762e-7
+method=linear_elastic_static
+solver=calculix

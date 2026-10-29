@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Button, Input, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@rtb/ui";
 import { RtbLogo } from "@/components/brand/rtb-logo";
-import { logAuthError, mapAuthError } from "@rtb/platform-core";
+import { EngineeringAuthorityNotice, PilotDataNotice } from "@/components/pilot/pilot-notices";
+import { buildAuthLoginRedirect, describeSignupAuthResult, logAuthError, mapAuthError } from "@rtb/platform-core";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -29,6 +30,10 @@ export default function SignupPage() {
         email,
         password,
         options: {
+          emailRedirectTo: buildAuthLoginRedirect({
+            appUrl: process.env.NEXT_PUBLIC_APP_URL,
+            requestOrigin: window.location.origin,
+          }),
           data: {
             full_name: fullName,
             tenant_name: organization.trim() || undefined,
@@ -51,15 +56,18 @@ export default function SignupPage() {
         return;
       }
 
-      // Email confirmation may be required — session can be null
-      if (!data.session) {
-        setInfo(
-          "Account created. Check your email to confirm your address, then sign in."
-        );
+      const outcome = describeSignupAuthResult(data);
+      if (outcome.kind === "existing" || outcome.kind === "failed") {
+        setError(outcome.message);
         setLoading(false);
         return;
       }
-
+      if (outcome.kind === "pending_confirmation") {
+        setInfo(outcome.message);
+        setLoading(false);
+        return;
+      }
+      setInfo(outcome.message);
       router.push("/engineering");
       router.refresh();
     } catch (err) {
@@ -77,9 +85,13 @@ export default function SignupPage() {
             <RtbLogo size="lg" variant="full" inverted={false} />
           </div>
           <CardTitle>Create Account</CardTitle>
-          <CardDescription>Get started with RTB Engineering OS</CardDescription>
+          <CardDescription>
+            Canonical owner onboarding is self-service: create the tenant here, then invite engineers from Users.
+          </CardDescription>
         </CardHeader>
         <CardContent>
+          <PilotDataNotice />
+          <EngineeringAuthorityNotice />
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="fullName" className="text-sm font-medium">

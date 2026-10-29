@@ -1,0 +1,124 @@
+name: Phase 12M Shared Spatial Domain Core
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/engineering-shared-spatial-domain/**"
+      - "packages/engineering-shared-spatial-domain-certification/**"
+      - "packages/digital-twin/src/version.ts"
+      - "packages/digital-twin/src/domain/spatial-reference.ts"
+      - "packages/digital-twin/src/domain/digital-thread-reference.ts"
+      - "packages/platform-certification/src/phase12m*"
+      - "apps/web/src/app/api/engineering/spatial/**"
+      - "apps/web/src/app/(platform)/engineering/apps/shared-spatial-domain/**"
+      - "supabase/migrations/20260808240000_batch_85_engineering_shared_spatial_domain.sql"
+      - "docs/architecture/ENGINEERING_SHARED_SPATIAL_DOMAIN_*"
+      - "docs/architecture/adr/ADR_TWIN_SPATIAL_*"
+      - "docs/contracts/ENGINEERING_SHARED_SPATIAL_DOMAIN_*"
+      - ".github/workflows/phase-12m-shared-spatial-domain-core.yml"
+
+concurrency:
+  group: phase-12m-shared-spatial-domain-core-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  CERTIFY_REQUIRE_HOSTED: "1"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Unit tests (shared spatial core)
+        run: pnpm --filter @rtb/engineering-shared-spatial-domain test
+      - name: Digital Twin regression
+        run: pnpm --filter @rtb/digital-twin test -- tests/phase12f-digital-twin-representation.test.ts tests/discovery-lock.test.ts
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase12m-shared-spatial-domain-core.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/engineering-shared-spatial-domain-certification secret-scan
+      - name: Phase 12M certification (gates A–BT)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/engineering-shared-spatial-domain-certification certify:phase12m
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/engineering-shared-spatial-domain-certification/artifacts/phase12m-shared-spatial-domain-core-certification.json","utf8"));
+          const checks = [
+            ["verdict", a.verdict==="PASS"],
+            ["failedGateCount", a.failedGateCount===0],
+            ["skippedGateCount", a.skippedGateCount===0],
+            ["notExecutedGateCount", a.notExecutedGateCount===0],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===72],
+            ["version", a.version==="0.2.0-spatial-core"],
+            ["status", a.status==="spatial_core"],
+            ["SharedSpatialDomainRuntimeImplemented", a.SharedSpatialDomainRuntimeImplemented===true],
+            ["SharedSpatialReferenceRegistryReady", a.SharedSpatialReferenceRegistryReady===true],
+            ["spatialOwnershipFullyResolved", a.spatialOwnershipFullyResolved===true],
+            ["DigitalTwinSpatialBindingReady", a.DigitalTwinSpatialBindingReady===true],
+            ["coordinateTransformationImplemented", a.coordinateTransformationImplemented===false],
+            ["gisRuntimeImplemented", a.gisRuntimeImplemented===false],
+            ["geometryRepositoryImplemented", a.geometryRepositoryImplemented===false],
+            ["digitalTwinMayOwnCanonicalSpatial", a.digitalTwinMayOwnCanonicalSpatial===false],
+            ["digitalTwinVersion", a.digitalTwinVersion==="0.11.0-digital-thread"],
+            ["productionDigitalTwinReady", a.productionDigitalTwinReady===false],
+            ["productionMemoryRepositoryAllowed", a.productionMemoryRepositoryAllowed===false],
+            ["publicContractVersion", a.publicContractVersion==="0.2.0-spatial-core"],
+            ["phase12NReady", a.phase12NReady===true],
+            ["phase12LCertifiedCommit", a.phase12LCertifiedCommit==="7d9bfbd792a034bae088dbb1db02876ca400929d"],
+            ["phase12LHostedRun", a.phase12LHostedRun==="31269729941"],
+            ["projectControlsV1Intact", a.projectControlsV1Intact===true],
+            ["projectControlsV1TagNotMoved", a.projectControlsV1TagMoved===false],
+            ["assetIntelligenceV1Intact", a.assetIntelligenceV1Intact===true],
+            ["projectIntelligenceV1Intact", a.projectIntelligenceV1Intact===true],
+            ["inspectionIntelligenceV1Intact", a.inspectionIntelligenceV1Intact===true],
+            ["secretExposureDetected", a.secretExposureDetected===false],
+            ["unexpected5xx", a.unexpected5xx===0],
+            ["hostedTablesOk", a.hostedVerification && a.hostedVerification.tablesOk===true],
+            ["hostedRlsOk", a.hostedVerification && a.hostedVerification.rlsOk===true],
+            ["releaseEligible", a.releaseEligible===true],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify({ failedGates: a.failedGates }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            version: a.version,
+            spatialOwnershipFullyResolved: a.spatialOwnershipFullyResolved,
+            gateCount: a.gateCount,
+            phase12NReady: a.phase12NReady,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase12m-shared-spatial-domain-core-certification
+          path: packages/engineering-shared-spatial-domain-certification/artifacts/phase12m-shared-spatial-domain-core-certification.json
+          if-no-files-found: warn

@@ -1,0 +1,760 @@
+{
+  "title": "Security & Assurance Control / Evidence / Assessment Foundation",
+  "verdict": "PASS",
+  "version": "0.2.0-control-evidence",
+  "status": "control_evidence_foundation",
+  "commit": "4748972076f77e7392bb41ec664adddfeb677407",
+  "artifactCommitSha": "4748972076f77e7392bb41ec664adddfeb677407",
+  "ciHeadSha": "4748972076f77e7392bb41ec664adddfeb677407",
+  "buildIdentitySha": "4748972076f77e7392bb41ec664adddfeb677407",
+  "phase15ABaseline": "4748972076f77e7392bb41ec664adddfeb677407",
+  "engineeringOsV1Baseline": "3bfc02478f50ce17f7a81e4e312986c9e1377535",
+  "gateCount": 72,
+  "requiredGates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity"
+    },
+    {
+      "id": "B",
+      "name": "Phase 15A baseline intact"
+    },
+    {
+      "id": "C",
+      "name": "Engineering OS V1 tag intact"
+    },
+    {
+      "id": "D",
+      "name": "Frozen module tags intact"
+    },
+    {
+      "id": "E",
+      "name": "Foundation version 0.2.0-control-evidence"
+    },
+    {
+      "id": "F",
+      "name": "Public contracts 0.2.0-control-evidence"
+    },
+    {
+      "id": "G",
+      "name": "Ownership matrix preserved"
+    },
+    {
+      "id": "H",
+      "name": "Control registry"
+    },
+    {
+      "id": "I",
+      "name": "Control lifecycle"
+    },
+    {
+      "id": "J",
+      "name": "Control implementation references"
+    },
+    {
+      "id": "K",
+      "name": "Evidence registry + provenance"
+    },
+    {
+      "id": "L",
+      "name": "Evidence freshness"
+    },
+    {
+      "id": "M",
+      "name": "Missing evidence fail-closed"
+    },
+    {
+      "id": "N",
+      "name": "Invalid/conflicting evidence"
+    },
+    {
+      "id": "O",
+      "name": "Assessment taxonomy"
+    },
+    {
+      "id": "P",
+      "name": "Assessment reproducibility"
+    },
+    {
+      "id": "Q",
+      "name": "Governed assessment review"
+    },
+    {
+      "id": "R",
+      "name": "Finding lifecycle"
+    },
+    {
+      "id": "S",
+      "name": "Exception expiry + approval governance"
+    },
+    {
+      "id": "T",
+      "name": "Posture composition"
+    },
+    {
+      "id": "U",
+      "name": "No universal security score"
+    },
+    {
+      "id": "V",
+      "name": "Framework many-to-many mapping"
+    },
+    {
+      "id": "W",
+      "name": "Framework mapping ≠ certification"
+    },
+    {
+      "id": "X",
+      "name": "External assurance semantics"
+    },
+    {
+      "id": "Y",
+      "name": "S01–S06 CLOSED preserved"
+    },
+    {
+      "id": "Z",
+      "name": "S07/S08 ownership preserved"
+    },
+    {
+      "id": "AA",
+      "name": "Tenant/workspace isolation in migration"
+    },
+    {
+      "id": "AB",
+      "name": "RLS policies present"
+    },
+    {
+      "id": "AC",
+      "name": "Classification handling"
+    },
+    {
+      "id": "AD",
+      "name": "Audit/event safety"
+    },
+    {
+      "id": "AE",
+      "name": "Timeline integrity"
+    },
+    {
+      "id": "AF",
+      "name": "KG reuse / no Security KG"
+    },
+    {
+      "id": "AG",
+      "name": "Platform Files reuse"
+    },
+    {
+      "id": "AH",
+      "name": "Policy Engine reuse"
+    },
+    {
+      "id": "AI",
+      "name": "Anti-duplication flags"
+    },
+    {
+      "id": "AJ",
+      "name": "Migration batch_90 integrity"
+    },
+    {
+      "id": "AK",
+      "name": "Unit tests"
+    },
+    {
+      "id": "AL",
+      "name": "Secret scan"
+    },
+    {
+      "id": "AM",
+      "name": "Browser E2E"
+    },
+    {
+      "id": "AN",
+      "name": "Accessibility markers"
+    },
+    {
+      "id": "AO",
+      "name": "Responsive UI markers"
+    },
+    {
+      "id": "AP",
+      "name": "Admin UI ready marker"
+    },
+    {
+      "id": "AQ",
+      "name": "Workflow exists"
+    },
+    {
+      "id": "AR",
+      "name": "Architecture test"
+    },
+    {
+      "id": "AS",
+      "name": "Phase 15B overview doc"
+    },
+    {
+      "id": "AT",
+      "name": "Contracts doc"
+    },
+    {
+      "id": "AU",
+      "name": "SecurityAssuranceFoundationReady"
+    },
+    {
+      "id": "AV",
+      "name": "Registry ready flags"
+    },
+    {
+      "id": "AW",
+      "name": "Evidence enforcement flags"
+    },
+    {
+      "id": "AX",
+      "name": "Automatic approval disabled"
+    },
+    {
+      "id": "AY",
+      "name": "Advanced runtimes unimplemented"
+    },
+    {
+      "id": "AZ",
+      "name": "implementsOwnAiStack=false"
+    },
+    {
+      "id": "BA",
+      "name": "EngineeringOSV1Intact"
+    },
+    {
+      "id": "BB",
+      "name": "Module V1 intact flags"
+    },
+    {
+      "id": "BC",
+      "name": "phase15CReady"
+    },
+    {
+      "id": "BD",
+      "name": "No Trust Center / Security Intelligence packages"
+    },
+    {
+      "id": "BE",
+      "name": "Artifact identity"
+    },
+    {
+      "id": "BF",
+      "name": "releaseEligible"
+    },
+    {
+      "id": "BG",
+      "name": "Outbox event types bounded"
+    },
+    {
+      "id": "BH",
+      "name": "IDOR surface least privilege notes"
+    },
+    {
+      "id": "BI",
+      "name": "JWT/authz reuse (no new IdP)"
+    },
+    {
+      "id": "BJ",
+      "name": "EOS version still 1.0.0"
+    },
+    {
+      "id": "BK",
+      "name": "Foundation package not 1.0.0"
+    },
+    {
+      "id": "BL",
+      "name": "Phase 15A discovery corpus preserved"
+    },
+    {
+      "id": "BM",
+      "name": "Semantics locks present"
+    },
+    {
+      "id": "BN",
+      "name": "security_assurance.assessment_review"
+    },
+    {
+      "id": "BO",
+      "name": "Posture dimensions complete"
+    },
+    {
+      "id": "BP",
+      "name": "No SIEM package"
+    },
+    {
+      "id": "BQ",
+      "name": "No second Policy Engine"
+    },
+    {
+      "id": "BR",
+      "name": "Event payload safety constraints"
+    },
+    {
+      "id": "BS",
+      "name": "phase15BReady remains true"
+    },
+    {
+      "id": "BT",
+      "name": "SecurityAssuranceBoundaryLocked"
+    }
+  ],
+  "failedGateCount": 0,
+  "skippedGateCount": 0,
+  "notExecutedGateCount": 0,
+  "failedGates": [],
+  "unexpected5xx": 0,
+  "secretExposureDetected": false,
+  "secretExposure": false,
+  "SecurityAssuranceFoundationReady": true,
+  "SecurityIntelligenceImplemented": false,
+  "ComplianceIntelligenceImplemented": false,
+  "CustomerTrustCenterImplemented": false,
+  "IsolationAssuranceRuntimeImplemented": false,
+  "AiTrustRuntimeImplemented": false,
+  "SecureComputeAssuranceRuntimeImplemented": false,
+  "ThreatIntelligenceRuntimeImplemented": false,
+  "automaticSecurityApprovalEnabled": false,
+  "automaticExceptionApprovalEnabled": false,
+  "automaticRemediationEnabled": false,
+  "implementsOwnAiStack": false,
+  "duplicatePolicyEngineDetected": false,
+  "EngineeringOSV1Intact": true,
+  "phase15CReady": true,
+  "releaseEligible": true,
+  "gates": [
+    {
+      "id": "A",
+      "name": "Repository/build identity",
+      "status": "pass",
+      "detail": "4748972076f77e7392bb41ec664adddfeb677407"
+    },
+    {
+      "id": "B",
+      "name": "Phase 15A baseline intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "C",
+      "name": "Engineering OS V1 tag intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "D",
+      "name": "Frozen module tags intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "E",
+      "name": "Foundation version 0.2.0-control-evidence",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "F",
+      "name": "Public contracts 0.2.0-control-evidence",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "G",
+      "name": "Ownership matrix preserved",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "H",
+      "name": "Control registry",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "I",
+      "name": "Control lifecycle",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "J",
+      "name": "Control implementation references",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "K",
+      "name": "Evidence registry + provenance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "L",
+      "name": "Evidence freshness",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "M",
+      "name": "Missing evidence fail-closed",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "N",
+      "name": "Invalid/conflicting evidence",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "O",
+      "name": "Assessment taxonomy",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "P",
+      "name": "Assessment reproducibility",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Q",
+      "name": "Governed assessment review",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "R",
+      "name": "Finding lifecycle",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "S",
+      "name": "Exception expiry + approval governance",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "T",
+      "name": "Posture composition",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "U",
+      "name": "No universal security score",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "V",
+      "name": "Framework many-to-many mapping",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "W",
+      "name": "Framework mapping ≠ certification",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "X",
+      "name": "External assurance semantics",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Y",
+      "name": "S01–S06 CLOSED preserved",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "Z",
+      "name": "S07/S08 ownership preserved",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AA",
+      "name": "Tenant/workspace isolation in migration",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AB",
+      "name": "RLS policies present",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AC",
+      "name": "Classification handling",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AD",
+      "name": "Audit/event safety",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AE",
+      "name": "Timeline integrity",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AF",
+      "name": "KG reuse / no Security KG",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AG",
+      "name": "Platform Files reuse",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AH",
+      "name": "Policy Engine reuse",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AI",
+      "name": "Anti-duplication flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AJ",
+      "name": "Migration batch_90 integrity",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AK",
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AL",
+      "name": "Secret scan",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AM",
+      "name": "Browser E2E",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AN",
+      "name": "Accessibility markers",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AO",
+      "name": "Responsive UI markers",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AP",
+      "name": "Admin UI ready marker",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AQ",
+      "name": "Workflow exists",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AR",
+      "name": "Architecture test",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AS",
+      "name": "Phase 15B overview doc",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AT",
+      "name": "Contracts doc",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AU",
+      "name": "SecurityAssuranceFoundationReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AV",
+      "name": "Registry ready flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AW",
+      "name": "Evidence enforcement flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AX",
+      "name": "Automatic approval disabled",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AY",
+      "name": "Advanced runtimes unimplemented",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "AZ",
+      "name": "implementsOwnAiStack=false",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BA",
+      "name": "EngineeringOSV1Intact",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BB",
+      "name": "Module V1 intact flags",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BC",
+      "name": "phase15CReady",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BD",
+      "name": "No Trust Center / Security Intelligence packages",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BE",
+      "name": "Artifact identity",
+      "status": "pass",
+      "detail": "4748972076f77e7392bb41ec664adddfeb677407"
+    },
+    {
+      "id": "BF",
+      "name": "releaseEligible",
+      "status": "pass",
+      "detail": "priorFailed=0"
+    },
+    {
+      "id": "BG",
+      "name": "Outbox event types bounded",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BH",
+      "name": "IDOR surface least privilege notes",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BI",
+      "name": "JWT/authz reuse (no new IdP)",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BJ",
+      "name": "EOS version still 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BK",
+      "name": "Foundation package not 1.0.0",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BL",
+      "name": "Phase 15A discovery corpus preserved",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BM",
+      "name": "Semantics locks present",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BN",
+      "name": "security_assurance.assessment_review",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BO",
+      "name": "Posture dimensions complete",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BP",
+      "name": "No SIEM package",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BQ",
+      "name": "No second Policy Engine",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BR",
+      "name": "Event payload safety constraints",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BS",
+      "name": "phase15BReady remains true",
+      "status": "pass",
+      "detail": "ok"
+    },
+    {
+      "id": "BT",
+      "name": "SecurityAssuranceBoundaryLocked",
+      "status": "pass",
+      "detail": "ok"
+    }
+  ]
+}

@@ -32,3 +32,17 @@ export const POST = withEngineeringApi("risks", async ({ ctx, commerce }, reques
   });
   return NextResponse.json({ data }, { status: 201 });
 });
+
+export const PATCH = withEngineeringApi("risks", async ({ ctx, commerce }, request) => {
+  const body = await request.json();
+  if (!body.id) {
+    return NextResponse.json({ error: "id required" }, { status: 422 });
+  }
+  const data = await ctx.engineering.risks.update(commerce, ctx.tenantId, body.id, {
+    status: body.status,
+    mitigation: body.mitigation,
+    probability: body.probability,
+    consequence: body.consequence,
+  });
+  return NextResponse.json({ data });
+});

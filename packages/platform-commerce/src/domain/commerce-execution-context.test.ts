@@ -121,6 +121,25 @@ describe("verifyCommerceAuthorization", () => {
 
     expect(verifyCommerceAuthorization(tampered)).toBe(false);
   });
+
+  it("fails closed in production when COMMERCE_AUTH_SECRET is missing", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("COMMERCE_AUTH_SECRET", "");
+    expect(() =>
+      createVerifiedCommerceAuthorization({
+        decision: {
+          allowed: true,
+          decision: "allow",
+          reasonCode: "active_product_licence" as never,
+          seatRequired: false,
+          seatAssigned: true,
+        },
+        policy: { productKey: "engineering-os", action: "project.read" },
+        tenantId: "tenant-a",
+      }),
+    ).toThrow(CommerceDomainError);
+    vi.unstubAllEnvs();
+  });
 });
 
 describe("createCommerceExecutionContext", () => {

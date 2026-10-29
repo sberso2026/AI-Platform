@@ -1,0 +1,26 @@
+{
+  "name": "@rtb/engineering-review",
+  "version": "0.7.0-era-7",
+  "private": true,
+  "type": "module",
+  "description": "Bounded Engineering Review AI domain engine — contracts, lifecycle, grounded pipeline, trusted application service. Framework-independent.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./identity": "./src/identity.ts",
+    "./mfa-ux": "./src/mfa-ux.ts",
+    "./runtime": "./src/runtime-project.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@rtb/platform-commerce": "workspace:*",
+    "@types/node": "^22.15.29",
+    "exceljs": "^4.4.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
+  }
+}

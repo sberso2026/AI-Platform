@@ -1,0 +1,784 @@
+import type {
+  SteelCheckVerdict,
+  SteelDesignCheckOutcome,
+  SteelDesignContext,
+  SteelLimitState,
+  SteelOptimizationCandidate,
+  SteelUtilizationComposition,
+  StructuralDemandResult,
+} from "@rtb/types";
+import {
+  AI_ENGINEERING_APPROVAL,
+  CHECK_RESULT_EQUALS_ENGINEERING_APPROVAL,
+  LLM_STEEL_CAPACITY_AUTHORITY,
+  OPTIMIZATION_ACCEPTS_UNDETERMINED_AS_PASS,
+  OPTIMIZATION_BENDING_RECHECK_REQUIRED,
+  OPTIMIZATION_INTERACTION_RECHECK_REQUIRED,
+  OPTIMIZATION_REQUIRES_DETERMINISTIC_RECHECK,
+  OPTIMIZATION_SHEAR_RECHECK_REQUIRED,
+  UNIVERSAL_INTERACTION_EQUATION_HARDCODED,
+  EU_OPTIMIZATION_TENSION_RECHECK_REQUIRED,
+  EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_STABILITY,
+  EU_OPTIMIZATION_COMPRESSION_RECHECK_REQUIRED,
+  EU_OPTIMIZATION_BENDING_RECHECK_REQUIRED,
+  EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_BENDING,
+  EU_OPTIMIZATION_SHEAR_RECHECK_REQUIRED,
+  EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_SHEAR,
+  EU_OPTIMIZATION_INTERACTION_RECHECK_REQUIRED,
+  EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_INTERACTION,
+  MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK,
+  MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_AISC_CHECK,
+  US_OPTIMIZATION_TENSION_RECHECK_REQUIRED,
+  US_OPTIMIZATION_ACCEPTS_UNDETERMINED_TENSION,
+  US_OPTIMIZATION_COMPRESSION_RECHECK_REQUIRED,
+  US_OPTIMIZATION_ACCEPTS_UNDETERMINED_COMPRESSION,
+  US_OPTIMIZATION_BENDING_RECHECK_REQUIRED,
+  US_OPTIMIZATION_ACCEPTS_UNDETERMINED_BENDING,
+  US_OPTIMIZATION_SHEAR_RECHECK_REQUIRED,
+  US_OPTIMIZATION_ACCEPTS_UNDETERMINED_SHEAR,
+  US_OPTIMIZATION_INTERACTION_RECHECK_REQUIRED,
+  US_OPTIMIZATION_ACCEPTS_UNDETERMINED_INTERACTION,
+} from "@rtb/types";
+import { toForceN, toMomentNm } from "../structural-demand/units";
+import { evaluateSteelCapacity } from "./adapters";
+import type { SteelCapacityEngineInput } from "@rtb/types";
+
+export function simpleUtilization(input: {
+  declaredValid: boolean;
+  demand: { value: number; unit: string };
+  capacity: { value: number; unit: string } | null;
+}): SteelUtilizationComposition {
+  if (!input.declaredValid) {
+    throw new Error("complex interaction requires a standard adapter; simple D/C is not universally valid");
+  }
+  if (UNIVERSAL_INTERACTION_EQUATION_HARDCODED) throw new Error("universal interaction equation is forbidden");
+  if (!input.capacity) {
+    return { simpleUtilizationValid: true, demand: input.demand, capacity: null, ratio: null };
+  }
+  if (input.demand.unit !== input.capacity.unit) throw new Error("steel design fail closed: units incompatible");
+  if (!(input.capacity.value > 0)) throw new Error("steel design fail closed: capacity must be positive");
+  return {
+    simpleUtilizationValid: true,
+    demand: input.demand,
+    capacity: input.capacity,
+    ratio: input.demand.value / input.capacity.value,
+  };
+}
+
+export function verdictFromUtilization(ratio: number | null): SteelCheckVerdict {
+  if (ratio == null) return "CHECK_UNDETERMINED";
+  return ratio <= 1 ? "CHECK_SATISFIED" : "CHECK_NOT_SATISFIED";
+}
+
+export function orchestrateSteelDesignCheck(input: {
+  designCheckId: string;
+  limitState: SteelLimitState;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+  simpleUtilizationValid: boolean;
+  demandValue: { value: number; unit: string };
+}): SteelDesignCheckOutcome {
+  if (LLM_STEEL_CAPACITY_AUTHORITY) throw new Error("LLM must not originate steel capacity");
+  if (AI_ENGINEERING_APPROVAL || CHECK_RESULT_EQUALS_ENGINEERING_APPROVAL) {
+    throw new Error("check result must not equal engineering approval");
+  }
+  if (!input.designContext.demandRefs.includes(input.capacityInput.demand.resultId)) {
+    throw new Error("steel design fail closed: demand missing from design context");
+  }
+  if (input.limitState === "COMBINED_ACTION" && input.simpleUtilizationValid) {
+    throw new Error("complex interaction requires a standard adapter");
+  }
+  const capacity = evaluateSteelCapacity(input.capacityInput);
+  const utilization = input.simpleUtilizationValid
+    ? simpleUtilization({
+      declaredValid: true,
+      demand: input.demandValue,
+      capacity: capacity.capacity && capacity.capacity.value != null && capacity.capacity.units
+        ? { value: capacity.capacity.value, unit: capacity.capacity.units }
+        : null,
+    })
+    : null;
+  const verdict = verdictFromUtilization(utilization?.ratio ?? null);
+  return {
+    designCheck: {
+      designCheckId: input.designCheckId,
+      demandRef: input.capacityInput.demand.resultId,
+      capacityRef: capacity.capacity?.capacityResultId ?? null,
+      checkType: input.limitState,
+      approvalState: "not_approved",
+      reviewState: "required",
+      validationState: capacity.maturity,
+    },
+    verdict,
+    utilization,
+    interactionRequiresAdapter: input.limitState === "COMBINED_ACTION",
+    humanReviewRequired: true,
+    engineeringApproved: false,
+  };
+}
+
+export function orchestrateAuTensionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "AU_STEEL" || input.capacityInput.limitState !== "TENSION") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  const axial = input.capacityInput.demand.axial;
+  if ("status" in axial && axial.status === "NO_AXIAL_COMPONENTS") {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandN = axial.valueN;
+  const tensileDemand = demandN > 0;
+  return orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: "TENSION",
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: tensileDemand,
+    demandValue: { value: demandN, unit: "N" },
+  });
+}
+
+export function orchestrateAuShearDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "AU_STEEL") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.capacityInput.limitState !== "SHEAR" && input.capacityInput.limitState !== "SHEAR_MAJOR" && input.capacityInput.limitState !== "SHEAR_MINOR") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  const shear = input.capacityInput.demand.shear;
+  if (!shear || !shear.unit?.trim() || !Number.isFinite(shear.value)) {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandN = toForceN({
+    value: Math.abs(shear.signed !== 0 ? shear.signed : shear.value),
+    unit: shear.unit,
+  });
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: input.capacityInput.limitState,
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: true,
+    demandValue: { value: demandN, unit: "N" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+  };
+}
+
+export function orchestrateAuBendingDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "AU_STEEL") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.capacityInput.limitState !== "BENDING_MAJOR" && input.capacityInput.limitState !== "BENDING_MINOR") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  const moment = input.capacityInput.demand.moment;
+  if (!moment || !moment.unit?.trim() || !Number.isFinite(moment.value)) {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandNm = toMomentNm({
+    value: Math.abs(moment.signed !== 0 ? moment.signed : moment.value),
+    unit: moment.unit,
+  });
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: input.capacityInput.limitState,
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: true,
+    demandValue: { value: demandNm, unit: "N.m" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+  };
+}
+
+export function orchestrateAuCompressionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "AU_STEEL") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.capacityInput.limitState !== "COMPRESSION" && input.capacityInput.limitState !== "MEMBER_STABILITY") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  const axial = input.capacityInput.demand.axial;
+  if ("status" in axial && axial.status === "NO_AXIAL_COMPONENTS") {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const compressionDemandN = axial.valueN < 0 ? Math.abs(axial.valueN) : 0;
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: input.capacityInput.limitState,
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: compressionDemandN > 0,
+    demandValue: { value: compressionDemandN, unit: "N" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+  };
+}
+
+export function consumeDemandHandoff(demand: Pick<StructuralDemandResult, "resultId" | "capacityPresent" | "memberId">): string {
+  if (demand.capacityPresent) throw new Error("D1C demand must not contain capacity");
+  if (!demand.resultId) throw new Error("steel design fail closed: demand missing");
+  return demand.resultId;
+}
+
+export function assertOptimizationCandidateRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!OPTIMIZATION_REQUIRES_DETERMINISTIC_RECHECK) throw new Error("optimization candidates must be rechecked deterministically");
+  if (!candidate.deterministicRecheckRequired) throw new Error("optimization candidates must be rechecked deterministically");
+  if (!candidate.rechecked) throw new Error("candidate optimization section requires deterministic recheck");
+}
+
+export function assertOptimizationBendingRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!OPTIMIZATION_BENDING_RECHECK_REQUIRED) throw new Error("optimization candidates must be rechecked deterministically");
+  assertOptimizationCandidateRecheck(candidate);
+}
+
+export function assertOptimizationShearRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!OPTIMIZATION_SHEAR_RECHECK_REQUIRED) throw new Error("optimization candidates must be rechecked deterministically");
+  assertOptimizationCandidateRecheck(candidate);
+}
+
+export function orchestrateAuCombinedActionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "AU_STEEL" || input.capacityInput.limitState !== "COMBINED_ACTION") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: "COMBINED_ACTION",
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: false,
+    demandValue: { value: 0, unit: "1" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    utilization: null,
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+    engineeringApproved: false,
+  };
+}
+
+export function assertOptimizationInteractionRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!OPTIMIZATION_INTERACTION_RECHECK_REQUIRED) throw new Error("optimization candidates must be rechecked deterministically");
+  if (OPTIMIZATION_ACCEPTS_UNDETERMINED_AS_PASS) throw new Error("optimizer cannot accept undetermined interaction as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.interactionCheckState !== "CHECK_SATISFIED" && candidate.interactionCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined interaction as pass");
+  }
+}
+
+export function assertLlmCannotOriginateCapacity(llmOriginated: boolean): void {
+  if (llmOriginated || LLM_STEEL_CAPACITY_AUTHORITY) throw new Error("AI cannot originate capacity");
+}
+
+export function orchestrateUsTensionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "US_STEEL" || input.capacityInput.limitState !== "TENSION") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_AISC_CHECK || MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK) {
+    throw new Error("mechanics-reference utilization must not be labelled as an AISC check");
+  }
+  const axial = input.capacityInput.demand.axial;
+  if ("status" in axial && axial.status === "NO_AXIAL_COMPONENTS") {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandN = axial.valueN;
+  const tensileDemand = demandN > 0;
+  return orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: "TENSION",
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: tensileDemand,
+    demandValue: { value: demandN, unit: "N" },
+  });
+}
+
+export function assertOptimizationUsTensionRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!US_OPTIMIZATION_TENSION_RECHECK_REQUIRED) throw new Error("US tension optimizer candidates must be rechecked deterministically");
+  if (US_OPTIMIZATION_ACCEPTS_UNDETERMINED_TENSION) throw new Error("optimizer cannot accept undetermined tension as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.memberCheckState != null && candidate.memberCheckState !== "CHECK_SATISFIED" && candidate.memberCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined tension as pass");
+  }
+}
+
+export function orchestrateUsCompressionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "US_STEEL") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.capacityInput.limitState !== "COMPRESSION" && input.capacityInput.limitState !== "MEMBER_STABILITY") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_AISC_CHECK || MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK) {
+    throw new Error("mechanics-reference utilization must not be labelled as an AISC check");
+  }
+  const axial = input.capacityInput.demand.axial;
+  if ("status" in axial && axial.status === "NO_AXIAL_COMPONENTS") {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const compressionDemandN = axial.valueN < 0 ? Math.abs(axial.valueN) : 0;
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: input.capacityInput.limitState,
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: compressionDemandN > 0,
+    demandValue: { value: compressionDemandN, unit: "N" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+  };
+}
+
+export function assertOptimizationUsCompressionRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!US_OPTIMIZATION_COMPRESSION_RECHECK_REQUIRED) throw new Error("US compression optimizer candidates must be rechecked deterministically");
+  if (US_OPTIMIZATION_ACCEPTS_UNDETERMINED_COMPRESSION) throw new Error("optimizer cannot accept undetermined compression as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.memberCheckState !== "CHECK_SATISFIED" && candidate.memberCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined compression as pass");
+  }
+}
+
+export function orchestrateUsBendingDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "US_STEEL") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.capacityInput.limitState !== "BENDING_MAJOR" && input.capacityInput.limitState !== "BENDING_MINOR") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_AISC_CHECK || MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK) {
+    throw new Error("mechanics-reference utilization must not be labelled as an AISC check");
+  }
+  const moment = input.capacityInput.demand.moment;
+  if (!moment || !moment.unit?.trim() || !Number.isFinite(moment.value)) {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandNm = toMomentNm({
+    value: Math.abs(moment.signed !== 0 ? moment.signed : moment.value),
+    unit: moment.unit,
+  });
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: input.capacityInput.limitState,
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: true,
+    demandValue: { value: demandNm, unit: "N.m" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+  };
+}
+
+export function assertOptimizationUsBendingRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!US_OPTIMIZATION_BENDING_RECHECK_REQUIRED) throw new Error("US bending optimizer candidates must be rechecked deterministically");
+  if (US_OPTIMIZATION_ACCEPTS_UNDETERMINED_BENDING) throw new Error("optimizer cannot accept undetermined bending as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.memberCheckState !== "CHECK_SATISFIED" && candidate.memberCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined bending as pass");
+  }
+}
+
+export function orchestrateUsShearDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "US_STEEL") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.capacityInput.limitState !== "SHEAR" && input.capacityInput.limitState !== "SHEAR_MAJOR" && input.capacityInput.limitState !== "SHEAR_MINOR") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_AISC_CHECK || MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK) {
+    throw new Error("mechanics-reference utilization must not be labelled as an AISC check");
+  }
+  const shear = input.capacityInput.demand.shear;
+  if (!shear || !shear.unit?.trim() || !Number.isFinite(shear.value)) {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandN = toForceN({
+    value: Math.abs(shear.signed !== 0 ? shear.signed : shear.value),
+    unit: shear.unit,
+  });
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: input.capacityInput.limitState,
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: true,
+    demandValue: { value: demandN, unit: "N" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+  };
+}
+
+export function assertOptimizationUsShearRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!US_OPTIMIZATION_SHEAR_RECHECK_REQUIRED) throw new Error("US shear optimizer candidates must be rechecked deterministically");
+  if (US_OPTIMIZATION_ACCEPTS_UNDETERMINED_SHEAR) throw new Error("optimizer cannot accept undetermined shear as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.memberCheckState !== "CHECK_SATISFIED" && candidate.memberCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined shear as pass");
+  }
+}
+
+export function orchestrateUsCombinedActionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "US_STEEL" || input.capacityInput.limitState !== "COMBINED_ACTION") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: "COMBINED_ACTION",
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: false,
+    demandValue: { value: 0, unit: "1" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    utilization: null,
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+    engineeringApproved: false,
+  };
+}
+
+export function assertOptimizationUsInteractionRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!US_OPTIMIZATION_INTERACTION_RECHECK_REQUIRED) throw new Error("US interaction optimizer candidates must be rechecked deterministically");
+  if (US_OPTIMIZATION_ACCEPTS_UNDETERMINED_INTERACTION) throw new Error("optimizer cannot accept undetermined interaction as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.interactionCheckState !== "CHECK_SATISFIED" && candidate.interactionCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined interaction as pass");
+  }
+}
+
+export function orchestrateEuTensionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "EU_STEEL" || input.capacityInput.limitState !== "TENSION") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  const axial = input.capacityInput.demand.axial;
+  if ("status" in axial && axial.status === "NO_AXIAL_COMPONENTS") {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandN = axial.valueN;
+  const tensileDemand = demandN > 0;
+  return orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: "TENSION",
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: tensileDemand,
+    demandValue: { value: demandN, unit: "N" },
+  });
+}
+
+export function assertOptimizationEuTensionRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!EU_OPTIMIZATION_TENSION_RECHECK_REQUIRED) throw new Error("EU tension optimizer candidates must be rechecked deterministically");
+  assertOptimizationCandidateRecheck(candidate);
+}
+
+export function orchestrateEuCompressionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "EU_STEEL") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.capacityInput.limitState !== "COMPRESSION" && input.capacityInput.limitState !== "MEMBER_STABILITY") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK) {
+    throw new Error("mechanics-reference utilization must not be labelled as a Eurocode design check");
+  }
+  const axial = input.capacityInput.demand.axial;
+  if ("status" in axial && axial.status === "NO_AXIAL_COMPONENTS") {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const compressionDemandN = axial.valueN < 0 ? Math.abs(axial.valueN) : 0;
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: input.capacityInput.limitState,
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: compressionDemandN > 0,
+    demandValue: { value: compressionDemandN, unit: "N" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+  };
+}
+
+export function assertOptimizationEuCompressionRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!EU_OPTIMIZATION_COMPRESSION_RECHECK_REQUIRED) throw new Error("EU compression optimizer candidates must be rechecked deterministically");
+  if (EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_STABILITY) throw new Error("optimizer cannot accept undetermined stability as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.memberCheckState !== "CHECK_SATISFIED" && candidate.memberCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined stability as pass");
+  }
+}
+
+export function orchestrateEuBendingDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "EU_STEEL") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.capacityInput.limitState !== "BENDING_MAJOR" && input.capacityInput.limitState !== "BENDING_MINOR") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK) {
+    throw new Error("mechanics-reference utilization must not be labelled as a Eurocode design check");
+  }
+  const moment = input.capacityInput.demand.moment;
+  if (!moment || !moment.unit?.trim() || !Number.isFinite(moment.value)) {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandNm = toMomentNm({
+    value: Math.abs(moment.signed !== 0 ? moment.signed : moment.value),
+    unit: moment.unit,
+  });
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: input.capacityInput.limitState,
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: true,
+    demandValue: { value: demandNm, unit: "N.m" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+  };
+}
+
+export function assertOptimizationEuBendingRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!EU_OPTIMIZATION_BENDING_RECHECK_REQUIRED) throw new Error("EU bending optimizer candidates must be rechecked deterministically");
+  if (EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_BENDING) throw new Error("optimizer cannot accept undetermined bending as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.memberCheckState !== "CHECK_SATISFIED" && candidate.memberCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined bending as pass");
+  }
+}
+
+export function orchestrateEuShearDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "EU_STEEL") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (input.capacityInput.limitState !== "SHEAR" && input.capacityInput.limitState !== "SHEAR_MAJOR" && input.capacityInput.limitState !== "SHEAR_MINOR") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  if (MECHANICS_REFERENCE_UTILIZATION_LABELLED_AS_CODE_CHECK) {
+    throw new Error("mechanics-reference utilization must not be labelled as a Eurocode design check");
+  }
+  const shear = input.capacityInput.demand.shear;
+  if (!shear || !shear.unit?.trim() || !Number.isFinite(shear.value)) {
+    throw new Error("steel design fail closed: demand missing");
+  }
+  const demandN = toForceN({
+    value: Math.abs(shear.signed !== 0 ? shear.signed : shear.value),
+    unit: shear.unit,
+  });
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: input.capacityInput.limitState,
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: true,
+    demandValue: { value: demandN, unit: "N" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+  };
+}
+
+export function assertOptimizationEuShearRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!EU_OPTIMIZATION_SHEAR_RECHECK_REQUIRED) throw new Error("EU shear optimizer candidates must be rechecked deterministically");
+  if (EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_SHEAR) throw new Error("optimizer cannot accept undetermined shear as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.memberCheckState !== "CHECK_SATISFIED" && candidate.memberCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined shear as pass");
+  }
+}
+
+export function orchestrateEuCombinedActionDesignCheck(input: {
+  designCheckId: string;
+  designContext: SteelDesignContext;
+  capacityInput: SteelCapacityEngineInput;
+}): SteelDesignCheckOutcome {
+  if (input.capacityInput.adapterId !== "EU_STEEL" || input.capacityInput.limitState !== "COMBINED_ACTION") {
+    throw new Error("steel design fail closed: unsupported calculation scope");
+  }
+  const outcome = orchestrateSteelDesignCheck({
+    designCheckId: input.designCheckId,
+    limitState: "COMBINED_ACTION",
+    designContext: input.designContext,
+    capacityInput: input.capacityInput,
+    simpleUtilizationValid: false,
+    demandValue: { value: 0, unit: "1" },
+  });
+  return {
+    ...outcome,
+    verdict: "CHECK_UNDETERMINED",
+    utilization: null,
+    designCheck: {
+      ...outcome.designCheck,
+      approvalState: "not_approved",
+      validationState: outcome.designCheck.validationState,
+    },
+    engineeringApproved: false,
+  };
+}
+
+export function assertOptimizationEuInteractionRecheck(candidate: SteelOptimizationCandidate): void {
+  if (!EU_OPTIMIZATION_INTERACTION_RECHECK_REQUIRED) throw new Error("EU interaction optimizer candidates must be rechecked deterministically");
+  if (EU_OPTIMIZATION_ACCEPTS_UNDETERMINED_INTERACTION) throw new Error("optimizer cannot accept undetermined interaction as pass");
+  assertOptimizationCandidateRecheck(candidate);
+  if (candidate.interactionCheckState !== "CHECK_SATISFIED" && candidate.interactionCheckState !== "CHECK_NOT_SATISFIED") {
+    throw new Error("optimizer cannot accept undetermined interaction as pass");
+  }
+}
+
+export const AU_STEEL_IMPLEMENTATION_SUBPHASES = [
+  "AU-1 validated material/section identity and bounded tension capacity with licensed AS 4100 authority",
+  "AU-2 compression / member stability with explicit effective length",
+  "AU-3 bending / member stability including LTB inputs",
+  "AU-4 shear",
+  "AU-5 combined actions (AS 4100 interaction, not a universal D/C)",
+  "AU-6 serviceability criteria referencing D1C deflection + design orchestration",
+  "AU-7 independent certification gate (handbook/worked example + human validation)",
+] as const;
+
+export const EU_STEEL_IMPLEMENTATION_SUBPHASES = [
+  "EU-1 EN 1993 adapter + National Annex parameter bind (no formulas)",
+  "EU-2 tension",
+  "EU-3 compression / buckling curves as annex-selected parameters",
+  "EU-4 bending / LTB",
+  "EU-5 shear",
+  "EU-6 combined actions (EN interaction, annex-driven)",
+  "EU-7 member design orchestration",
+  "EU-8 independent validation / conformance / release gate",
+] as const;
+
+export const US_STEEL_IMPLEMENTATION_SUBPHASES = [
+  "US-1 AISC 360 adapter + LRFD/ASD method selection (explicit, not inferred)",
+  "US-2 tension",
+  "US-3 compression / member stability",
+  "US-4 bending / LTB",
+  "US-5 shear",
+  "US-6 combined actions (AISC interaction, not a universal D/C)",
+  "US-7 member design orchestration (mechanics vs AISC vs building-code vs approval)",
+  "US-8 independent validation / conformance / release gate",
+] as const;

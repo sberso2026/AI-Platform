@@ -1,0 +1,101 @@
+# EOS D1 C3 nonzero N-M validation evidence
+
+Path: docs/architecture/engineering-os/EOS_D1_C3_NONZERO_NM_VALIDATION_EVIDENCE.md
+
+This record is a technical validation of one nonzero axial-flexure point, plus a second preexisting compression magnitude. It does not replace the historical C3 human review. It is not complete interaction-surface validation, member-stability validation, national-profile validation, regulatory approval, or engineering approval.
+
+FROZEN_C3_IMPLEMENTATION_FINGERPRINT: a32bf2a00b313d9d
+C3_FROZEN_IMPLEMENTATION_FINGERPRINT_CHANGED: NO
+PRODUCTION_IMPLEMENTATION_REVISION: ef416f1f4ec92e1e97e97096ae625f8d61ca6265
+PRODUCTION_C3_EVALUATOR_CHANGED: NO
+BENCHMARK_CASE_ID: C3-NONZERO-NM-COMPRESSION-100KN
+SUPPLEMENTAL_EVIDENCE_FINGERPRINT: fp:48f5b4c8
+INDEPENDENT_METHOD: EQUIVALENT_RECTANGULAR_NM_HAND_DERIVATION
+INDEPENDENCE_CLASS: INDEPENDENT_CLOSED_FORM
+EOS_RESULT_USED_AS_REFERENCE: NO
+SELF_REFERENCE_USED: NO
+
+SIGN_CONVENTION: TENSION_POSITIVE_COMPRESSION_NEGATIVE
+AXIAL_SIGN_CONVENTION_EXPLICIT: YES
+SIGN_CONVENTION_BASIS: The independent hand model assigns a negative force to the concrete compression block. The C6 handoff converts a positive compression magnitude to a negative C3 axial input. The C9 column routing sample uses axial valueN -100000 N. Negative therefore means compression. The target was not reversed to obtain agreement.
+
+SECTION_WIDTH_MM: 300
+SECTION_HEIGHT_MM: 500
+REINFORCEMENT: three bars, each 314 mm2, at (50, 50), (150, 50), and (250, 50) mm
+CONCRETE: C30, fc 30 MPa, Ec 33000 MPa
+REINFORCEMENT_MATERIAL: B500, fy 500 MPa, Es 200000 MPa
+PARTIAL_FACTORS: gamma_c 1.5, gamma_s 1.15, alpha_cc 1.0, declared test profile, not a validated National Annex
+AXIS: MAJOR_AXIS
+MOMENT_SIGN: POSITIVE
+MESH: 16 by 16, the same resolution as the frozen C10 C3 zero-axial execution
+
+DESIGN_CONCRETE_STRENGTH_MPA: 20
+DESIGN_STEEL_STRENGTH_MPA: 434.7826086956522
+ETA: 1
+LAMBDA: 0.8
+EPS_CU2: 0.0035
+EPS_YD: 0.002173913043478261
+
+PRIMARY_TARGET_AXIAL_N: -100000
+NONZERO_AXIAL_TARGET_IS_ZERO: NO
+
+INDEPENDENT_NEUTRAL_AXIS_COORDINATE_MM: 393.8404812812805
+INDEPENDENT_NEUTRAL_AXIS_DEPTH_FROM_COMPRESSION_FACE_MM: 106.15951871871948
+INDEPENDENT_CONCRETE_BLOCK_DEPTH_MM: 84.9276149749756
+INDEPENDENT_CONCRETE_FORCE_N: -509565.6898498536
+INDEPENDENT_CONCRETE_RESULTANT_MM: x 150, y 457.53619251251223
+INDEPENDENT_STEEL_STRAIN: 0.011336163718612211 at each bottom bar
+INDEPENDENT_STEEL_YIELD_STATE: YIELDED_TENSION
+YIELD_CHECK: the bar strain is greater than eps_yd, so yield is the result of the strain check and is not assumed before that check
+INDEPENDENT_STEEL_FORCE_N: 409565.2173913043
+INDEPENDENT_STEEL_RESULTANT_Y_MM: 50
+INDEPENDENT_AXIAL_FORCE_N: -100000.47245854925
+INDEPENDENT_AXIAL_RESIDUAL_N: -0.47245854925131425
+INDEPENDENT_RESISTANCE_MOMENT_NM: 187666.36658471118
+INDEPENDENT_SOURCE: INDEPENDENT_EQUIVALENT_RECTANGULAR_HAND
+
+EOS_TARGET_AXIAL_N: -100000
+EOS_ACHIEVED_AXIAL_N: -100046.01443391509
+EOS_AXIAL_RESIDUAL_N: -46.014433915086556
+EOS_STRAIN_FAMILY: EPS_CU2_PIVOT
+EOS_AXIAL_STRAIN: 0.004697021261023896
+EOS_CURVATURE_X_PER_MM: 0.000032788085044095584
+EOS_CURVATURE_Y_PER_MM: 0
+EOS_RESISTANCE_MOMENT_NM: 187353.39590468965
+EOS_SOLVER_CONFIGURATION: BRACKETED_AXIAL_BISECTION:MAJOR_AXIS:POSITIVE:N=-100000:eps_cu2
+EOS_SOLVER_STATUS: CONVERGED
+SOLVER_CONVERGED: YES
+AXIAL_EQUILIBRIUM_WITHIN_EXISTING_TOLERANCE: YES
+
+GOVERNED_TOLERANCE: EU_C3_NUMERICAL_TOLERANCE
+EQUILIBRIUM_RESIDUAL_LIMIT_N: 50
+RESISTANCE_COMPARISON_ABS_NM: 8000
+RESISTANCE_COMPARISON_REL: 0.08
+ACCEPTANCE_RULE: absolute moment difference is within the larger of 8000 N.m and 0.08 times the absolute independent moment, and the absolute axial residual is within 50 N
+ABSOLUTE_MOMENT_DIFFERENCE_NM: 312.9706800215354
+RELATIVE_MOMENT_DIFFERENCE: 0.0016676972316201515
+PRIMARY_PASS_FAIL: PASS
+MODELLING_DIFFERENCE: the independent result uses an equivalent rectangular stress block. Production uses parabola-rectangle fiber integration. The governed tolerance already records that difference. The tolerance was not widened.
+
+SECOND_NONZERO_POINT_EXECUTED: YES
+SECOND_TARGET_AXIAL_N: -500000
+SECOND_TARGET_BASIS: the existing C6 fixture compression magnitude 500000 N, converted by the same tension-positive convention. The section was not changed. The target was not selected by inspecting production agreement.
+SECOND_INDEPENDENT_RESISTANCE_MOMENT_NM: 240361.85129568598
+SECOND_EOS_ACHIEVED_AXIAL_N: -499998.27397091605
+SECOND_EOS_AXIAL_RESIDUAL_N: 1.726029083947651
+SECOND_EOS_RESISTANCE_MOMENT_NM: 238546.15449989965
+SECOND_ABSOLUTE_MOMENT_DIFFERENCE_NM: 1815.6967957863235
+SECOND_RELATIVE_MOMENT_DIFFERENCE: 0.0075540140250987976
+SECOND_NONZERO_POINT_RESULT: PASS
+
+APPLICABILITY: rectangular 300 mm by 500 mm singly reinforced section, positive major-axis interaction, declared test partial factors, at the two stated compressive targets.
+LIMITATIONS: one or two nonzero points are not a complete interaction surface. Member stability is not validated. The national profile is not validated. Regulatory approval is not claimed. The historical zero-axial human review file remains REVIEW_INCOMPLETE and was not rewritten. The supplemental human re-review is ACCEPTED_FOR_STATED_SCOPE for the stated bounded scope.
+REPRODUCIBILITY: packages/engineering-os/src/structural-concrete/eos-d1e-eu-c3-nonzero-nm-validation.test.ts computes the independent report before calling evaluateEuC3InteractionPoint. The independent module does not import the production evaluator.
+REVIEWER_REREVIEW_REQUIRED: NO
+C3_CURRENT_HUMAN_REVIEW_STATUS: ACCEPTED_FOR_STATED_SCOPE
+C3_NONZERO_NM_TECHNICAL_VALIDATION_SATISFIED: YES
+C3_QUALIFIED_HUMAN_REREVIEW_REQUIRED: NO
+MEMBER_STABILITY_VALIDATED: NO
+NATIONAL_PROFILE_VALIDATED: NO
+REGULATORY_APPROVAL: NO
+COMPLETE_INTERACTION_SURFACE_VALIDATED: NO

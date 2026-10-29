@@ -14,7 +14,7 @@
     "@rtb/platform-core": "workspace:*",
     "@rtb/platform-intelligence": "workspace:*",
     "@rtb/types": "workspace:*",
-    "zod": "^3.25.36"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",

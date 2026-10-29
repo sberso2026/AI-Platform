@@ -1,6 +1,29 @@
 import type { SupabaseClient } from "@rtb/database";
 import type { ModelRouteResolution } from "@rtb/types";
 
+const SYSTEM_CHAT_MODEL_ID = "00000000-0000-4000-8000-0000000000e3";
+
+function isEmbeddingModel(modelKey: string | null | undefined, capabilities: unknown): boolean {
+  const key = (modelKey ?? "").toLowerCase();
+  if (key.includes("embedding")) return true;
+  if (!Array.isArray(capabilities)) return false;
+  return capabilities.some((row) => {
+    const capability = typeof row === "object" && row && "capability" in row ? String((row as { capability?: string }).capability ?? "") : "";
+    return capability.toLowerCase() === "embedding";
+  });
+}
+
+function toRoute(model: Record<string, unknown>, provider: Record<string, unknown> | null | undefined): ModelRouteResolution {
+  return {
+    modelKey: model.model_key as string,
+    modelId: model.id as string,
+    providerType: (provider?.provider_type as string) ?? "mock",
+    providerId: (provider?.id as string) ?? "mock",
+    costInputPer1k: Number(model.cost_input_per_1k ?? 0),
+    costOutputPer1k: Number(model.cost_output_per_1k ?? 0),
+  };
+}
+
 export class ModelRegistryService {
   constructor(private readonly supabase: SupabaseClient) {}
 
@@ -26,32 +49,28 @@ export class ModelRegistryService {
   }
 
   async resolveRoute(tenantId: string, intent: string): Promise<ModelRouteResolution> {
-    const { data: route } = await this.supabase
+    const { data: routes } = await this.supabase
       .from("model_routes")
-      .select("model_id, model_registry(*, model_providers(*))")
+      .select("model_id, priority, model_registry(*, model_providers(*), model_capabilities(capability))")
       .eq("tenant_id", tenantId)
       .eq("intent", intent)
       .eq("is_active", true)
-      .order("priority")
-      .limit(1)
-      .single();
+      .order("priority");
 
-    if (route) {
+    for (const route of routes ?? []) {
       const row = route as Record<string, unknown>;
-      const model = row.model_registry as Record<string, unknown>;
-      const provider = model.model_providers as Record<string, unknown>;
-
-      const allowed = await this.isModelAllowed(tenantId, model.id as string, provider.provider_type as string);
-      if (allowed) {
-        return {
-          modelKey: model.model_key as string,
-          modelId: model.id as string,
-          providerType: provider.provider_type as string,
-          providerId: provider.id as string,
-          costInputPer1k: Number(model.cost_input_per_1k ?? 0),
-          costOutputPer1k: Number(model.cost_output_per_1k ?? 0),
-        };
+      const model = row.model_registry as Record<string, unknown> | null;
+      if (!model) continue;
+      const provider = model.model_providers as Record<string, unknown> | null;
+      if (isEmbeddingModel(model.model_key as string, model.model_capabilities)) continue;
+      const providerType = provider?.provider_type as string | undefined;
+      const allowed = await this.isModelAllowed(tenantId, model.id as string, providerType ?? "mock");
+      if (!allowed) continue;
+      if (providerType === "mock") {
+        const chat = await this.resolveSystemChatRoute(tenantId);
+        if (chat) return chat;
       }
+      return toRoute(model, provider);
     }
 
     // Fallback to legacy ai_model_routes
@@ -76,6 +95,9 @@ export class ModelRegistryService {
         costOutputPer1k: 0,
       };
     }
+
+    const chat = await this.resolveSystemChatRoute(tenantId);
+    if (chat) return chat;
 
     // Global mock fallback
     const { data: mockModel } = await this.supabase
@@ -106,6 +128,26 @@ export class ModelRegistryService {
       costInputPer1k: 0,
       costOutputPer1k: 0,
     };
+  }
+
+  private async resolveSystemChatRoute(tenantId: string): Promise<ModelRouteResolution | null> {
+    const { data } = await this.supabase
+      .from("model_registry")
+      .select("*, model_providers(*), model_capabilities(capability)")
+      .eq("id", SYSTEM_CHAT_MODEL_ID)
+      .eq("status", "active")
+      .maybeSingle();
+    if (!data) return null;
+    const model = data as Record<string, unknown>;
+    const provider = model.model_providers as Record<string, unknown> | null;
+    if (isEmbeddingModel(model.model_key as string, model.model_capabilities)) return null;
+    const allowed = await this.isModelAllowed(
+      tenantId,
+      model.id as string,
+      (provider?.provider_type as string) ?? "openai",
+    );
+    if (!allowed) return null;
+    return toRoute(model, provider);
   }
 
   private async isModelAllowed(tenantId: string, modelId: string, providerType: string): Promise<boolean> {

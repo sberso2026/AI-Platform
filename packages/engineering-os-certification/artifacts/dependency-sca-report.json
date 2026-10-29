@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "rtb-dependency-sca-report/1",
+  "scannedAt": "2026-10-01T15:03:54.115Z",
+  "tool": "pnpm audit --prod --json",
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 1,
+      "high": 0,
+      "critical": 0
+    },
+    "dependencies": 231,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 231
+  },
+  "findingCount": 1,
+  "findings": [
+    {
+      "severity": "moderate",
+      "package": "uuid",
+      "advisory": "GHSA-w5hq-g745-h8pq",
+      "title": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided"
+    }
+  ],
+  "exceptionsApplied": [],
+  "expiredExceptions": [
+    {
+      "advisory": "GHSA-f88m-g3jw-g9cj",
+      "review_by": "2026-09-30",
+      "applied": false
+    },
+    {
+      "advisory": "GHSA-m99w-x7hq-7vfj",
+      "review_by": "2026-09-30",
+      "applied": false
+    },
+    {
+      "advisory": "GHSA-89xv-2m56-2m9x",
+      "review_by": "2026-09-30",
+      "applied": false
+    },
+    {
+      "advisory": "GHSA-p9j2-gv94-2wf4",
+      "review_by": "2026-09-30",
+      "applied": false
+    },
+    {
+      "advisory": "GHSA-6g55-p6wh-862q",
+      "review_by": "2026-09-30",
+      "applied": false
+    },
+    {
+      "advisory": "GHSA-r28c-9q8g-f849",
+      "review_by": "2026-09-30",
+      "applied": false
+    },
+    {
+      "advisory": "GHSA-28wg-ghj8-5hjv",
+      "review_by": "2026-09-30",
+      "applied": false
+    },
+    {
+      "advisory": "GHSA-2v37-7h3g-55p8",
+      "review_by": "2026-09-30",
+      "applied": false
+    }
+  ],
+  "CriticalDependencyVulnerabilityUnresolved": false,
+  "unresolvedCritical": [],
+  "unresolvedHigh": [],
+  "DependencyScaReady": true,
+  "DependencyScaCiEnforced": true,
+  "pass": true
+}

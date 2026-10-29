@@ -28,7 +28,7 @@ export function ProductSwitcher({ compact = false }: { compact?: boolean }) {
         type="button"
         className={cn(
           "flex w-full items-center gap-4 px-4 py-4 text-left transition-colors",
-          "hover:bg-sidebar-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400"
+          "hover:bg-sidebar-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--eos-accent)]"
         )}
         aria-haspopup="listbox"
         aria-expanded={open}

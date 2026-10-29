@@ -1,0 +1,22 @@
+{
+  "name": "@rtb/engineering-execution-host-certification",
+  "version": "0.1.0-execution-host",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "certify:phase13d1": "tsx scripts/run-phase13d1-certification.ts",
+    "test:e2e:execution-host": "playwright test playwright/v1-execution-host.spec.ts",
+    "secret-scan": "tsx scripts/secret-exposure-scan.ts"
+  },
+  "dependencies": {
+    "@rtb/engineering-execution-host": "workspace:*",
+    "@rtb/engineering-model-interoperability": "workspace:*",
+    "@supabase/supabase-js": "^2.49.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^22.15.29",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3"
+  }
+}

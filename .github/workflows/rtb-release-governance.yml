@@ -1,0 +1,46 @@
+name: RTB release governance
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "packages/release-governance/**"
+      - "docs/release/migration-manifest.json"
+      - "docs/release/RTB_MIGRATION_RELEASE_GOVERNANCE.md"
+      - "docs/release/MIGRATION_HEADER.template.sql"
+      - "supabase/migrations/**"
+      - ".github/workflows/rtb-release-governance.yml"
+  pull_request:
+    paths:
+      - "packages/release-governance/**"
+      - "docs/release/migration-manifest.json"
+      - "docs/release/RTB_MIGRATION_RELEASE_GOVERNANCE.md"
+      - "docs/release/MIGRATION_HEADER.template.sql"
+      - "supabase/migrations/**"
+      - ".github/workflows/rtb-release-governance.yml"
+
+concurrency:
+  group: rtb-release-governance-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  guard:
+    name: Migration promotion guard (read-only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/release-governance typecheck
+      - run: pnpm --filter @rtb/release-governance test
+      - run: pnpm --filter @rtb/release-governance report

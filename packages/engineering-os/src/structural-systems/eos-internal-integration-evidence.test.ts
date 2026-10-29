@@ -1,0 +1,287 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
+import { C10_REVIEW_SUBJECTS } from "./d1-qualified-structural-review";
+import { C10_SUPPLEMENTAL_INDEPENDENT_CALC_PACK_IDS, D1_REVIEW_BASELINE_FROZEN as HISTORICAL_REVIEW_BASELINE_FROZEN } from "./d1-development-first-roadmap-resequencing";
+import { D1K_INTERNAL_INTEGRATION_SATISFIED as D1K_PACK_FORMULA_SATISFIED } from "./structural-pack-sequencing";
+import {
+  BASELINE_FREEZE_EQUALS_QUALIFIED_HUMAN_REVIEW,
+  C10_REVIEW_PACKAGE_PRESERVED,
+  C10_SUPPLEMENTAL_REVIEWER_WORKSHEETS_PATH,
+  C10_SUPPLEMENTAL_REVIEWER_WORKSHEETS_PRESERVED,
+  D1_CANONICAL_NEXT_PHASE,
+  D1_CANONICAL_NEXT_PHASE_SCOPE,
+  D1_CANONICAL_NEXT_PHASE_TYPE,
+  D1_CANONICAL_TOTAL_MILESTONE_COUNT,
+  D1_COMPLETED_MILESTONE_COUNT,
+  D1_QUALIFIED_STRUCTURAL_REVIEW_STATUS,
+  D1_REMAINING_CANONICAL_PHASE_LIST,
+  D1_REMAINING_MILESTONE_COUNT,
+  D1_REVIEW_BASELINE,
+  D1_REVIEW_BASELINE_FROZEN,
+  D1_REVIEW_BASELINE_MANIFEST_CREATED,
+  D1_REVIEW_BASELINE_MANIFEST_PATH,
+  D1_TO_D9_EXISTING_BOUNDARY_REGRESSION_FREE,
+  D1_TO_D9_SOURCE_CONTRACT_PACK_GATE_REQUIRED,
+  D1F_REVIEW_PACKAGE_PRESERVED,
+  D1K_ASSUMPTION_PROPAGATION_TESTED,
+  D1K_AUTHORITY_BOUNDARIES_PRESERVED,
+  D1K_CAN_SILENTLY_DROP_LIMITATIONS,
+  D1K_CHANGED_PREVIOUSLY_VALIDATED_COMPONENT_COUNT,
+  D1K_COMPOSITION,
+  D1K_CROSS_TENANT_INTERNAL_FLOW,
+  D1K_CURRENTNESS_PROPAGATION_TESTED,
+  D1K_D1F_CALCULATION_INTEGRATION_STATUS,
+  D1K_D1G_INTEGRATION_STATUS,
+  D1K_D1H_INTEGRATION_STATUS,
+  D1K_D1I_INTEGRATION_STATUS,
+  D1K_D1J_INTEGRATION_STATUS,
+  D1K_D1M_INTERNAL_INTEGRATION_REQUIRED,
+  D1K_D1M_INTERNAL_INTEGRATION_STATUS,
+  D1K_D1N_INTERNAL_INTEGRATION_REQUIRED,
+  D1K_D1N_INTERNAL_INTEGRATION_STATUS,
+  D1K_DEFECT_REMAINING_COUNT,
+  D1K_DUPLICATE_PROTECTION_STATUS,
+  D1K_EDGE_CONTRACTS,
+  D1K_END_TO_END_SCENARIO_FAIL_COUNT,
+  D1K_END_TO_END_SCENARIO_PASS_COUNT,
+  D1K_EXACT_REVISION_PROPAGATION_TESTED,
+  D1K_FAILED_UPSTREAM_RESULT_CAN_SILENTLY_PROMOTE,
+  D1K_FAILURE_PROPAGATION_TESTED,
+  D1K_FLOATING_REVISION_SUBSTITUTION_ALLOWED,
+  D1K_HISTORICAL_REFERENCE_AUTO_REPOINTED,
+  D1K_HISTORICAL_TRACK_STATUS,
+  D1K_IDEMPOTENCY_STATUS,
+  D1K_IDENTITY_PRESERVATION_TESTED,
+  D1K_INTEGRATION_MATURITY,
+  D1K_INTEGRATION_STATUS,
+  D1K_INTERNAL_COMPONENT_COUNT,
+  D1K_INTERNAL_COMPONENTS,
+  D1K_INTERNAL_EDGE_CONTRACTS_TRACEABLE,
+  D1K_INTERNAL_EDGE_COUNT,
+  D1K_INTERNAL_EDGES,
+  D1K_INTERNAL_INTEGRATION_EVIDENCE_MATRIX_COMPLETE,
+  D1K_INTERNAL_INTEGRATION_EVIDENCE_PATH,
+  D1K_INTERNAL_INTEGRATION_PASS_CRITERIA,
+  D1K_INTERNAL_INTEGRATION_SATISFIED,
+  D1K_INTERNAL_INTEGRATION_SCOPE,
+  D1K_LIMITATIONS_PROPAGATED,
+  D1K_PROVENANCE_PRESERVED,
+  D1K_REOPENED_STATUS,
+  D1K_REPLAY_PROTECTION_STATUS,
+  D1K_REPRODUCIBILITY_EVIDENCE_COMPLETE,
+  D1K_SIGN_CONVENTION_COMPATIBILITY_STATUS,
+  D1K_SILENT_ENGINEERING_ASSUMPTION_ALLOWED,
+  D1K_SILENT_IDENTITY_SUBSTITUTION_ALLOWED,
+  D1K_SOURCE_BASIS_PRESERVED,
+  D1K_STALE_VALIDATION_EVIDENCE_RETAINED_AS_CURRENT,
+  D1K_TAKES_OVER_D9_GLOBAL_CROSS_DISCIPLINE_ROLE,
+  D1K_TENANT_SCOPE_PRESERVED,
+  D1K_UNIT_SEMANTICS_PRESERVED,
+  INTEGRATION_PASS_EQUALS_QUALIFIED_HUMAN_REVIEW,
+  verifyD1kInternalIntegrationEvidence,
+} from "./internal-integration-evidence";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const evidenceDoc = readFileSync(join(here, "../../../../docs/architecture/engineering-os/EOS_D1K_INTERNAL_INTEGRATION_EVIDENCE.md"), "utf8");
+const baselineDoc = readFileSync(join(here, "../../../../docs/architecture/engineering-os/EOS_D1_STRUCTURAL_REVIEW_BASELINE.md"), "utf8");
+const worksheets = readFileSync(join(here, "../../../../", C10_SUPPLEMENTAL_REVIEWER_WORKSHEETS_PATH), "utf8");
+
+describe("EOS-D1K internal integration evidence", () => {
+  it("D1K_INTERNAL_INTEGRATION_EVIDENCE_TESTS", () => {
+    expect(verifyD1kInternalIntegrationEvidence()).toEqual({ completed: 13, remaining: 2 });
+    expect(D1K_INTEGRATION_STATUS).toBe("INTERNAL_INTEGRATION_EVIDENCE_RECORDED");
+    expect(D1K_INTEGRATION_MATURITY).toBe("INTERNAL_INTEGRATION_EVIDENCE_RECORDED_REVIEW_BASELINE_FROZEN_STRUCTURAL_REVIEW_NOT_PERFORMED");
+    expect(D1K_INTERNAL_INTEGRATION_SATISFIED).toBe(true);
+    expect(D1K_PACK_FORMULA_SATISFIED).toBe(false);
+    expect(evidenceDoc).toContain(D1K_INTERNAL_INTEGRATION_SCOPE);
+    expect(evidenceDoc).toContain(D1K_INTERNAL_INTEGRATION_PASS_CRITERIA);
+  });
+
+  it("D1K_COMPONENT_GRAPH_TESTS", () => {
+    expect(D1K_INTERNAL_COMPONENT_COUNT).toBe(6);
+    expect(D1K_INTERNAL_COMPONENTS).toEqual([
+      "D1F_IDENTITY",
+      "D1E_CHECK_REFERENCE",
+      "D1G_VALIDATION_BOUNDARY",
+      "D1H_INSPECTION",
+      "D1I_TWIN",
+      "D1J_OPTIMIZATION",
+    ]);
+    expect(D1K_D1M_INTERNAL_INTEGRATION_REQUIRED).toBe(false);
+    expect(D1K_D1N_INTERNAL_INTEGRATION_REQUIRED).toBe(false);
+    expect(D1K_D1M_INTERNAL_INTEGRATION_STATUS).toBe("NOT_REQUIRED");
+    expect(D1K_D1N_INTERNAL_INTEGRATION_STATUS).toBe("NOT_REQUIRED");
+  });
+
+  it("D1K_EDGE_CONTRACT_TESTS", () => {
+    expect(D1K_INTERNAL_EDGE_COUNT).toBe(6);
+    expect(D1K_EDGE_CONTRACTS.map((row) => row.edgeId)).toEqual(D1K_INTERNAL_EDGES.map((row) => row.EDGE_ID));
+    expect(D1K_INTERNAL_EDGE_CONTRACTS_TRACEABLE).toBe(true);
+    expect(D1K_EDGE_CONTRACTS.every((row) => row.sourceContract.length > 0 && row.failureBehavior.length > 0)).toBe(true);
+  });
+
+  it("D1K_IDENTITY_PRESERVATION_TESTS", () => {
+    expect(D1K_IDENTITY_PRESERVATION_TESTED).toBe(true);
+    expect(D1K_SILENT_IDENTITY_SUBSTITUTION_ALLOWED).toBe(false);
+    expect(D1K_COMPOSITION.structuralSystemId).toBe("sys-1");
+    expect(D1K_COMPOSITION.twinTargetId).toBe(D1K_COMPOSITION.structuralSystemId);
+    expect(D1K_COMPOSITION.optimizationSystemRef).toBe(D1K_COMPOSITION.structuralSystemId);
+    expect(D1K_COMPOSITION.memberId).toBe("mem-1");
+    expect(D1K_COMPOSITION.inspectionFingerprint).not.toBe(D1K_COMPOSITION.twinFingerprint);
+    expect(D1K_COMPOSITION.inspectionFingerprint).not.toBe(D1K_COMPOSITION.optimizationFingerprint);
+  });
+
+  it("D1K_REVISION_PROPAGATION_TESTS", () => {
+    expect(D1K_EXACT_REVISION_PROPAGATION_TESTED).toBe(true);
+    expect(D1K_FLOATING_REVISION_SUBSTITUTION_ALLOWED).toBe(false);
+    expect(D1K_HISTORICAL_REFERENCE_AUTO_REPOINTED).toBe(false);
+    expect(new Set(D1K_INTERNAL_EDGES.map((row) => row.SOURCE_REVISION)).size).toBeGreaterThan(1);
+    expect(D1K_INTERNAL_EDGES.every((row) => row.REVISION_STATUS === "PASS" && row.SOURCE_REVISION.length > 0)).toBe(true);
+  });
+
+  it("D1K_PROVENANCE_PROPAGATION_TESTS", () => {
+    expect(D1K_PROVENANCE_PRESERVED).toBe(true);
+    expect(D1K_SOURCE_BASIS_PRESERVED).toBe(true);
+    expect(D1K_COMPOSITION.inspectionFingerprint.length).toBeGreaterThan(0);
+    expect(D1K_COMPOSITION.twinFingerprint.length).toBeGreaterThan(0);
+    expect(D1K_COMPOSITION.optimizationFingerprint.length).toBeGreaterThan(0);
+  });
+
+  it("D1K_CURRENTNESS_PROPAGATION_TESTS", () => {
+    expect(D1K_CURRENTNESS_PROPAGATION_TESTED).toBe(true);
+    expect(D1K_COMPOSITION.inspectionStatus).toBe("RECORDED");
+    expect(D1K_COMPOSITION.inspectionEngineeringApproval).toBe(false);
+    expect(D1K_COMPOSITION.inspectionStaleCode).toBe("STALE_TARGET");
+    expect(D1K_COMPOSITION.twinStaleCode).toBe("TARGET_STALE");
+  });
+
+  it("D1K_LIMITATION_PROPAGATION_TESTS", () => {
+    expect(D1K_LIMITATIONS_PROPAGATED).toBe(true);
+    expect(D1K_CAN_SILENTLY_DROP_LIMITATIONS).toBe(false);
+    expect(D1K_COMPOSITION.parameterSemanticsStatus).toBe("COMPLETE_WITH_LIMITATIONS");
+    expect(D1K_COMPOSITION.optimizationLimitation.trim().length).toBeGreaterThan(0);
+  });
+
+  it("D1K_UNIT_COMPATIBILITY_TESTS", () => {
+    expect(D1K_UNIT_SEMANTICS_PRESERVED).toBe(true);
+    expect(D1K_COMPOSITION.lengthUnitsCompatible).toBe(true);
+    expect(D1K_COMPOSITION.millimetreCompatible).toBe(false);
+    expect(D1K_COMPOSITION.incompatibleUnitCode).toBe("VARIABLE_UNIT_INCOMPATIBLE");
+    expect(D1K_SIGN_CONVENTION_COMPATIBILITY_STATUS).toBe("NOT_APPLICABLE");
+  });
+
+  it("D1K_ASSUMPTION_PROPAGATION_TESTS", () => {
+    expect(D1K_ASSUMPTION_PROPAGATION_TESTED).toBe(true);
+    expect(D1K_SILENT_ENGINEERING_ASSUMPTION_ALLOWED).toBe(false);
+  });
+
+  it("D1K_AUTHORITY_BOUNDARY_TESTS", () => {
+    expect(D1K_AUTHORITY_BOUNDARIES_PRESERVED).toBe(true);
+    expect(D1K_COMPOSITION.inspectionEngineeringApproval).toBe(false);
+    expect(D1K_COMPOSITION.twinEngineeringApproval).toBe(false);
+    expect(D1K_COMPOSITION.optimizationApproved).toBe(false);
+    expect(D1K_COMPOSITION.optimizationCertification).toBe(false);
+    expect(D1K_COMPOSITION.certifiedSolverStatus).toBe("NOT_CERTIFIED");
+    expect(D1K_COMPOSITION.analysisPromotesAuthority).toBe(false);
+    expect(D1K_COMPOSITION.inspectionAiCode).toBe("AI_AUTHORITY_REJECTED");
+  });
+
+  it("D1K_END_TO_END_INTEGRATION_TESTS", () => {
+    expect(D1K_END_TO_END_SCENARIO_PASS_COUNT).toBe(1);
+    expect(D1K_END_TO_END_SCENARIO_FAIL_COUNT).toBe(0);
+    expect(D1K_D1F_CALCULATION_INTEGRATION_STATUS).toBe("PASS");
+    expect(D1K_D1G_INTEGRATION_STATUS).toBe("PASS");
+    expect(D1K_D1H_INTEGRATION_STATUS).toBe("PASS");
+    expect(D1K_D1I_INTEGRATION_STATUS).toBe("PASS");
+    expect(D1K_D1J_INTEGRATION_STATUS).toBe("PASS");
+    expect(D1K_COMPOSITION.flexureDomain).toBe("D1E_CONCRETE_DESIGN_CHECK");
+  });
+
+  it("D1K_FAILURE_PROPAGATION_TESTS", () => {
+    expect(D1K_FAILURE_PROPAGATION_TESTED).toBe(true);
+    expect(D1K_FAILED_UPSTREAM_RESULT_CAN_SILENTLY_PROMOTE).toBe(false);
+    expect(D1K_COMPOSITION.infeasibleCandidateState).toBe("INFEASIBLE");
+    expect(D1K_COMPOSITION.nonDominated).not.toContain("cand-fail");
+  });
+
+  it("D1K_TENANT_SCOPE_TESTS", () => {
+    expect(D1K_TENANT_SCOPE_PRESERVED).toBe(true);
+    expect(D1K_CROSS_TENANT_INTERNAL_FLOW).toBe(false);
+    expect(D1K_COMPOSITION.tenantId).toBe("tenant-1");
+    expect(D1K_COMPOSITION.inspectionCrossTenantCode).toBe("CROSS_TENANT_BINDING_REJECTED");
+    expect(D1K_COMPOSITION.twinCrossTenantCode).toBe("CROSS_TENANT_REFERENCE");
+  });
+
+  it("D1K_REPRODUCIBILITY_TESTS", () => {
+    expect(D1K_REPRODUCIBILITY_EVIDENCE_COMPLETE).toBe(true);
+    expect(D1K_DUPLICATE_PROTECTION_STATUS).toBe("PASS");
+    expect(D1K_REPLAY_PROTECTION_STATUS).toBe("PASS");
+    expect(D1K_IDEMPOTENCY_STATUS).toBe("PASS");
+    expect(D1K_COMPOSITION.inspectionDuplicateCode).toBe("DUPLICATE_CONTEXT_ID");
+    expect(D1K_COMPOSITION.twinFingerprint).toBe(D1K_COMPOSITION.twinReplayFingerprint);
+    expect(D1K_COMPOSITION.optimizationFingerprint).toBe(D1K_COMPOSITION.optimizationReplayFingerprint);
+    expect(D1_REVIEW_BASELINE.d1fImplementationRevision).toBe("1db11bfc7481dc01fabedb320d44d156f2dc4f37");
+    expect(D1_REVIEW_BASELINE.d1fContractRevision).toBe("27e902bdba212fcc79adf2c27a99b686f80d7192");
+  });
+
+  it("D1K_D9_OWNERSHIP_BOUNDARY_TESTS", () => {
+    expect(D1K_TAKES_OVER_D9_GLOBAL_CROSS_DISCIPLINE_ROLE).toBe(false);
+    expect(D1_TO_D9_SOURCE_CONTRACT_PACK_GATE_REQUIRED).toBe(false);
+    expect(D1_TO_D9_EXISTING_BOUNDARY_REGRESSION_FREE).toBe(true);
+  });
+
+  it("D1K_HISTORICAL_TRACK_NO_REOPEN_TESTS", () => {
+    expect(D1K_HISTORICAL_TRACK_STATUS).toBe("COMPLETE_BOUNDED_WITH_LIMITATIONS");
+    expect(D1K_REOPENED_STATUS).toBe(false);
+    expect(D1K_PACK_FORMULA_SATISFIED).toBe(false);
+  });
+
+  it("D1K_REVIEW_BASELINE_FREEZE_TESTS", () => {
+    expect(D1_REVIEW_BASELINE_FROZEN).toBe(true);
+    expect(HISTORICAL_REVIEW_BASELINE_FROZEN).toBe(false);
+    expect(D1_REVIEW_BASELINE_MANIFEST_CREATED).toBe(true);
+    expect(D1_REVIEW_BASELINE.c10PackFingerprints).toHaveLength(16);
+    expect(C10_SUPPLEMENTAL_INDEPENDENT_CALC_PACK_IDS).toHaveLength(6);
+    for (const row of C10_REVIEW_SUBJECTS) {
+      expect(baselineDoc).toContain(row.packFingerprint);
+      expect(baselineDoc).toContain(row.packId);
+    }
+    expect(baselineDoc).toContain(D1_REVIEW_BASELINE_MANIFEST_PATH);
+    expect(worksheets.length).toBeGreaterThan(0);
+    for (const packId of C10_SUPPLEMENTAL_INDEPENDENT_CALC_PACK_IDS) expect(worksheets).toContain(packId);
+  });
+
+  it("D1K_NO_HUMAN_REVIEW_PROMOTION_TESTS", () => {
+    expect(D1_QUALIFIED_STRUCTURAL_REVIEW_STATUS).toBe("READY_FOR_QUALIFIED_HUMAN_REVIEW");
+    expect(INTEGRATION_PASS_EQUALS_QUALIFIED_HUMAN_REVIEW).toBe(false);
+    expect(BASELINE_FREEZE_EQUALS_QUALIFIED_HUMAN_REVIEW).toBe(false);
+    expect(C10_REVIEW_PACKAGE_PRESERVED).toBe(true);
+    expect(C10_SUPPLEMENTAL_REVIEWER_WORKSHEETS_PRESERVED).toBe(true);
+    expect(D1F_REVIEW_PACKAGE_PRESERVED).toBe(true);
+    expect(baselineDoc).not.toContain("reviewerSignature");
+  });
+
+  it("D1K_D1_PACK_BOUNDARY_TESTS", () => {
+    expect(D1_CANONICAL_TOTAL_MILESTONE_COUNT).toBe(15);
+    expect(D1_COMPLETED_MILESTONE_COUNT).toBe(13);
+    expect(D1_REMAINING_MILESTONE_COUNT).toBe(2);
+    expect(D1_REMAINING_CANONICAL_PHASE_LIST).toEqual([
+      "EOS-D1-QUALIFIED-STRUCTURAL-REVIEW",
+      "EOS-D1-STRUCTURAL-PACK-BOUNDED-CLOSEOUT",
+    ]);
+    expect(D1_CANONICAL_NEXT_PHASE).toBe("EOS-D1-QUALIFIED-STRUCTURAL-REVIEW");
+    expect(D1_CANONICAL_NEXT_PHASE_TYPE).toBe("QUALIFIED_STRUCTURAL_REVIEW");
+    expect(D1_CANONICAL_NEXT_PHASE_SCOPE).toContain("D1K internal integration evidence does not satisfy this phase.");
+    expect(D1K_DEFECT_REMAINING_COUNT).toBe(0);
+    expect(D1K_CHANGED_PREVIOUSLY_VALIDATED_COMPONENT_COUNT).toBe(0);
+    expect(D1K_STALE_VALIDATION_EVIDENCE_RETAINED_AS_CURRENT).toBe(false);
+  });
+
+  it("D1K_BOUNDARY_MATRIX_TESTS", () => {
+    expect(D1K_INTERNAL_INTEGRATION_EVIDENCE_MATRIX_COMPLETE).toBe(true);
+    expect(D1K_INTERNAL_EDGES.every((row) => row.CONTRACT_STATUS === "PASS" && row.AUTHORITY_BOUNDARY_STATUS === "PASS" && row.FAILURE_BEHAVIOR_STATUS === "PASS")).toBe(true);
+    expect(evidenceDoc).toContain(D1K_INTERNAL_INTEGRATION_EVIDENCE_PATH);
+  });
+});

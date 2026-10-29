@@ -1,0 +1,39 @@
+{
+  "phase": "EOS-3.0-ARCHITECTURE-AND-PROGRAM-BOUNDARY",
+  "verdict": "PASS_WITH_LIMITATIONS",
+  "eos2GaBaselinePreserved": true,
+  "eos2MaintenanceSeparated": true,
+  "eos2ExternalCustomerHoldPreserved": true,
+  "majorVersionJustification": "PASS",
+  "applicationRuntimeChanged": false,
+  "databaseSchemaChanged": false,
+  "engineeringFormulasChanged": false,
+  "qualifiedD1BaselineInvalidated": false,
+  "d1MigrationStrategy": "PRESERVE_COMPATIBLE",
+  "nonD1CalculationStatus": "NOT_QUALIFIED",
+  "workflowEngineDecision": "EVOLVE_EXISTING",
+  "entitlementArchitecture": "INHERIT_EOS_2_GA",
+  "autoMigrationEos2ToEos3": false,
+  "recommendedPhaseCount": 13,
+  "recommendedFirstImplementationPhase": "EOS-3.1-FOUNDATION-AND-COMPATIBILITY",
+  "nextPhase": "EOS-3.1-FOUNDATION-AND-COMPATIBILITY",
+  "readyForNextPhase": true,
+  "artifacts": {
+    "architectureBoundary": "docs/architecture/engineering-os/EOS_3_0_ARCHITECTURE_AND_PROGRAM_BOUNDARY.md",
+    "canonicalArchitecture": "docs/architecture/engineering-os/EOS_3_0_CANONICAL_ARCHITECTURE.md",
+    "programPhaseMap": "docs/architecture/engineering-os/EOS_3_0_PROGRAM_PHASE_MAP.md",
+    "qualificationSecurityGovernance": "docs/architecture/engineering-os/EOS_3_0_QUALIFICATION_AND_SECURITY_GOVERNANCE.md",
+    "compatibilityMigration": "docs/architecture/engineering-os/EOS_3_0_EOS_2_COMPATIBILITY_AND_MIGRATION_STRATEGY.md",
+    "architecturalRiskRegister": "docs/architecture/engineering-os/EOS_3_0_ARCHITECTURAL_RISK_REGISTER.md",
+    "nonGoals": "docs/architecture/engineering-os/EOS_3_0_NON_GOALS.md"
+  },
+  "preservedEos2Baseline": {
+    "version": "2.0.0",
+    "deploymentId": "dpl_Hyixcc94d7sbfJbWwR1sBWozmmxF",
+    "runtimeCommit": "051a341092f9a37fd6270c5bb1702b08169f6db0",
+    "migrationLedger": 161,
+    "gaAuthorizationFingerprint": "bf582829bfa7169d912c6ae73a2bd9a148dab3e9fa13f12702784e0cc4c183c2",
+    "gaBaselineFingerprint": "c794308a34219e1e5c7074ca5b3637a5a7c8b9a2cf6682312dd53dd270d1f946",
+    "evidenceManifestFingerprint": "01240a3847fe533eb01782f58e58856ad9c987775c7d1e0ce7b029872b6bf8c3"
+  }
+}

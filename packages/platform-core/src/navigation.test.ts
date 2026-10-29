@@ -12,29 +12,33 @@ import {
   groupNavigation,
   itemsForSidebarSection,
   parseSidebarGroupState,
+  isNavItemActive,
 } from "./navigation";
 import { filterSidebarNavigation } from "./nav-visibility";
 
 describe("Batch 2.07 — Navigation grouping", () => {
   it("places Engineering OS groups first", () => {
     expect(NAV_GROUP_ORDER[0]).toBe("engineering");
-    expect(NAV_GROUP_ORDER[1]).toBe("engineering_registers");
-    expect(NAV_GROUP_ORDER[2]).toBe("engineering_admin");
+    expect(NAV_GROUP_ORDER[1]).toBe("engineering_work");
+    expect(NAV_GROUP_ORDER[2]).toBe("engineering_registers");
+    expect(NAV_GROUP_ORDER[3]).toBe("engineering_analysis");
   });
 
-  it("labels Engineering Command Center as primary engineering entry", () => {
-    const cmd = ENGINEERING_NAVIGATION.find((i) => i.id === "eng-dashboard");
-    expect(cmd?.label).toBe("Engineering Command Center");
-    expect(cmd?.href).toBe("/engineering");
-    expect(cmd?.group).toBe("engineering");
+  it("labels Command Centre as primary engineering entry", () => {
+    const home = ENGINEERING_NAVIGATION.find((i) => i.id === "eng-home");
+    expect(home?.label).toBe("Command Centre");
+    expect(home?.href).toBe("/engineering");
+    expect(home?.group).toBe("engineering");
   });
 
-  it("splits registers and administration away from primary eng ops", () => {
+  it("splits work, engineering, analysis, and administration", () => {
     const grouped = groupNavigation(FULL_NAVIGATION);
     expect(Object.keys(grouped)[0]).toBe("engineering");
+    expect(grouped.engineering_work?.some((i) => i.id === "eng-projects")).toBe(true);
     expect(grouped.engineering_registers?.some((i) => i.id === "eng-risks")).toBe(true);
+    expect(grouped.engineering_analysis?.some((i) => i.id === "eng-digital-twin")).toBe(true);
     expect(grouped.engineering_admin?.some((i) => i.id === "eng-settings")).toBe(true);
-    expect(NAV_GROUP_LABELS.engineering_registers).toBe("Engineering Registers");
+    expect(NAV_GROUP_LABELS.engineering_registers).toBe("Engineering");
     expect(NAV_GROUP_LABELS.administration).toBe("Administration");
   });
 
@@ -66,18 +70,18 @@ describe("Batch 2.07 — Navigation grouping", () => {
 });
 
 describe("Batch 2.07 — UX theme contracts", () => {
-  it("defines enterprise light background token", () => {
-    expect("#F4F6F8".toLowerCase()).toBe("#f4f6f8");
+  it("defines enterprise dark background token", () => {
+    expect("#060B14".toLowerCase()).toBe("#060b14");
   });
 
-  it("requires dark sidebar with light main content", () => {
+  it("requires dark sidebar with dark command canvas", () => {
     const theme = {
       sidebar: "dark",
-      main: "light",
-      cards: "white",
+      main: "dark",
+      cards: "elevated-panel",
     };
     expect(theme.sidebar).toBe("dark");
-    expect(theme.main).toBe("light");
+    expect(theme.main).toBe("dark");
   });
 });
 
@@ -98,7 +102,10 @@ describe("Batch 2.08 — Collapsible sidebar sections", () => {
   it("defines sidebar sections including Engineering, reference-os, and advanced tools", () => {
     expect(SIDEBAR_SECTIONS.map((s) => s.id)).toEqual([
       "engineering",
+      "engineering_work",
       "engineering_registers",
+      "engineering_analysis",
+      "engineering_ai",
       "engineering_admin",
       "reference_os",
       "platform_admin",
@@ -106,9 +113,10 @@ describe("Batch 2.08 — Collapsible sidebar sections", () => {
     ]);
   });
 
-  it("expands Engineering OS and Registers by default", () => {
+  it("expands Engineering OS by default; registers collapse by default", () => {
     const defaults = getDefaultSidebarGroupState();
     expect(defaults.engineering).toBe(true);
+    expect(defaults.engineering_work).toBe(true);
     expect(defaults.engineering_registers).toBe(true);
     expect(defaults.engineering_admin).toBe(false);
     expect(defaults.platform_admin).toBe(false);
@@ -122,8 +130,8 @@ describe("Batch 2.08 — Collapsible sidebar sections", () => {
     const parsed = parseSidebarGroupState(
       JSON.stringify({ engineering_admin: true, platform_admin: true, unknown: false })
     );
-    expect(parsed.engineering).toBe(true);
-    expect(parsed.engineering_registers).toBe(true);
+      expect(parsed.engineering).toBe(true);
+      expect(parsed.engineering_registers).toBe(true);
     expect(parsed.engineering_admin).toBe(true);
     expect(parsed.platform_admin).toBe(true);
     expect(parsed).not.toHaveProperty("unknown");
@@ -165,7 +173,7 @@ describe("Batch 2.08 — Collapsible sidebar sections", () => {
         "/engineering/companies",
         "/engineering/settings",
         "/engineering/health",
-        "/engineering/test-runner",
+        "/engineering/governance",
       ])
     );
   });
@@ -195,10 +203,41 @@ describe("Platform Commerce UI — navigation rename", () => {
 });
 
 describe("Platform Commerce UI — Engineering OS access", () => {
-  it("keeps Engineering Command Center route unchanged", () => {
-    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-dashboard")?.href).toBe(
+  it("keeps Engineering home route unchanged", () => {
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-home")?.href).toBe(
       "/engineering"
     );
+  });
+
+  it("exposes work-first primary experience surfaces without dead tabs", () => {
+    const primary = ENGINEERING_NAVIGATION.filter((i) => !i.sidebarHidden);
+    expect(primary.map((i) => i.id)).toEqual(
+      expect.arrayContaining([
+        "eng-home",
+        "eng-modules",
+        "eng-projects",
+        "eng-assets",
+        "eng-inspections",
+        "eng-documents",
+        "eng-risks",
+        "eng-tqs",
+        "eng-decisions",
+        "eng-actions",
+        "eng-models",
+        "eng-digital-twin",
+        "eng-reports",
+        "eng-ask",
+      ]),
+    );
+    expect(primary.every((i) => Boolean(i.href))).toBe(true);
+  });
+
+  it("keeps assistant-first E1 routes reachable but not as the primary work nav", () => {
+    for (const id of ["eng-my", "eng-explore", "eng-intelligence", "eng-ai"]) {
+      const item = ENGINEERING_NAVIGATION.find((i) => i.id === id);
+      expect(item?.sidebarHidden).toBe(true);
+      expect(item?.href).toBeTruthy();
+    }
   });
 
   it("preserves sidebar persistence keys", () => {
@@ -208,8 +247,8 @@ describe("Platform Commerce UI — Engineering OS access", () => {
 });
 
 describe("Batch 2.08 — Default landing and Platform Overview access", () => {
-  it("uses Engineering Command Center as product home route", () => {
-    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-dashboard")?.href).toBe(
+  it("uses Engineering Home as product home route", () => {
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-home")?.href).toBe(
       "/engineering"
     );
   });
@@ -270,5 +309,43 @@ describe("Batch 2.09 — Design system persistence contracts", () => {
     expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-dashboard")?.href).toBe(
       "/engineering"
     );
+  });
+});
+
+describe("EOS-UX-1R — primary nav exact root match", () => {
+  const hrefs = ENGINEERING_NAVIGATION.filter((i) => !i.sidebarHidden).map((i) => i.href);
+
+  it("activates Command Centre only on the exact /engineering route", () => {
+    expect(isNavItemActive("/engineering", "/engineering", hrefs)).toBe(true);
+    expect(isNavItemActive("/engineering/projects", "/engineering", hrefs)).toBe(false);
+    expect(isNavItemActive("/engineering/assets", "/engineering", hrefs)).toBe(false);
+    expect(isNavItemActive("/engineering/apps/inspection-intelligence", "/engineering", hrefs)).toBe(
+      false,
+    );
+    expect(isNavItemActive("/engineering/ask", "/engineering", hrefs)).toBe(false);
+    expect(isNavItemActive("/engineering/modules", "/engineering", hrefs)).toBe(false);
+  });
+
+  it("activates Engineering Systems only on the launcher root", () => {
+    expect(isNavItemActive("/engineering/modules", "/engineering/modules", hrefs)).toBe(true);
+    expect(isNavItemActive("/engineering", "/engineering/modules", hrefs)).toBe(false);
+    expect(isNavItemActive("/engineering/projects", "/engineering/modules", hrefs)).toBe(false);
+    expect(isNavItemActive("/engineering/apps/asset-intelligence", "/engineering/modules", hrefs)).toBe(
+      false,
+    );
+    expect(isNavItemActive("/engineering/apps/digital-twin", "/engineering/modules", hrefs)).toBe(false);
+    expect(isNavItemActive("/engineering/apps/model-interoperability", "/engineering/modules", hrefs)).toBe(
+      false,
+    );
+    expect(isNavItemActive("/engineering/apps/project-controls", "/engineering/modules", hrefs)).toBe(
+      false,
+    );
+  });
+
+  it("activates the longest matching primary item", () => {
+    expect(isNavItemActive("/engineering/projects", "/engineering/projects", hrefs)).toBe(true);
+    expect(isNavItemActive("/engineering/projects/abc", "/engineering/projects", hrefs)).toBe(true);
+    expect(isNavItemActive("/engineering/assets/xyz", "/engineering/assets", hrefs)).toBe(true);
+    expect(isNavItemActive("/engineering/risks", "/engineering/risks", hrefs)).toBe(true);
   });
 });

@@ -1,0 +1,194 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
+import { scanAnalysisFormulaBypass } from "./formula-scan";
+import { D1J_FINAL_MATURITY, D1J_FINAL_TRACK_STATUS, D1J_TRACK_CLOSED } from "./optimization-closeout";
+import { D1K_STARTED, D1J_STARTED, D2_STARTED_BY_THIS_PHASE as D2_FROM_POST_D1H } from "./post-d1h-roadmap";
+import {
+  CANONICAL_NEXT_PHASE as POST_D1I_CANONICAL_NEXT_PHASE,
+  D1K_CURRENT_STATUS as HISTORICAL_D1K_STATUS,
+  D1K_STARTED_BY_POST_D1I_CANONICALIZATION,
+  D1L_STARTED,
+  D1_STRUCTURAL_PACK_COMPLETE as HISTORICAL_PACK,
+  D2_STARTED_BY_THIS_PHASE as D2_FROM_POST_D1I,
+} from "./roadmap-after-twin-closeout";
+import {
+  CANONICAL_NEXT_PHASE,
+  DATABASE_SCHEMA_CHANGE_REQUIRED,
+  D1G_CERTIFICATION_BLOCKS_D1K_ARCHITECTURE,
+  D1G_CERTIFICATION_BLOCKS_D1K_REFERENCE_RUNTIME,
+  D1G_CERTIFIED_SOLVER_STATUS_REUSED,
+  D1J_CERTIFICATION_ELIGIBILITY_PROMOTION,
+  D1J_CLOSEOUT_REUSED,
+  D1J_CONFORMANCE_PROMOTION,
+  D1J_ENGINEER_VALIDATION_PROMOTION,
+  D1J_MATURITY,
+  D1J_MODEL_MUTATION_PROMOTION,
+  D1J_OPTIMIZER_PROMOTION,
+  D1J_SOLVER_PROMOTION,
+  D1J_TRACK_STATUS,
+  D1J_VALIDATION_DEBT_BLOCKS_D1K_ARCHITECTURE,
+  D1K_0_ARCHITECTURE_AUTHORIZED,
+  D1K_0_CROSS_DISCIPLINE_CALCULATION_RUNTIME_COUNT,
+  D1K_0_D2_D8_RUNTIME_COUNT,
+  D1K_0_D9_RUNTIME_COUNT,
+  D1K_0_GLOBAL_CYCLE_DETECTION_RUNTIME_COUNT,
+  D1K_0_INTERFACE_COMPATIBILITY_RUNTIME_COUNT,
+  D1K_0_INTERFACE_RUNTIME_COUNT,
+  D1K_0_NEW_ENGINEERING_FORMULA_COUNT,
+  D1K_ABSORBS_D1M,
+  D1K_ABSORBS_D1N,
+  D1K_ARCHITECTURE_READY,
+  D1K_ARCHITECTURE_SEPARABLE_FROM_D2_D8_RUNTIME,
+  D1K_ARBITRARY_JSON_EQUALS_GOVERNED_ENGINEERING_INTERFACE,
+  D1K_CROSS_DISCIPLINE_INTELLIGENCE_READY,
+  D1K_CURRENT_STATUS,
+  D1K_CYCLE_DETECTION_OWNERSHIP,
+  D1K_DEPENDS_ON_D1J,
+  D1K_FREEFORM_DISCIPLINE_IDENTITY_ALLOWED,
+  D1K_GLOBAL_CYCLE_DETECTION_AUTHORIZED,
+  D1K_GLOBAL_CYCLE_DETECTION_IMPLEMENTED,
+  D1K_INTERFACE_ACCEPTED_EQUALS_ENGINEERING_APPROVAL,
+  D1K_INTERFACE_EQUALS_D9_INTELLIGENCE,
+  D1K_INTERFACE_EQUALS_OTHER_DISCIPLINE_CALCULATION,
+  D1K_INTERNAL_DISCIPLINE_INTEGRATION_READY,
+  D1K_REAUTHORS_D2_ENGINEERING,
+  D1K_REAUTHORS_D3_ENGINEERING,
+  D1K_REAUTHORS_D4_ENGINEERING,
+  D1K_REAUTHORS_D5_ENGINEERING,
+  D1K_REAUTHORS_D6_ENGINEERING,
+  D1K_REAUTHORS_D7_ENGINEERING,
+  D1K_REAUTHORS_D8_ENGINEERING,
+  D1K_REFERENCE_RUNTIME_READY,
+  D1K_RUNTIME_CAPABILITY_PROMOTED,
+  D1K_STARTED_BY_POST_D1J_CANONICALIZATION,
+  D1K_STARTS_D2_RUNTIME,
+  D1K_STARTS_D3_RUNTIME,
+  D1K_STARTS_D4_RUNTIME,
+  D1K_STARTS_D5_RUNTIME,
+  D1K_STARTS_D6_RUNTIME,
+  D1K_STARTS_D7_RUNTIME,
+  D1K_STARTS_D8_RUNTIME,
+  D1K_STARTS_D9_RUNTIME,
+  D1K_UNAUTHORIZED_PRODUCT_CLAIM,
+  D1L_CURRENT_STATUS,
+  D1L_STARTED_BY_POST_D1J_CANONICALIZATION,
+  D1_STRUCTURAL_PACK_COMPLETE,
+  DISCIPLINE_PACK_ORDER_PRESERVED,
+  GA_SECURITY_DEBT_BLOCKS_D1K_ARCHITECTURE,
+  GA_SECURITY_DEBT_BLOCKS_GENERAL_AVAILABILITY,
+  HISTORICAL_ROADMAP_HISTORY_PRESERVED,
+  MACHINE_READABLE_ROADMAP_UPDATED,
+  NEXT_PHASE_TYPE,
+  PARALLEL_CAPABILITY_MANIFEST_CREATED,
+} from "./post-d1j-roadmap";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const docPath = join(here, "../../../../docs/architecture/engineering-os/EOS_POST_D1J_CANONICAL_ROADMAP.md");
+
+describe("EOS roadmap after structural optimization closeout", () => {
+  it("reuses the bounded D1J closeout without promoting it", () => {
+    expect(D1J_CLOSEOUT_REUSED).toBe(true);
+    expect(D1J_TRACK_CLOSED).toBe(true);
+    expect(D1J_TRACK_STATUS).toBe(D1J_FINAL_TRACK_STATUS);
+    expect(D1J_TRACK_STATUS).toBe("COMPLETE_BOUNDED_WITH_LIMITATIONS");
+    expect(D1J_MATURITY).toBe(D1J_FINAL_MATURITY);
+    expect(D1J_MATURITY).toBe("STRUCTURAL_OPTIMIZATION_CERTIFICATION_BOUNDED_RUNTIME_IMPLEMENTED");
+    expect(D1J_OPTIMIZER_PROMOTION).toBe(false);
+    expect(D1J_SOLVER_PROMOTION).toBe(false);
+    expect(D1J_MODEL_MUTATION_PROMOTION).toBe(false);
+    expect(D1J_ENGINEER_VALIDATION_PROMOTION).toBe(false);
+    expect(D1J_CONFORMANCE_PROMOTION).toBe(false);
+    expect(D1J_CERTIFICATION_ELIGIBILITY_PROMOTION).toBe(false);
+    expect(D1G_CERTIFIED_SOLVER_STATUS_REUSED).toBe("NOT_CERTIFIED");
+    expect(HISTORICAL_ROADMAP_HISTORY_PRESERVED).toBe(true);
+    expect(POST_D1I_CANONICAL_NEXT_PHASE).toBe("EOS-D1J-0-STRUCTURAL-OPTIMIZATION-CERTIFICATION-ARCHITECTURE");
+    expect(D1J_STARTED).toBe(false);
+    expect(MACHINE_READABLE_ROADMAP_UPDATED).toBe("NOT_APPLICABLE");
+  });
+
+  it("keeps D1K runtime unstarted and separable from other disciplines", () => {
+    expect(HISTORICAL_D1K_STATUS).toBe("NOT_STARTED");
+    expect(D1K_CURRENT_STATUS).toBe("NOT_STARTED");
+    expect(D1K_STARTED).toBe(false);
+    expect(D1K_STARTED_BY_POST_D1I_CANONICALIZATION).toBe(false);
+    expect(D1K_STARTED_BY_POST_D1J_CANONICALIZATION).toBe(false);
+    expect(D1K_0_ARCHITECTURE_AUTHORIZED).toBe(true);
+    expect(D1K_ARCHITECTURE_SEPARABLE_FROM_D2_D8_RUNTIME).toBe(true);
+    expect(D1K_DEPENDS_ON_D1J).toBe(false);
+    expect(D1K_ARCHITECTURE_READY).toBe(false);
+    expect(D1K_REFERENCE_RUNTIME_READY).toBe(false);
+    expect(D1K_INTERNAL_DISCIPLINE_INTEGRATION_READY).toBe(false);
+    expect(D1K_CROSS_DISCIPLINE_INTELLIGENCE_READY).toBe(false);
+    expect(D1K_REAUTHORS_D2_ENGINEERING).toBe(false);
+    expect(D1K_REAUTHORS_D3_ENGINEERING).toBe(false);
+    expect(D1K_REAUTHORS_D4_ENGINEERING).toBe(false);
+    expect(D1K_REAUTHORS_D5_ENGINEERING).toBe(false);
+    expect(D1K_REAUTHORS_D6_ENGINEERING).toBe(false);
+    expect(D1K_REAUTHORS_D7_ENGINEERING).toBe(false);
+    expect(D1K_REAUTHORS_D8_ENGINEERING).toBe(false);
+    expect(D1K_STARTS_D2_RUNTIME).toBe(false);
+    expect(D1K_STARTS_D3_RUNTIME).toBe(false);
+    expect(D1K_STARTS_D4_RUNTIME).toBe(false);
+    expect(D1K_STARTS_D5_RUNTIME).toBe(false);
+    expect(D1K_STARTS_D6_RUNTIME).toBe(false);
+    expect(D1K_STARTS_D7_RUNTIME).toBe(false);
+    expect(D1K_STARTS_D8_RUNTIME).toBe(false);
+    expect(D2_FROM_POST_D1H).toBe(false);
+    expect(D2_FROM_POST_D1I).toBe(false);
+    expect(D1K_FREEFORM_DISCIPLINE_IDENTITY_ALLOWED).toBe(false);
+    expect(D1K_INTERFACE_EQUALS_OTHER_DISCIPLINE_CALCULATION).toBe(false);
+    expect(D1K_INTERFACE_ACCEPTED_EQUALS_ENGINEERING_APPROVAL).toBe(false);
+    expect(D1K_ARBITRARY_JSON_EQUALS_GOVERNED_ENGINEERING_INTERFACE).toBe(false);
+    expect(CANONICAL_NEXT_PHASE).toBe("EOS-D1K-0-CROSS-DISCIPLINE-STRUCTURAL-INTERFACES-ARCHITECTURE");
+    expect(NEXT_PHASE_TYPE).toBe("CROSS_DISCIPLINE_STRUCTURAL_INTERFACES_ARCHITECTURE");
+  });
+
+  it("keeps cycle detection and cross-discipline intelligence with D9", () => {
+    expect(D1K_CYCLE_DETECTION_OWNERSHIP).toBe("D9");
+    expect(D1K_GLOBAL_CYCLE_DETECTION_IMPLEMENTED).toBe(false);
+    expect(D1K_GLOBAL_CYCLE_DETECTION_AUTHORIZED).toBe(false);
+    expect(D1K_INTERFACE_EQUALS_D9_INTELLIGENCE).toBe(false);
+    expect(D1K_STARTS_D9_RUNTIME).toBe(false);
+    expect(D1K_0_GLOBAL_CYCLE_DETECTION_RUNTIME_COUNT).toBe(0);
+    expect(D1K_0_D9_RUNTIME_COUNT).toBe(0);
+  });
+
+  it("does not implement D1K runtime, formulas, D1L, or a completed structural pack", () => {
+    expect(D1K_0_INTERFACE_RUNTIME_COUNT).toBe(0);
+    expect(D1K_0_INTERFACE_COMPATIBILITY_RUNTIME_COUNT).toBe(0);
+    expect(D1K_0_CROSS_DISCIPLINE_CALCULATION_RUNTIME_COUNT).toBe(0);
+    expect(D1K_0_D2_D8_RUNTIME_COUNT).toBe(0);
+    expect(D1K_0_NEW_ENGINEERING_FORMULA_COUNT).toBe(0);
+    expect(D1K_RUNTIME_CAPABILITY_PROMOTED).toBe(false);
+    expect(PARALLEL_CAPABILITY_MANIFEST_CREATED).toBe(false);
+    expect(DATABASE_SCHEMA_CHANGE_REQUIRED).toBe(false);
+    expect(D1L_CURRENT_STATUS).toBe("NOT_STARTED");
+    expect(D1L_STARTED).toBe(false);
+    expect(D1L_STARTED_BY_POST_D1J_CANONICALIZATION).toBe(false);
+    expect(D1K_ABSORBS_D1M).toBe(false);
+    expect(D1K_ABSORBS_D1N).toBe(false);
+    expect(HISTORICAL_PACK).toBe(false);
+    expect(D1_STRUCTURAL_PACK_COMPLETE).toBe(false);
+    expect(DISCIPLINE_PACK_ORDER_PRESERVED).toContain("D9 CROSS_DISCIPLINE_INTELLIGENCE");
+    expect(D1J_VALIDATION_DEBT_BLOCKS_D1K_ARCHITECTURE).toBe(false);
+    expect(D1G_CERTIFICATION_BLOCKS_D1K_ARCHITECTURE).toBe(false);
+    expect(D1G_CERTIFICATION_BLOCKS_D1K_REFERENCE_RUNTIME).toBe(false);
+    expect(GA_SECURITY_DEBT_BLOCKS_GENERAL_AVAILABILITY).toBe(true);
+    expect(GA_SECURITY_DEBT_BLOCKS_D1K_ARCHITECTURE).toBe(false);
+    expect(D1K_UNAUTHORIZED_PRODUCT_CLAIM).toBe(false);
+    const source = readFileSync(join(here, "post-d1j-roadmap.ts"), "utf8");
+    const doc = readFileSync(docPath, "utf8");
+    const historical = readFileSync(join(here, "roadmap-after-twin-closeout.ts"), "utf8");
+    expect(historical).not.toContain("EOS-D1K-0-CROSS-DISCIPLINE-STRUCTURAL-INTERFACES-ARCHITECTURE");
+    expect(doc).toContain("did not exist in the repository before this decision");
+    expect(doc).toContain("does not mean an optimizer");
+    expect(doc).toContain("cycle detection remains D9");
+    expect(source).not.toMatch(/\bfetch\(|mqtt|opcua|modbus|WebSocket|fft\(|child_process|eval\(|new Function/);
+    expect(source.includes(["from", '"@rtb/engineering-review"'].join(" "))).toBe(false);
+    expect(scanAnalysisFormulaBypass(join(here, "post-d1j-roadmap.ts"), source)).toEqual([]);
+    expect(scanAnalysisFormulaBypass(docPath, doc)).toEqual([]);
+    expect(readdirSync(here).filter((name) => /digital-twin|d1i-/i.test(name))).toEqual([]);
+  });
+});

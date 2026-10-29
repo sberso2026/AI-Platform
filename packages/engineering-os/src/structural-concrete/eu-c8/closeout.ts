@@ -1,0 +1,274 @@
+/**
+ * C8-R6 closes the bounded detailing track.
+ * It does not add a cover, spacing, anchorage, lap, durability, or bond formula.
+ */
+
+import {
+  EU_C7_R3_CALCULATED_CREEP_IMPLEMENTED,
+  EU_C7_R3_CALCULATED_SHRINKAGE_IMPLEMENTED,
+} from "@rtb/types";
+import { CONCRETE_CAPABILITY_MANIFEST } from "../capability";
+import { DEFLECTION_RUNTIME_CAPABILITY } from "../eu-c7/deflection-authority";
+import {
+  EU_C8_BASIC_ANCHORAGE_BOUNDED_CAPABILITY_COMPLETE,
+  EU_C8_R4B_DESIGN_ANCHORAGE_IMPLEMENTED,
+  EU_C8_R4B_FYD_AUTOMATICALLY_USED_AS_SIGMA_SD,
+  EU_C8_R4B_INTERNAL_FBD_DERIVATION_IMPLEMENTED,
+  EU_C8_R4B_METHOD_ID,
+  recheckEuC8BasicRequiredAnchorage,
+} from "./anchorage-evaluate";
+import { EU_C8_R4_ANCHORAGE_PROFILE_ID, EU_C8_R4_FORMULA_FINGERPRINT_VALIDATION } from "./anchorage-profile";
+import { EU_C8_R2_METHOD_ID, recheckEuC8CoverAssemblyRequirement } from "./evaluate";
+import { EU_C8_R2_COVER_SUBPACK_FORMULA_FINGERPRINT_VALIDATION } from "./fingerprints";
+import {
+  EU_C8_R5_DESIGN_ANCHORAGE_IMPLEMENTED,
+  EU_C8_R5_FINAL_DISPOSITION,
+  EU_C8_R5_LAP_PROFILE_CREATED,
+} from "./lap-authority";
+import {
+  EU_C8_R1_LAP_PROFILE_COMPLETE,
+  EU_C8_R1_REFERENCE_PROFILE_ID,
+  NEW_C8_ANCHORAGE_RUNTIME_METHOD_IMPLEMENTED,
+  NEW_C8_LAP_RUNTIME_METHOD_IMPLEMENTED,
+} from "./profile";
+import {
+  EU_C8_R2_METHOD_REGISTRY,
+  EU_C8_R3B_ENGINEER_VALIDATED_METHOD_COUNT,
+  EU_C8_R3B_METHOD_REGISTRY,
+  EU_C8_R4B_ENGINEER_VALIDATED_METHOD_COUNT,
+  EU_C8_R4B_METHOD_REGISTRY,
+} from "./registry";
+import { EU_C8_R3B_METHOD_ID, EU_C8_SPACING_BOUNDED_CAPABILITY_COMPLETE, recheckEuC8MinClearSpacing } from "./spacing-evaluate";
+import { EU_C8_R3_FORMULA_FINGERPRINT_VALIDATION, EU_C8_R3_SPACING_PROFILE_ID } from "./spacing-profile";
+
+export const EU_C8_CAPABILITY_CLASSIFICATIONS = {
+  COVER_ASSEMBLY: "IMPLEMENTED_NUMERICALLY_VALIDATED",
+  DURABILITY_COVER_LOOKUP: "NOT_IMPLEMENTED",
+  PROVIDED_COVER_COMPLIANCE: "NOT_IMPLEMENTED",
+  MINIMUM_CLEAR_SPACING: "IMPLEMENTED_NUMERICALLY_VALIDATED",
+  UNEQUAL_DIAMETER_SPACING: "NOT_IMPLEMENTED",
+  BUNDLE_SPACING: "NOT_IMPLEMENTED",
+  MESH_SPACING: "NOT_IMPLEMENTED",
+  PRESTRESS_SPACING: "NOT_IMPLEMENTED",
+  PROJECT_SPACING_OVERLAY: "NOT_IMPLEMENTED",
+  BASIC_REQUIRED_STRAIGHT_BAR_ANCHORAGE: "IMPLEMENTED_NUMERICALLY_VALIDATED",
+  DESIGN_BOND_STRENGTH_DERIVATION: "NOT_IMPLEMENTED",
+  BOND_CONDITION_DERIVATION: "NOT_IMPLEMENTED",
+  DESIGN_ANCHORAGE: "NOT_IMPLEMENTED",
+  MINIMUM_DESIGN_ANCHORAGE: "NOT_IMPLEMENTED",
+  COMPRESSION_ANCHORAGE: "NOT_IMPLEMENTED",
+  HOOKED_BENT_BAR_ANCHORAGE: "NOT_IMPLEMENTED",
+  LAPS: "DEFERRED_RULE_AUTHORITY",
+} as const;
+
+export const EU_C8_COVER_ASSEMBLY_RUNTIME_CAPABILITY = EU_C8_CAPABILITY_CLASSIFICATIONS.COVER_ASSEMBLY;
+export const EU_C8_COVER_ASSEMBLY_BOUNDED_CAPABILITY_COMPLETE = true as const;
+export const EU_C8_DURABILITY_COVER_LOOKUP_CAPABILITY = EU_C8_CAPABILITY_CLASSIFICATIONS.DURABILITY_COVER_LOOKUP;
+export const EU_C8_EXPOSURE_TO_COVER_LOOKUP_CAPABILITY = "NOT_IMPLEMENTED" as const;
+export const EU_C8_PROVIDED_COVER_COMPLIANCE_CAPABILITY = EU_C8_CAPABILITY_CLASSIFICATIONS.PROVIDED_COVER_COMPLIANCE;
+export const EU_C8_MIN_CLEAR_SPACING_RUNTIME_CAPABILITY = EU_C8_CAPABILITY_CLASSIFICATIONS.MINIMUM_CLEAR_SPACING;
+export const EU_C8_BASIC_ANCHORAGE_RUNTIME_CAPABILITY = EU_C8_CAPABILITY_CLASSIFICATIONS.BASIC_REQUIRED_STRAIGHT_BAR_ANCHORAGE;
+export const EU_C8_BASIC_ANCHORAGE_EQUALS_DESIGN_ANCHORAGE = false as const;
+export const EU_C8_DESIGN_ANCHORAGE_CAPABILITY = EU_C8_CAPABILITY_CLASSIFICATIONS.DESIGN_ANCHORAGE;
+export const EU_C8_COMPLETE_ANCHORAGE_DESIGN_CAPABILITY = false as const;
+export const EU_C8_DESIGN_BOND_STRENGTH_DERIVATION = EU_C8_CAPABILITY_CLASSIFICATIONS.DESIGN_BOND_STRENGTH_DERIVATION;
+export const EU_C8_BOND_CONDITION_DERIVATION = EU_C8_CAPABILITY_CLASSIFICATIONS.BOND_CONDITION_DERIVATION;
+export const EU_C8_DESIGN_ANCHORAGE_MODIFICATION_FACTORS = "NOT_IMPLEMENTED" as const;
+export const EU_C8_MINIMUM_DESIGN_ANCHORAGE_CAPABILITY = EU_C8_CAPABILITY_CLASSIFICATIONS.MINIMUM_DESIGN_ANCHORAGE;
+export const EU_C8_COMPRESSION_ANCHORAGE_CAPABILITY = EU_C8_CAPABILITY_CLASSIFICATIONS.COMPRESSION_ANCHORAGE;
+export const EU_C8_HOOKED_BENT_BAR_ANCHORAGE_CAPABILITY = EU_C8_CAPABILITY_CLASSIFICATIONS.HOOKED_BENT_BAR_ANCHORAGE;
+export const EU_C8_LAP_RUNTIME_CAPABILITY = "NOT_IMPLEMENTED" as const;
+export const EU_C8_LAP_RULE_AUTHORITY_STATE = "DEFERRED_RULE_AUTHORITY" as const;
+export const EU_C8_LAP_NUMERICALLY_VALIDATED = false as const;
+export const EU_C8_LAP_ENGINEER_VALIDATED = false as const;
+export const EU_C8_LAP_FORMAL_CONFORMANCE = false as const;
+export const EU_C8_LAP_DEFERRED_BLOCKERS = [
+  "SHAPE_FACTOR",
+  "COVER_CONFINEMENT_FACTOR",
+  "TRANSVERSE_REINFORCEMENT_FACTOR",
+  "TRANSVERSE_PRESSURE_FACTOR",
+  "PERCENTAGE_DEPENDENT_DESIGN_PRODUCT",
+  "MINIMUM_LAP",
+] as const;
+export const EU_C8_R5_BLOCKED_FOR_LAP_IMPLEMENTATION = true as const;
+export const EU_C8_R5_BLOCKED_FOR_C8_CLOSEOUT = false as const;
+export const HIDDEN_LAP_CAPABILITY_CLAIM = false as const;
+export const HIDDEN_DESIGN_ANCHORAGE_CAPABILITY_CLAIM = false as const;
+export const EU_C8_BOUNDED_TRACK_COMPLETE = true as const;
+export const EU_C8_COMPLETE_EN1992_DETAILING = false as const;
+export const EU_C8_MATURITY_STATE = "FRAMEWORK_PLUS_BOUNDED_METHODS" as const;
+export const EU_C8_ENGINEER_VALIDATED_METHOD_COUNT = 0 as const;
+export const EU_C8_ENGINEER_VALIDATION_STATE = "PENDING_HUMAN_ENGINEERING_REVIEW" as const;
+export const NUMERICAL_VALIDATION_EQUALS_ENGINEER_VALIDATION = false as const;
+export const EU_C8_FORMAL_STANDARD_CONFORMANCE = false as const;
+export const EU_C8_LAP_AUTONOMOUS_RECOVERY_REOPENED = false as const;
+export const EU_C8_LAP_FUTURE_RECOVERY_ALLOWED = true as const;
+export const EU_C8_DESIGN_ANCHORAGE_FUTURE_RECOVERY_ALLOWED = true as const;
+export const CONCRETE_CAPABILITY_MANIFEST_RECONCILED = true as const;
+export const CAPABILITY_MANIFEST_TRUTHFUL = true as const;
+export const EU_C8_METHOD_REGISTRY_RECONCILED = true as const;
+export const EU_C8_LAP_RUNTIME_METHOD_REGISTERED = false as const;
+export const EU_C8_DESIGN_ANCHORAGE_RUNTIME_METHOD_REGISTERED = false as const;
+export const EU_C8_VALIDATION_MATRIX_RECONCILED = true as const;
+export const EU_C8_RELEASE_ARTIFACTS_RECONCILED = true as const;
+export const EU_C8_PROFILE_INVENTORY_RECONCILED = true as const;
+export const EU_C8_LAP_PROFILE_PRESENT = false as const;
+export const EU_C8_COVER_PROFILE_FINGERPRINT_VALID = true as const;
+export const EU_C8_SPACING_PROFILE_FINGERPRINT_VALID = true as const;
+export const EU_C8_BASIC_ANCHORAGE_PROFILE_FINGERPRINT_VALID = true as const;
+export const EU_C8_IMPLEMENTED_METHODS_HISTORICALLY_REPRODUCIBLE = true as const;
+export const EU_C8_INVERSE_DESIGN_RECHECK_READY = true as const;
+export const GENERATIVE_MODEL_CAN_BYPASS_C8_COVER = false as const;
+export const GENERATIVE_MODEL_CAN_BYPASS_C8_SPACING = false as const;
+export const GENERATIVE_MODEL_CAN_BYPASS_C8_BASIC_ANCHORAGE = false as const;
+export const GENERATIVE_MODEL_CAN_INVENT_C8_GOVERNED_INPUTS = false as const;
+export const EU_C8_OPTIMIZATION_ACCEPTS_UNDETERMINED = false as const;
+export const EU_C8_PARETO_ACCEPTS_UNDETERMINED_AS_FEASIBLE = false as const;
+export const NEW_C8_ENGINEERING_FORMULA_IMPLEMENTED = false as const;
+export const NEW_C8_RUNTIME_METHOD_IMPLEMENTED = false as const;
+export const NEW_C8_COVER_METHOD_IMPLEMENTED = false as const;
+export const NEW_C8_SPACING_METHOD_IMPLEMENTED = false as const;
+export const NEW_C8_ANCHORAGE_METHOD_IMPLEMENTED = false as const;
+export const NEW_C8_LAP_METHOD_IMPLEMENTED = false as const;
+export const NEW_C8_DURABILITY_LOOKUP_IMPLEMENTED = false as const;
+export const PARALLEL_DETAILING_ENGINE_CREATED = false as const;
+export const EU_C8_NEXT_ROADMAP_PHASE = "EOS-D1E-EU-C9-R1-MEMBER-ORCHESTRATION-FOUNDATION" as const;
+export const EU_C8_NEXT_ROADMAP_SCOPE = "BOUNDED MEMBER-LEVEL ORCHESTRATION OF EXISTING C2-C8 CAPABILITIES" as const;
+export const EU_C9_ORCHESTRATION_CAN_INVENT_MISSING_METHODS = false as const;
+export const READY_FOR_EU_C9 = true as const;
+
+export const EU_C8_VALIDATION_DEBT_OPEN_ITEMS = [
+  "DURABILITY_COVER_LOOKUP",
+  "PROVIDED_COVER_COMPLIANCE",
+  "PROJECT_SPECIFIC_SPACING_OVERLAY",
+  "UNEQUAL_DIAMETER_SPACING",
+  "BUNDLES",
+  "MESH",
+  "PRESTRESS_SPACING",
+  "DESIGN_BOND_STRENGTH_DERIVATION",
+  "BOND_CONDITION_DERIVATION",
+  "BAR_DIAMETER_BOND_FACTOR",
+  "DESIGN_ANCHORAGE_MODIFICATION_FACTORS",
+  "MINIMUM_DESIGN_ANCHORAGE",
+  "COMPRESSION_ANCHORAGE",
+  "HOOKS_BENDS",
+  "C8_LAP_RULE_PROFILE_AUTHORITY",
+  "LAP_RUNTIME_NUMERICAL_VALIDATION",
+  "ENGINEER_VALIDATION",
+  "EXPLICIT_NATIONAL_PROFILE",
+  "FORMAL_EN1992_CONFORMANCE",
+  "THIRD_PARTY_COMPARISON",
+] as const;
+
+export const EU_C8_VALIDATION_MATRIX = {
+  COVER_ASSEMBLY: { implemented: true, numericallyValidated: true, engineerValidated: false, conformanceValidated: false },
+  SPACING: { implemented: true, numericallyValidated: true, engineerValidated: false, conformanceValidated: false },
+  BASIC_ANCHORAGE: { implemented: true, numericallyValidated: true, engineerValidated: false, conformanceValidated: false },
+  DESIGN_ANCHORAGE: { implemented: false, numericallyValidated: false, engineerValidated: false, conformanceValidated: false },
+  LAPS: { implemented: false, numericallyValidated: false, engineerValidated: false, conformanceValidated: false, state: EU_C8_LAP_RULE_AUTHORITY_STATE },
+} as const;
+
+export const EU_C8_CLOSEOUT_RUNTIME_METHOD_IDS = [
+  EU_C8_R2_METHOD_ID,
+  EU_C8_R3B_METHOD_ID,
+  EU_C8_R4B_METHOD_ID,
+] as const;
+
+export const EU_C8_PROFILE_INVENTORY = [
+  EU_C8_R1_REFERENCE_PROFILE_ID,
+  EU_C8_R3_SPACING_PROFILE_ID,
+  EU_C8_R4_ANCHORAGE_PROFILE_ID,
+] as const;
+
+export const EU_C9_AVAILABLE_CAPABILITY_IDS = [
+  "D1E.EU.C2.FLEXURE.UNIAXIAL",
+  "D1E.EU.C3.AXIAL_FLEXURE.UNIAXIAL",
+  "D1E.EU.C4.BIAXIAL.PMM",
+  "D1E.EU.C5.SHEAR",
+  "D1E.EU.C5.PUNCHING",
+  "D1E.EU.C5.TORSION",
+  "D1E.EU.C6.NOMINAL_CURVATURE",
+  "D1E.EU.C7.SLS_REFERENCE",
+  "D1E.EU.C7.EXPLICIT_LONG_TERM",
+  "D1E.EU.C8.COVER_ASSEMBLY",
+  "D1E.EU.C8.MIN_CLEAR_SPACING",
+  "D1E.EU.C8.BASIC_REQUIRED_ANCHORAGE",
+] as const;
+
+export const EU_C9_DEFERRED_CAPABILITY_IDS = [
+  "DEFLECTION",
+  "CALCULATED_CREEP",
+  "CALCULATED_SHRINKAGE",
+  "DURABILITY_COVER_LOOKUP",
+  "PROVIDED_COVER_COMPLIANCE",
+  "UNEQUAL_DIAMETER_SPACING",
+  "BUNDLE_SPACING",
+  "MESH_SPACING",
+  "PRESTRESS_SPACING",
+  "PROJECT_SPACING_OVERLAY",
+  "DESIGN_BOND_STRENGTH_DERIVATION",
+  "BOND_CONDITION_DERIVATION",
+  "DESIGN_ANCHORAGE",
+  "MINIMUM_DESIGN_ANCHORAGE",
+  "COMPRESSION_ANCHORAGE",
+  "HOOKED_BENT_BAR_ANCHORAGE",
+  "LAPS",
+] as const;
+
+export const EU_C9_CANDIDATE_MEMBER_CLASSES = [
+  "BEAM",
+  "COLUMN",
+  "SOLID_SLAB",
+  "RECTANGULAR_WALL_SECTION",
+] as const;
+
+export function assertEuC8CloseoutPreservesPriorFlags(): void {
+  if (NEW_C8_ENGINEERING_FORMULA_IMPLEMENTED || NEW_C8_RUNTIME_METHOD_IMPLEMENTED) {
+    throw new Error("closeout must not add an engineering method");
+  }
+  if (NEW_C8_LAP_RUNTIME_METHOD_IMPLEMENTED || NEW_C8_ANCHORAGE_RUNTIME_METHOD_IMPLEMENTED) {
+    throw new Error("historical lap and anchorage runtime flags must stay false");
+  }
+  if (EU_C8_R1_LAP_PROFILE_COMPLETE || EU_C8_R5_LAP_PROFILE_CREATED || EU_C8_LAP_PROFILE_PRESENT) {
+    throw new Error("no lap profile is bound");
+  }
+  if (EU_C8_R5_FINAL_DISPOSITION !== "LAPS_DEFERRED_AFTER_TARGETED_RECOVERY") {
+    throw new Error("lap disposition must stay deferred");
+  }
+  if (EU_C8_R4B_DESIGN_ANCHORAGE_IMPLEMENTED || EU_C8_R5_DESIGN_ANCHORAGE_IMPLEMENTED || EU_C8_DESIGN_ANCHORAGE_RUNTIME_METHOD_REGISTERED) {
+    throw new Error("design anchorage must stay unimplemented");
+  }
+  if (EU_C8_R4B_INTERNAL_FBD_DERIVATION_IMPLEMENTED || EU_C8_R4B_FYD_AUTOMATICALLY_USED_AS_SIGMA_SD) {
+    throw new Error("bond derivation and yield substitution must stay absent");
+  }
+  if (EU_C8_BASIC_ANCHORAGE_EQUALS_DESIGN_ANCHORAGE) throw new Error("basic anchorage is not design anchorage");
+  if (!EU_C8_COVER_ASSEMBLY_BOUNDED_CAPABILITY_COMPLETE || !EU_C8_SPACING_BOUNDED_CAPABILITY_COMPLETE || !EU_C8_BASIC_ANCHORAGE_BOUNDED_CAPABILITY_COMPLETE) {
+    throw new Error("bounded cover, spacing, and basic anchorage must stay complete");
+  }
+  if (EU_C8_R2_METHOD_REGISTRY.length !== 1 || EU_C8_R3B_METHOD_REGISTRY.length !== 1 || EU_C8_R4B_METHOD_REGISTRY.length !== 1) {
+    throw new Error("C8 runtime registries must stay at the three bounded methods");
+  }
+  if (EU_C8_CLOSEOUT_RUNTIME_METHOD_IDS.some((methodId) => methodId.toLowerCase().includes("lap"))) {
+    throw new Error("a lap method must not be registered");
+  }
+  if (EU_C8_R2_COVER_SUBPACK_FORMULA_FINGERPRINT_VALIDATION !== "PASS") throw new Error("cover fingerprint drifted");
+  if (EU_C8_R3_FORMULA_FINGERPRINT_VALIDATION !== "PASS") throw new Error("spacing fingerprint drifted");
+  if (EU_C8_R4_FORMULA_FINGERPRINT_VALIDATION !== "PASS") throw new Error("basic anchorage fingerprint drifted");
+  const coverEngineerValidated = EU_C8_R2_METHOD_REGISTRY.filter((method) => method.engineerValidationState !== "PENDING_HUMAN_ENGINEERING_REVIEW").length;
+  if (EU_C8_ENGINEER_VALIDATED_METHOD_COUNT !== coverEngineerValidated + EU_C8_R3B_ENGINEER_VALIDATED_METHOD_COUNT + EU_C8_R4B_ENGINEER_VALIDATED_METHOD_COUNT) {
+    throw new Error("engineer-validated count drifted");
+  }
+  if (DEFLECTION_RUNTIME_CAPABILITY !== "NOT_IMPLEMENTED") throw new Error("C7 deflection must stay unimplemented");
+  if (EU_C7_R3_CALCULATED_CREEP_IMPLEMENTED || EU_C7_R3_CALCULATED_SHRINKAGE_IMPLEMENTED) {
+    throw new Error("calculated creep and shrinkage must stay absent");
+  }
+  if (typeof recheckEuC8CoverAssemblyRequirement !== "function" || typeof recheckEuC8MinClearSpacing !== "function" || typeof recheckEuC8BasicRequiredAnchorage !== "function") {
+    throw new Error("implemented C8 methods must remain recheckable");
+  }
+  const laps = CONCRETE_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1E.EU.C8.LAPS");
+  if (laps?.implementationState !== "DEFERRED_RULE_AUTHORITY" || laps.validationState === "NUMERICALLY_VALIDATED") {
+    throw new Error("lap manifest row must stay deferred and unvalidated");
+  }
+  const design = CONCRETE_CAPABILITY_MANIFEST.find((row) => row.capabilityId === "D1E.EU.C8.DESIGN_ANCHORAGE");
+  if (design?.implementationState !== "NOT_IMPLEMENTED") throw new Error("design anchorage manifest row must stay unimplemented");
+}

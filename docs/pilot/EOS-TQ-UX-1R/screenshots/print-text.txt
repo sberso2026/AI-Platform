@@ -1,0 +1,56 @@
+RTB ENGINEERING & ANALYTICS
+
+Engineering OS · Technical Query / RFI
+
+Configurable tenant branding · controlled engineering record
+
+TQ-009 — Sealant suitability at pipe sleeper isolation joint
+
+Status: Closed · Priority: High · Specification Clarification
+
+Project	Controlled Pilot UAT Project
+Contract / package	—
+Discipline	—
+Area	—
+System	—
+Asset / equipment	—
+Classification	Specification Clarification
+Date raised	03 Sept 2026
+Initiator	silvestre.berso — Administrator
+Action By	RTB Pilot Launch Admin — Owner
+Response due	14 Sept 2026
+Response date	03 Sept 2026
+Close date	03 Sept 2026
+QUERY / INFORMATION REQUIRED
+
+Thioflex 600 flowable sealant is not suitable around the pipe sleeper isolation joint. Please advise whether Flamex XT is acceptable.
+
+SUGGESTED SOLUTION
+
+Use Flamex XT subject to confirmation against the project specification and approved materials requirements.
+
+REFERENCES
+CMS-830-05-WI-02011 · RING FOUNDATION · Rev 0 · draft
+Confirm Flamex XT against approved materials register
+Confirm Flamex XT against approved materials register
+CLIENT / TECHNICAL RESPONSE
+
+Flamex XT is acceptable at the pipe sleeper isolation joint subject to the project specification and approved materials register. Confirmed against the approved materials register.
+
+RESPONSE BASIS
+
+Project specification and approved materials register.
+
+FOLLOW-UP ACTIONS
+
+Confirm material against the approved register before installation.
+
+CLOSEOUT
+
+Response accepted. Follow-up action linked. Evidence retained.
+
+Printed 03 Sept 2026, 20:34 · TQ-009 · Page of
+
+Uncontrolled when printed
+
+Use the browser print dialog for A4 output. Navigation is hidden in print.

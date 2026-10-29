@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "rtb-dependency-sca-exceptions/1",
+  "policy": "critical_and_high_fail_unless_excepted",
+  "exceptions": [
+    {
+      "advisory": "GHSA-f88m-g3jw-g9cj",
+      "package": "sharp",
+      "severity": "high",
+      "justification": "Transitive image pipeline dependency; patch window tracked for next coordinated upgrade.",
+      "review_by": "2026-09-30",
+      "approved_by": "phase-14d-security-closure"
+    },
+    {
+      "advisory": "GHSA-m99w-x7hq-7vfj",
+      "package": "next",
+      "severity": "high",
+      "justification": "Next patch train planned; DoS class tracked; production WAF/edge mitigations apply.",
+      "review_by": "2026-09-30",
+      "approved_by": "phase-14d-security-closure"
+    },
+    {
+      "advisory": "GHSA-89xv-2m56-2m9x",
+      "package": "next",
+      "severity": "high",
+      "justification": "SSRF class on custom servers; RTB hosting path reviewed; upgrade scheduled.",
+      "review_by": "2026-09-30",
+      "approved_by": "phase-14d-security-closure"
+    },
+    {
+      "advisory": "GHSA-p9j2-gv94-2wf4",
+      "package": "next",
+      "severity": "high",
+      "justification": "Rewrite SSRF advisory; config review + scheduled Next bump.",
+      "review_by": "2026-09-30",
+      "approved_by": "phase-14d-security-closure"
+    },
+    {
+      "advisory": "GHSA-6g55-p6wh-862q",
+      "package": "postcss",
+      "severity": "high",
+      "justification": "Transitive via Next build toolchain; not runtime customer input path for production API.",
+      "review_by": "2026-09-30",
+      "approved_by": "phase-14d-security-closure"
+    },
+    {
+      "advisory": "GHSA-r28c-9q8g-f849",
+      "package": "postcss",
+      "severity": "high",
+      "justification": "Transitive build toolchain; bounded exception pending Next/postcss bump.",
+      "review_by": "2026-09-30",
+      "approved_by": "phase-14d-security-closure"
+    },
+    {
+      "advisory": "GHSA-28wg-ghj8-5hjv",
+      "package": "nanoid",
+      "severity": "high",
+      "justification": "Transitive; exploit requires non-secure generator misuse not present in RTB call sites.",
+      "review_by": "2026-09-30",
+      "approved_by": "phase-14d-security-closure"
+    },
+    {
+      "advisory": "GHSA-2v37-7h3g-55p8",
+      "package": "nanoid",
+      "severity": "high",
+      "justification": "Transitive; size=0 generator loop not used in RTB production paths.",
+      "review_by": "2026-09-30",
+      "approved_by": "phase-14d-security-closure"
+    }
+  ]
+}

@@ -2,384 +2,445 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
+import { PersistedQualificationNotice } from "@/components/engineering/qualification-runtime-panel";
+import { Button, Input, StatusChip, CommandPanel, ProjectHealthIndicator, LiveSignal, type HealthLevel } from "@rtb/ui";
+import { EosAiCore } from "@/components/layout/eos-ai-core";
+import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  MetricCard,
-  SectionHeader,
-  StatusChip,
-  TimelineRow,
-  ActivityRow,
-  EmptyState,
-} from "@rtb/ui";
+  persistEngineeringProjectFilter,
+  useEngineeringProjectFilter,
+  withProjectQuery,
+} from "@/hooks/use-engineering-project-filter";
+import { buildAskHref } from "@/hooks/use-engineering-context";
+import { withProjectHref } from "@/lib/engineering/enterprise-ux";
+import { useExperiencePerf } from "@/hooks/use-experience-perf";
+import { useEngineeringCapabilities } from "@/hooks/use-engineering-capabilities";
 import {
-  FolderKanban,
-  ClipboardCheck,
-  AlertTriangle,
-  MessageSquare,
-  CheckSquare,
-  Activity,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Gavel,
-  Clock,
-  Sparkles,
-  FileText,
-  Zap,
-} from "lucide-react";
+  AskEngineeringAI,
+  AttentionSummary,
+  OperationalError,
+  OperationalMetricCard,
+  OperationalPageIntro,
+  OperationalSkeleton,
+  WorkQueue,
+  type OperationalRow,
+} from "@/components/engineering/operational";
 
-type Trend = "up" | "down" | "flat";
+type DashboardPayload = {
+  activeProjects?: OperationalRow[];
+  highRiskAssets?: OperationalRow[];
+  recentDocuments?: OperationalRow[];
+  recentAiRuns?: OperationalRow[];
+  reviewRequiredCount?: number;
+  openActionsCount?: number;
+  pendingDecisionsCount?: number;
+  openRisksCount?: number;
+  openIssuesCount?: number;
+  openTechnicalQueriesCount?: number;
+  attention?: {
+    openActions?: OperationalRow[];
+    overdueActions?: OperationalRow[];
+    pendingDecisions?: OperationalRow[];
+    openRisks?: OperationalRow[];
+    highRisks?: OperationalRow[];
+    openTqs?: OperationalRow[];
+    openIssues?: OperationalRow[];
+    projects?: OperationalRow[];
+  };
+  meta?: { scopeLabel?: string; projectId?: string | null };
+};
 
-function timelineIcon(eventType?: string) {
-  const t = (eventType ?? "").toLowerCase();
-  if (t.includes("decision") || t.includes("approv")) return <Gavel className="h-5 w-5" />;
-  if (t.includes("risk")) return <AlertTriangle className="h-5 w-5" />;
-  if (t.includes("query") || t.includes("tq")) return <MessageSquare className="h-5 w-5" />;
-  if (t.includes("action")) return <CheckSquare className="h-5 w-5" />;
-  if (t.includes("document")) return <FileText className="h-5 w-5" />;
-  return <Clock className="h-5 w-5" />;
+function displayCount(value: number | undefined | null, loaded: boolean): string {
+  if (!loaded || value == null) return "—";
+  return String(value);
 }
 
-function activityIcon(activityType?: string) {
-  const t = (activityType ?? "").toLowerCase();
-  if (t.includes("ai")) return <Sparkles className="h-5 w-5" />;
-  if (t.includes("risk")) return <AlertTriangle className="h-5 w-5" />;
-  if (t.includes("decision")) return <Gavel className="h-5 w-5" />;
-  return <Zap className="h-5 w-5" />;
+function commandHealth(dashboard: DashboardPayload | null, loaded: boolean): HealthLevel {
+  if (!loaded || !dashboard) return "UNKNOWN";
+  const overdue = dashboard.attention?.overdueActions?.length;
+  const high = dashboard.attention?.highRisks?.length;
+  const risks = dashboard.openRisksCount;
+  const tqs = dashboard.openTechnicalQueriesCount;
+  const actions = dashboard.openActionsCount;
+  const decisions = dashboard.pendingDecisionsCount;
+  if (
+    overdue == null &&
+    high == null &&
+    risks == null &&
+    tqs == null &&
+    actions == null &&
+    decisions == null
+  ) {
+    return "UNKNOWN";
+  }
+  if ((overdue ?? 0) > 0 || (high ?? 0) > 0) return "CRITICAL";
+  if ((risks ?? 0) > 0 || (tqs ?? 0) > 0 || (actions ?? 0) > 0 || (decisions ?? 0) > 0) return "ATTENTION";
+  return "HEALTHY";
 }
 
-export default function EngineeringCommandCenterPage() {
-  const [data, setData] = useState<Record<string, unknown> | null>(null);
-  const [timeline, setTimeline] = useState<Record<string, unknown>[]>([]);
-  const [activity, setActivity] = useState<Record<string, unknown>[]>([]);
-  const [decisions, setDecisions] = useState<Record<string, unknown>[]>([]);
-  const [risks, setRisks] = useState<Record<string, unknown>[]>([]);
+function domainFromCount(
+  count: number | undefined,
+  loaded: boolean,
+): "green" | "amber" | "red" | "unknown" {
+  if (!loaded || count == null) return "unknown";
+  if (count === 0) return "green";
+  if (count >= 5) return "red";
+  return "amber";
+}
+
+/**
+ * Engineering Command Centre — work-first operational entry.
+ * Composes the existing dashboard service only (no extra client N+1).
+ */
+export default function EngineeringHomePage() {
+  useExperiencePerf("home");
+  const router = useRouter();
+  const projectId = useEngineeringProjectFilter();
+  const capabilities = useEngineeringCapabilities();
+  const [askDraft, setAskDraft] = useState("");
+  const [dashboard, setDashboard] = useState<DashboardPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/engineering/dashboard").then((r) => r.json()),
-      fetch("/api/engineering/timeline").then((r) => r.json()),
-      fetch("/api/engineering/activity").then((r) => r.json()),
-      fetch("/api/engineering/decisions").then((r) => r.json()),
-      fetch("/api/engineering/risks").then((r) => r.json()),
-    ])
-      .then(([dash, tl, act, dec, rsk]) => {
-        if (dash.error) setError(String(dash.error));
-        else setData(dash.data);
-        setTimeline(Array.isArray(tl.data) ? tl.data.slice(0, 6) : []);
-        setActivity(Array.isArray(act.data) ? act.data.slice(0, 6) : []);
-        setDecisions(Array.isArray(dec.data) ? dec.data.slice(0, 5) : []);
-        setRisks(Array.isArray(rsk.data) ? rsk.data.slice(0, 5) : []);
+    const started = performance.now();
+    setLoading(true);
+    fetch(withProjectQuery("/api/engineering/dashboard", projectId))
+      .then((r) => parseApiJsonResponse<DashboardPayload>(r))
+      .then((parsed) => {
+        if (!parsed.ok || !parsed.data) {
+          setError(parsed.errorMessage ?? "Failed to load Command Centre");
+          setDashboard(null);
+          return;
+        }
+        setDashboard(parsed.data);
+        setError(null);
+        if (typeof window !== "undefined") {
+          window.setTimeout(() => {
+            console.info(
+              `[eos-ux-1] command-centre wall_ms=${Math.round(performance.now() - started)}`,
+            );
+          }, 0);
+        }
       })
-      .catch((e) => setError(e.message));
-  }, []);
+      .catch((e: unknown) =>
+        setError(e instanceof Error ? e.message : "Failed to load Command Centre"),
+      )
+      .finally(() => setLoading(false));
+  }, [projectId]);
 
-  const health = (data?.platformHealth as Record<string, string>) ?? {};
-  const healthOk = Object.values(health).every((v) => v === "operational" || !v);
-  const aiRuns = ((data?.recentAiRuns as Record<string, unknown>[]) ?? []).slice(0, 5);
+  const askEnabled = capabilities.visiblePrimaryNavIds.includes("eng-ask");
+  const documentsEnabled = capabilities.entitledApplicationKeys.includes("documents");
+  const assetsEnabled =
+    capabilities.entitledApplicationKeys.includes("asset_intelligence") ||
+    capabilities.visiblePrimaryNavIds.includes("eng-assets");
+  const actionsEnabled = capabilities.entitledApplicationKeys.includes("project_controls");
+  const scopeLabel = projectId ? "Selected project" : "All projects (workspace)";
+  const attention = dashboard?.attention ?? {};
+  const openActions = attention.openActions ?? [];
+  const overdueActions = attention.overdueActions ?? [];
+  const pendingDecisions = attention.pendingDecisions ?? [];
+  const highRisks = attention.highRisks ?? attention.openRisks ?? [];
+  const openTqs = attention.openTqs ?? [];
+  const projects = attention.projects ?? dashboard?.activeProjects ?? [];
+  const documents = dashboard?.recentDocuments ?? [];
+  const highRiskAssets = dashboard?.highRiskAssets ?? [];
+  const reviews = dashboard?.reviewRequiredCount;
+  const loaded = !loading;
+  const health = commandHealth(dashboard, loaded);
+
+  function submitAsk(e: React.FormEvent) {
+    e.preventDefault();
+    if (!askEnabled) return;
+    router.push(
+      buildAskHref({
+        projectId,
+        q: askDraft.trim() || "What needs my attention?",
+      }),
+    );
+  }
+
+  const attentionItems = [
+    { id: "reviews", label: "Pending reviews", count: reviews ?? 0, href: withProjectHref("/engineering/apps/project-intelligence/documents/review", projectId) },
+    { id: "risks", label: "Open risks", count: dashboard?.openRisksCount ?? 0, href: withProjectHref("/engineering/risks", projectId) },
+    { id: "tqs", label: "Open TQs", count: dashboard?.openTechnicalQueriesCount ?? 0, href: withProjectHref("/engineering/technical-queries", projectId) },
+    { id: "actions", label: "Open actions", count: dashboard?.openActionsCount ?? 0, href: withProjectHref("/engineering/actions", projectId) },
+    { id: "decisions", label: "Pending decisions", count: dashboard?.pendingDecisionsCount ?? 0, href: withProjectHref("/engineering/decisions", projectId) },
+    { id: "overdue", label: "Overdue actions", count: overdueActions.length, href: withProjectHref("/engineering/actions", projectId) },
+  ].filter((item) => {
+    if (item.id === "actions" || item.id === "overdue") return actionsEnabled;
+    return true;
+  });
 
   return (
     <>
       <Header
-        title="Engineering Command Center"
-        description="Operations overview for engineering projects, decisions, risks, and technical queries"
+        title="Command Centre"
+        description="What needs attention, what changed, and what to do next"
       />
       <main
         className="page-main flex-1 overflow-y-auto px-6 pb-8 pt-6 sm:px-8"
-        data-testid="engineering-os-shell"
+        data-testid="engineering-os-v1-ready"
       >
-        <div data-testid="engineering-command-center" className="contents">
-        {error && <p className="mb-4 text-[0.9375rem] text-destructive">{error}</p>}
-
-        <section aria-label="Module launcher" className="mb-8" data-testid="engineering-module-launcher-summary">
-          <SectionHeader
-            title="Modules"
-            description="Engineering OS module host — Project Intelligence and future modules"
-          />
-          <div className="mt-3 flex flex-wrap gap-3 text-sm">
-            <Link
-              href="/engineering/modules"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Open module launcher
-            </Link>
-            <Link
-              href="/engineering/apps/project-intelligence"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Project Intelligence
-            </Link>
-            <Link
-              href="/engineering/search"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-800 hover:border-slate-400"
-            >
-              Global search
-            </Link>
-          </div>
-        </section>
-
-        <section aria-label="Engineering KPIs" className="mb-8">
-          <SectionHeader
-            title="Engineering KPIs"
-            description="Live signal across projects, engineering reviews, risks, and action registers"
-          />
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 lg:gap-5">
-            <KpiLink href="/engineering/projects">
-              <MetricCard
-                label="Engineering Projects"
-                value={(data?.activeProjects as unknown[])?.length ?? 0}
-                icon={<FolderKanban className="h-6 w-6" />}
-                tone="blue"
-                trendLabel="this week"
-                trendIcon={<TrendGlyph trend="flat" />}
-              />
-            </KpiLink>
-            <KpiLink href="/engineering/decisions">
-              <MetricCard
-                label="Engineering Reviews Pending"
-                value={
-                  (data?.reviewRequiredCount as number) ??
-                  (data?.pendingDecisionsCount as number) ??
-                  0
-                }
-                icon={<ClipboardCheck className="h-6 w-6" />}
-                tone="amber"
-                trendLabel="today"
-                trendIcon={<TrendGlyph trend="up" />}
-              />
-            </KpiLink>
-            <KpiLink href="/engineering/risks">
-              <MetricCard
-                label="Critical Risk Assessments"
-                value={(data?.openRisksCount as number) ?? 0}
-                icon={<AlertTriangle className="h-6 w-6" />}
-                tone="red"
-                trendLabel="this week"
-                trendIcon={<TrendGlyph trend="down" />}
-              />
-            </KpiLink>
-            <KpiLink href="/engineering/technical-queries">
-              <MetricCard
-                label="Open Technical Queries"
-                value={(data?.openTechnicalQueriesCount as number) ?? 0}
-                icon={<MessageSquare className="h-6 w-6" />}
-                tone="blue"
-                trendLabel="today"
-                trendIcon={<TrendGlyph trend="flat" />}
-              />
-            </KpiLink>
-            <KpiLink href="/engineering/actions">
-              <MetricCard
-                label="Action Register — Critical"
-                value={(data?.openActionsCount as number) ?? 0}
-                icon={<CheckSquare className="h-6 w-6" />}
-                tone="amber"
-                trendLabel="this week"
-                trendIcon={<TrendGlyph trend="up" />}
-              />
-            </KpiLink>
-            <KpiLink href="/engineering/health">
-              <MetricCard
-                label="Platform Health"
-                value={healthOk ? "OK" : "Check"}
-                icon={<Activity className="h-6 w-6" />}
-                tone={healthOk ? "green" : "red"}
-                trendLabel="today"
-                trendIcon={<TrendGlyph trend="flat" />}
-                secondary
-              />
-            </KpiLink>
-          </div>
-        </section>
-
-        <div className="mt-8 grid gap-5 lg:grid-cols-2">
-          <Panel
-            title="Engineering Decisions"
-            href="/engineering/decisions"
-            emptyTitle="No engineering decisions yet"
-            emptyDescription="Engineering decisions requiring review will appear here."
-            items={decisions}
-            render={(d) => (
-              <ActivityRow
-                title={`${(d.decision_number as string) ?? ""} — ${(d.title as string) ?? ""}`.replace(/^ — /, "")}
-                subtitle="Engineering Decision"
-                icon={<Gavel className="h-5 w-5" />}
-                chip={<StatusChip value={(d.approval_status as string) ?? "pending"} />}
-              />
-            )}
-          />
-          <Panel
-            title="Risk Assessments"
-            href="/engineering/risks"
-            emptyTitle="No open risk assessments"
-            emptyDescription="Critical and scored engineering risks will appear here."
-            items={risks}
-            render={(r) => {
-              const score = Number(r.score ?? 0);
-              const severity =
-                score >= 15 ? "critical" : score >= 10 ? "high" : score >= 5 ? "medium" : "low";
-              return (
-                <ActivityRow
-                  title={`${(r.risk_number as string) ?? ""} — ${(r.title as string) ?? ""}`.replace(/^ — /, "")}
-                  subtitle={`Risk Assessment · score ${String(r.score ?? "—")}`}
-                  icon={<AlertTriangle className="h-5 w-5" />}
-                  chip={<StatusChip status={severity} />}
-                />
-              );
-            }}
-          />
-          <Panel
-            title="Engineering Timeline"
-            href="/engineering/timeline"
-            emptyTitle="No timeline events yet"
-            emptyDescription="Engineering events across decisions, risks, and technical queries will appear here."
-            items={timeline}
-            render={(e) => (
-              <TimelineRow
-                title={(e.title as string) ?? "Timeline event"}
-                eventType={(e.event_type as string) ?? undefined}
-                occurredAt={(e.occurred_at as string) ?? (e.created_at as string) ?? null}
-                icon={timelineIcon(e.event_type as string | undefined)}
-                entity={e.linked_entity_label ? String(e.linked_entity_label) : undefined}
-              />
-            )}
-          />
-          <Panel
-            title="AI Recommendations"
-            href="/engineering/ai"
-            emptyTitle="No active AI recommendations"
-            emptyDescription="Engineering AI Director will surface recommendations from risks, technical queries, documents, and project activity."
-            emptyAction={
-              <Link
-                href="/engineering/ai"
-                className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-[0.9375rem] font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                data-testid="ai-empty-cta"
-              >
-                Open AI Workspace
-              </Link>
+        <PersistedQualificationNotice />
+        <div data-testid="engineering-os-shell" className="contents">
+          <div data-testid="engineering-os-product-ready" className="contents">
+            <div data-testid="engineering-command-center" className="contents">
+              <div data-testid="engineering-home" className="contents">
+          <OperationalPageIntro
+            purpose="Exceptions, my work, and recent change — cards open authorized records."
+            primaryAction={
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href="/engineering/work"
+                  className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
+                >
+                  Open Engineering Workbench
+                </Link>
+                {askEnabled ? (
+                  <AskEngineeringAI projectId={projectId} q="What needs my attention?" />
+                ) : null}
+              </div>
             }
-            emptyIcon={<Sparkles className="h-5 w-5" />}
-            items={aiRuns}
-            render={(run) => (
-              <ActivityRow
-                title={(run.intent as string) ?? (run.status as string) ?? "AI recommendation"}
-                subtitle="Engineering AI Director"
-                icon={<Sparkles className="h-5 w-5" />}
-                chip={
-                  <StatusChip
-                    value={
-                      run.requires_review
-                        ? "ai-review-required"
-                        : String(run.status ?? "complete")
-                    }
-                  />
-                }
-              />
-            )}
           />
-        </div>
 
-        <section className="mt-8" aria-label="Recent Engineering Activity">
-          <Panel
-            title="Recent Engineering Activity"
-            href="/engineering/activity"
-            emptyTitle="No recent activity"
-            emptyDescription="Project and register activity will appear here as engineering work progresses."
-            items={activity}
-            render={(e) => (
-              <ActivityRow
-                title={(e.title as string) ?? "Activity"}
-                subtitle={[
-                  e.activity_type ? String(e.activity_type) : null,
-                  e.created_at
-                    ? new Date(String(e.created_at)).toLocaleString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-                icon={activityIcon(e.activity_type as string | undefined)}
-                chip={
-                  e.status ? <StatusChip value={String(e.status)} /> : undefined
-                }
+          {error ? <OperationalError message={error} retryHref="/engineering" /> : null}
+          {loading ? <OperationalSkeleton label="Loading Command Centre…" /> : null}
+
+          {askEnabled ? (
+          <section className="mb-8" data-testid="home-ask">
+            <form onSubmit={submitAsk} className="flex flex-col gap-3 sm:flex-row">
+              <Input
+                value={askDraft}
+                onChange={(e) => setAskDraft(e.target.value)}
+                placeholder="Ask Engineering AI…"
+                className="text-base sm:flex-1"
+                data-testid="home-ask-input"
               />
-            )}
-          />
-        </section>
+              <Button type="submit" data-testid="home-ask-submit">
+                Ask Engineering AI
+              </Button>
+            </form>
+          </section>
+          ) : null}
+
+          {!loading ? (
+          <>
+          <section className="mb-6" data-testid="home-current-context">
+            <p className="text-sm text-[color:var(--eos-text-secondary)]" data-testid="command-center-scope">
+              Scope: {scopeLabel}
+            </p>
+          </section>
+
+          <section className="mb-8 grid gap-5 lg:grid-cols-2" data-testid="command-centre-jarvis">
+            <CommandPanel title="Project Health" accent="success" testId="cc-project-health">
+              <ProjectHealthIndicator
+                level={health}
+                domains={[
+                  { label: "Risks", state: domainFromCount(dashboard?.openRisksCount, loaded) },
+                  { label: "Technical queries", state: domainFromCount(dashboard?.openTechnicalQueriesCount, loaded) },
+                  { label: "Actions", state: domainFromCount(dashboard?.openActionsCount, loaded) },
+                  { label: "Decisions", state: domainFromCount(dashboard?.pendingDecisionsCount, loaded) },
+                ]}
+              />
+            </CommandPanel>
+            <CommandPanel title="Engineering Intelligence Core" accent="ai" testId="cc-intelligence-core">
+              <EosAiCore
+                size="lg"
+                projectLabel={projectId ? scopeLabel : undefined}
+                evidenceAvailable={Boolean(documents.length || openTqs.length)}
+                systemHealthy={health !== "CRITICAL"}
+              />
+            </CommandPanel>
+            <CommandPanel title="Attention Required" accent="warning" testId="cc-attention-required">
+              <div data-testid="home-attention">
+                <AttentionSummary items={attentionItems} />
+              </div>
+            </CommandPanel>
+            <CommandPanel title="Live Engineering Signals" accent="cyan" testId="cc-live-signals">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <LiveSignal label="Open TQs" value={displayCount(dashboard?.openTechnicalQueriesCount, loaded)} testId="cc-signal-tqs" />
+                <LiveSignal label="Open actions" value={displayCount(dashboard?.openActionsCount, loaded)} testId="cc-signal-actions" />
+                <LiveSignal label="Open risks" value={displayCount(dashboard?.openRisksCount, loaded)} testId="cc-signal-risks" />
+                <LiveSignal label="Pending decisions" value={displayCount(dashboard?.pendingDecisionsCount, loaded)} testId="cc-signal-decisions" />
+              </div>
+            </CommandPanel>
+          </section>
+
+          <section className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <OperationalMetricCard
+              label="Open risks"
+              value={displayCount(dashboard?.openRisksCount, loaded)}
+              href={withProjectHref("/engineering/risks", projectId)}
+              tone={(dashboard?.openRisksCount ?? 0) > 0 ? "attention" : "neutral"}
+              testId="cc-metric-risks"
+            />
+            <OperationalMetricCard
+              label="Open TQs"
+              value={displayCount(dashboard?.openTechnicalQueriesCount, loaded)}
+              href={withProjectHref("/engineering/technical-queries", projectId)}
+              tone={(dashboard?.openTechnicalQueriesCount ?? 0) > 0 ? "attention" : "neutral"}
+              testId="cc-metric-tqs"
+            />
+            {actionsEnabled ? (
+            <OperationalMetricCard
+              label="Open actions"
+              value={displayCount(dashboard?.openActionsCount, loaded)}
+              href={withProjectHref("/engineering/actions", projectId)}
+              testId="cc-metric-actions"
+            />
+            ) : null}
+            <OperationalMetricCard
+              label="Pending decisions"
+              value={displayCount(dashboard?.pendingDecisionsCount, loaded)}
+              href={withProjectHref("/engineering/decisions", projectId)}
+              testId="cc-metric-decisions"
+            />
+          </section>
+
+          <section className="mb-8 grid gap-4 lg:grid-cols-2" data-testid="home-my-work">
+            {actionsEnabled ? (
+            <WorkQueue
+              title="My work — actions"
+              href={withProjectHref("/engineering/actions", projectId)}
+              rows={overdueActions.length ? overdueActions : openActions}
+              labelKeys={["title", "action_title", "summary"]}
+              statusKey="status"
+              emptyTitle="No open actions"
+              emptyDescription="Nothing is assigned yet. Outstanding actions appear here when recorded for this workspace."
+              testId="cc-queue-actions"
+            />
+            ) : null}
+            <WorkQueue
+              title="Technical queries"
+              href={withProjectHref("/engineering/technical-queries", projectId)}
+              rows={openTqs}
+              labelKeys={["title", "query_number", "subject", "tq_number"]}
+              statusKey="status"
+              emptyTitle="No open technical queries"
+              emptyDescription="No TQs are open in this scope. That is normal when none have been raised."
+              testId="cc-queue-tqs"
+            />
+            <WorkQueue
+              title="Critical / high risks"
+              href={withProjectHref("/engineering/risks", projectId)}
+              rows={highRisks}
+              labelKeys={["title", "risk_title"]}
+              statusKey="status"
+              emptyTitle="No open risks"
+              emptyDescription="No high-severity risks are recorded in this scope."
+              testId="cc-queue-risks"
+            />
+            <WorkQueue
+              title="Decisions awaiting attention"
+              href={withProjectHref("/engineering/decisions", projectId)}
+              rows={pendingDecisions}
+              labelKeys={["title", "decision_title"]}
+              statusKey="approval_status"
+              emptyTitle="No pending decisions"
+              emptyDescription="No decisions currently require review."
+              testId="cc-queue-decisions"
+            />
+          </section>
+
+          <section className="mb-8 grid gap-4 lg:grid-cols-2" data-testid="home-recent">
+            <WorkQueue
+              title="Projects"
+              href="/engineering/projects"
+              rows={projects}
+              labelKeys={["project_name", "project_code"]}
+              statusKey="status"
+              emptyTitle="No projects yet"
+              emptyDescription="No engineering projects exist in this workspace yet. Create a project to start work."
+              testId="cc-queue-projects"
+              itemHref={(row) => `/engineering/projects/${row.id}`}
+            />
+            {documentsEnabled ? (
+            <WorkQueue
+              title="Recent documents"
+              href={withProjectHref("/engineering/documents", projectId)}
+              rows={documents}
+              labelKeys={["title", "document_number"]}
+              statusKey="status"
+              emptyTitle="No recent documents"
+              emptyDescription="No documents are recorded in this scope yet."
+              testId="cc-queue-documents"
+              itemHref={(row) => `/engineering/documents/${row.id}`}
+            />
+            ) : null}
+            {assetsEnabled ? (
+            <WorkQueue
+              title="Assets requiring attention"
+              href={withProjectHref("/engineering/apps/asset-intelligence", projectId)}
+              rows={highRiskAssets}
+              labelKeys={["asset_tag", "asset_name"]}
+              statusKey="criticality"
+              emptyTitle="No high-criticality assets"
+              emptyDescription="Assets with recorded high or critical criticality appear here."
+              testId="cc-queue-assets"
+              itemHref={(row) => `/engineering/assets/${row.id}`}
+            />
+            ) : null}
+          </section>
+
+          {projects.length > 0 ? (
+            <section className="mb-8" data-testid="home-project-status">
+              <h3 className="mb-3 text-sm font-semibold text-[color:var(--eos-text-primary)]">Project status</h3>
+              <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
+                {projects.slice(0, 6).map((row) => {
+                  const id = String(row.id ?? "");
+                  return (
+                    <li key={id}>
+                      <Link
+                        href={`/engineering/projects/${id}`}
+                        className="flex min-h-11 items-center justify-between gap-3 px-4 py-2 text-sm hover:bg-slate-50"
+                        onClick={() => persistEngineeringProjectFilter(id)}
+                      >
+                        <span>
+                          {String(row.project_code ?? "")} — {String(row.project_name ?? id)}
+                        </span>
+                        <StatusChip value={String(row.status ?? "")} />
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ) : null}
+
+          {askEnabled ? (
+          <section data-testid="home-suggestions">
+            <h3 className="mb-3 text-sm font-semibold text-[color:var(--eos-text-primary)]">Suggested next steps</h3>
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  { id: "attention", label: "What needs my attention?", q: "What needs my attention?" },
+                  { id: "changes", label: "What changed?", q: "What changed recently?" },
+                  { id: "risks", label: "Summarise critical risks", q: "Summarize critical engineering risks." },
+                  { id: "tqs", label: "Show overdue TQs", q: "Show overdue technical queries." },
+                ] as const
+              ).map((s) => (
+                  <Link
+                    key={s.id}
+                    href={buildAskHref({ projectId, q: s.q })}
+                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:border-slate-400"
+                    data-testid={`home-suggestion-${s.id}`}
+                  >
+                    {s.label}
+                  </Link>
+              ))}
+            </div>
+          </section>
+          ) : null}
+          </>
+          ) : null}
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     </>
-  );
-}
-
-function TrendGlyph({ trend }: { trend: Trend }) {
-  const Icon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
-  return <Icon className="h-3.5 w-3.5" aria-hidden />;
-}
-
-function KpiLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-    >
-      {children}
-    </Link>
-  );
-}
-
-function Panel({
-  title,
-  href,
-  emptyTitle,
-  emptyDescription,
-  emptyAction,
-  emptyIcon,
-  items,
-  render,
-}: {
-  title: string;
-  href: string;
-  emptyTitle: string;
-  emptyDescription: string;
-  emptyAction?: React.ReactNode;
-  emptyIcon?: React.ReactNode;
-  items: Record<string, unknown>[];
-  render: (item: Record<string, unknown>) => React.ReactNode;
-}) {
-  return (
-    <Card className="border-slate-200 bg-white">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-3">
-        <CardTitle className="text-[1.0625rem] font-semibold text-slate-900">{title}</CardTitle>
-        <Link
-          href={href}
-          className="text-[0.8125rem] font-semibold text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        >
-          View all
-        </Link>
-      </CardHeader>
-      <CardContent className="space-y-3.5 p-6 pt-0">
-        {items.length === 0 && (
-          <EmptyState
-            title={emptyTitle}
-            description={emptyDescription}
-            action={emptyAction}
-            icon={emptyIcon}
-          />
-        )}
-        {items.map((item, i) => (
-          <div key={(item.id as string) ?? i}>{render(item)}</div>
-        ))}
-      </CardContent>
-    </Card>
   );
 }

@@ -7,6 +7,8 @@ import {
   ENGINEERING_PERMISSIONS,
   ENGINEERING_PERMISSION_MAP,
   hasEngineeringPermission,
+  hasEngineeringAdminAuthority,
+  canInsertEngineeringM365Connection,
 } from "./index";
 import {
   ENGINEERING_REGISTER_OBJECT_TYPES,
@@ -17,20 +19,42 @@ describe("Engineering OS installation seed", () => {
   it("defines Engineering OS manifest", () => {
     expect(ENGINEERING_OS_MANIFEST.id).toBe("engineering-os");
     expect(ENGINEERING_OS_MANIFEST.operating_system).toBe("engineering");
-    expect(ENGINEERING_OS_MANIFEST.version).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(ENGINEERING_OS_MANIFEST.version).toMatch(/^\d+\.\d+\.\d+(-[A-Za-z0-9.-]+)?$/);
   });
 
-  it("registers Phase 8A initial modules via module registry bridge", () => {
-    expect(ENGINEERING_APPLICATIONS).toHaveLength(4);
+  it("declares Phase 14E Engineering OS V1.0 GA", async () => {
+    const v = await import("./version");
+    expect(v.ENGINEERING_OS_VERSION).toBe("1.0.0");
+    expect(v.ENGINEERING_OS_STATUS).toBe("ga");
+    expect(v.productionEngineeringOSReady).toBe(true);
+    expect(v.engineeringOSV1GaCertified).toBe(true);
+    expect(v.engineeringOSV1Frozen).toBe(true);
+    expect(v.EngineeringOSProductIntegrationReady).toBe(true);
+    expect(v.moduleRegistryTruthful).toBe(true);
+    expect(v.ENGINEERING_OS_RELEASE_TAG).toBe("engineering-os-v1.0.0");
+    const s = await import("./security-readiness");
+    expect(s.EnterpriseSecurityAssessmentComplete).toBe(true);
+    const closure = await import("./security-closure");
+    expect(closure.engineeringOsSecurityGaGatePassed).toBe(true);
+    expect(closure.securityClosureRequiredBeforeGa).toBe(false);
+  });
+
+  it("registers all production V1 modules truthfully", () => {
+    expect(ENGINEERING_APPLICATIONS).toHaveLength(6);
     const keys = ENGINEERING_APPLICATIONS.map((app) => app.app_key);
     expect(keys).toEqual([
       "project_intelligence",
       "inspection_intelligence",
+      "asset_intelligence",
       "project_controls",
       "digital_twin",
+      "engineering_model_interoperability",
     ]);
-    const pi = ENGINEERING_APPLICATIONS.find((a) => a.app_key === "project_intelligence");
-    expect(pi?.enabled).toBe(true);
+    for (const app of ENGINEERING_APPLICATIONS) {
+      expect(app.enabled).toBe(true);
+      expect(app.status).not.toBe("coming_soon");
+      expect(app.version).toBe("1.0.0");
+    }
   });
 
   it("declares core capabilities", () => {
@@ -38,6 +62,7 @@ describe("Engineering OS installation seed", () => {
     expect(keys).toContain("engineering_os");
     expect(keys).toContain("engineering_project_management");
     expect(keys).toContain("engineering_ai_workspace");
+    expect(keys).toContain("engineering_optimization");
   });
 
   it("seeds expected disciplines", () => {
@@ -103,6 +128,39 @@ describe("Engineering permission checks", () => {
       expect(hasEngineeringPermission(has, p)).toBe(true);
     });
   });
+
+  it("matches SQL engineering admin for owner, admin, permission, and engineer", () => {
+    expect(hasEngineeringAdminAuthority({ roleSlug: "owner", permissions: [] })).toBe(true);
+    expect(hasEngineeringAdminAuthority({ roleSlug: "admin", permissions: [] })).toBe(true);
+    expect(hasEngineeringAdminAuthority({
+      roleSlug: "engineering-owner",
+      permissions: [{ resource: "engineering", action: "admin" }],
+    })).toBe(true);
+    expect(hasEngineeringAdminAuthority({
+      roleSlug: "engineer",
+      permissions: [{ resource: "engineering", action: "execute" }, { resource: "engineering", action: "read" }],
+    })).toBe(false);
+    const admin = {
+      userId: "user-admin",
+      roleSlug: "admin",
+      tenantIds: ["tenant-a"],
+      workspaceIds: ["ws-a"],
+      permissions: [{ resource: "engineering", action: "admin" }],
+    };
+    const engineer = {
+      userId: "user-eng",
+      roleSlug: "engineer",
+      tenantIds: ["tenant-a"],
+      workspaceIds: ["ws-a"],
+      permissions: [{ resource: "engineering", action: "execute" }],
+    };
+    const row = { tenantId: "tenant-a", workspaceId: "ws-a" };
+    expect(canInsertEngineeringM365Connection(admin, row)).toBe(true);
+    expect(canInsertEngineeringM365Connection(engineer, row)).toBe(false);
+    expect(canInsertEngineeringM365Connection(admin, { tenantId: "tenant-b", workspaceId: "ws-a" })).toBe(false);
+    expect(canInsertEngineeringM365Connection(admin, { tenantId: "tenant-a", workspaceId: "ws-b" })).toBe(false);
+    expect(canInsertEngineeringM365Connection({ ...admin, userId: "" }, row)).toBe(false);
+  });
 });
 
 describe("Engineering project creation contract", () => {
@@ -145,8 +203,8 @@ describe("Knowledge Graph node types", () => {
     expect(types).toHaveLength(3);
   });
 
-  it("defines register KG node types for all six registers", () => {
-    expect(ENGINEERING_REGISTER_OBJECT_TYPES).toHaveLength(6);
+  it("defines register KG node types for Core registers including assumptions", () => {
+    expect(ENGINEERING_REGISTER_OBJECT_TYPES).toHaveLength(7);
     ENGINEERING_REGISTER_OBJECT_TYPES.forEach((objectType) => {
       expect(REGISTER_KG_NODE_TYPES[objectType]).toMatch(/^engineering_/);
     });
@@ -159,7 +217,7 @@ describe("Knowledge Graph node types", () => {
 });
 
 describe("Engineering Intelligence Registers (Batch 2.05)", () => {
-  it("declares six register object types owned by Engineering Core", () => {
+  it("declares Core register object types including EOS-A2 assumptions", () => {
     expect(ENGINEERING_REGISTER_OBJECT_TYPES).toEqual([
       "decision",
       "action",
@@ -167,6 +225,7 @@ describe("Engineering Intelligence Registers (Batch 2.05)", () => {
       "issue",
       "technical_query",
       "lesson",
+      "assumption",
     ]);
   });
 
@@ -177,6 +236,7 @@ describe("Engineering Intelligence Registers (Batch 2.05)", () => {
     expect(REGISTER_KG_NODE_TYPES.issue).toBe("engineering_issue");
     expect(REGISTER_KG_NODE_TYPES.technical_query).toBe("engineering_technical_query");
     expect(REGISTER_KG_NODE_TYPES.lesson).toBe("engineering_lesson");
+    expect(REGISTER_KG_NODE_TYPES.assumption).toBe("engineering_assumption");
   });
 
   it("requires human approval for engineering decisions", () => {
@@ -273,6 +333,18 @@ describe("Engineering OS RLS tenant isolation principle", () => {
       "engineering_technical_queries",
       "engineering_lessons",
       "engineering_object_links",
+      "engineering_assumptions",
+      "engineering_systems",
+      "engineering_interfaces",
+      "engineering_requirements",
+      "engineering_changes",
+      "engineering_impacts",
+      "engineering_configuration_baselines",
+      "engineering_configuration_items",
+      "engineering_optimization_studies",
+      "engineering_optimization_runs",
+      "engineering_decision_alternatives",
+      "engineering_decision_approvals",
       "engineering_timeline_events",
       "engineering_activity_events",
     ];

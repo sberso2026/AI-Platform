@@ -1,0 +1,17 @@
+import type { EuSteelValidationMatrixRow } from "@rtb/types";
+
+export const EU_STEEL_VALIDATION_MATRIX: readonly EuSteelValidationMatrixRow[] = [
+  { capability: "standard binding", implemented: true, numericallyValidated: false, engineerValidated: false, codeProfileImplemented: false, conformanceValidated: false, certified: false, limitation: "family/part/Annex/NDP architecture; edition UNKNOWN_PENDING_CONFIRMATION" },
+  { capability: "tension", implemented: true, numericallyValidated: true, engineerValidated: false, codeProfileImplemented: false, conformanceValidated: false, certified: false, limitation: "fyAg/fuAn mechanics; not EN 1993 tension resistance" },
+  { capability: "compression", implemented: true, numericallyValidated: true, engineerValidated: false, codeProfileImplemented: false, conformanceValidated: false, certified: false, limitation: "squash fyA mechanics; not EN 1993 compression resistance" },
+  { capability: "compression stability", implemented: true, numericallyValidated: true, engineerValidated: false, codeProfileImplemented: false, conformanceValidated: false, certified: false, limitation: "Euler Pcr is not EN 1993 member compression resistance" },
+  { capability: "major bending", implemented: true, numericallyValidated: true, engineerValidated: false, codeProfileImplemented: false, conformanceValidated: false, certified: false, limitation: "elastic My=fyZ; not EN 1993 section resistance" },
+  { capability: "minor bending", implemented: true, numericallyValidated: true, engineerValidated: false, codeProfileImplemented: false, conformanceValidated: false, certified: false, limitation: "elastic My=fyZ; not EN 1993 section resistance" },
+  { capability: "LTB", implemented: true, numericallyValidated: true, engineerValidated: false, codeProfileImplemented: false, conformanceValidated: false, certified: false, limitation: "elastic Mcr is not EN 1993 member resistance" },
+  { capability: "major shear", implemented: true, numericallyValidated: true, engineerValidated: false, codeProfileImplemented: false, conformanceValidated: false, certified: false, limitation: "von Mises yield reference; not EN 1993 shear resistance" },
+  { capability: "minor shear", implemented: true, numericallyValidated: true, engineerValidated: false, codeProfileImplemented: false, conformanceValidated: false, certified: false, limitation: "von Mises yield reference; not EN 1993 shear resistance" },
+  { capability: "web stability", implemented: true, numericallyValidated: true, engineerValidated: false, codeProfileImplemented: false, conformanceValidated: false, certified: false, limitation: "elastic plate buckling; not EN 1993 web resistance" },
+  { capability: "combined actions", implemented: false, numericallyValidated: false, engineerValidated: false, codeProfileImplemented: false, conformanceValidated: false, certified: false, limitation: "framework only; IMPLEMENTED_EU_INTERACTION_METHODS = NONE" },
+  { capability: "serviceability", implemented: true, numericallyValidated: false, engineerValidated: false, codeProfileImplemented: false, conformanceValidated: false, certified: false, limitation: "orchestration of governed criteria; no default L/n" },
+  { capability: "member orchestration", implemented: true, numericallyValidated: false, engineerValidated: false, codeProfileImplemented: false, conformanceValidated: false, certified: false, limitation: "mechanics complete does not equal code-design complete" },
+];

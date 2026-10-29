@@ -10,6 +10,7 @@ import {
 } from "@rtb/platform-core";
 import { getAuthContext } from "@/lib/kernel";
 import { requireCommerceAdmin } from "@/lib/commerce/with-commerce-entitlement";
+import { loadSeatedProductIds } from "@/lib/commerce/current-user-seats";
 
 type Params = { params: Promise<{ productSlug: string }> };
 
@@ -23,8 +24,12 @@ export async function GET(request: Request, { params }: Params) {
   const tab = parseProductDetailTab(new URL(request.url).searchParams.get("tab"));
 
   const catalogData = await ctx.commerce.catalog.buildTenantCommerceData(ctx.tenantId);
+  const seatedProductIds = await loadSeatedProductIds(ctx);
   const products = await import("@rtb/platform-core").then(({ mapRegistryToCommercialProducts }) =>
-    mapRegistryToCommercialProducts({ roleSlug: ctx.roleSlug, engineeringOsEnabled: true }, catalogData)
+    mapRegistryToCommercialProducts(
+      { roleSlug: ctx.roleSlug, engineeringOsEnabled: true, seatedProductIds },
+      { ...catalogData, current_user_seated_product_ids: seatedProductIds },
+    )
   );
   const product = products.find((p) => p.slug === productSlug);
   if (!product) return NextResponse.json({ error: "Not found" }, { status: 404 });

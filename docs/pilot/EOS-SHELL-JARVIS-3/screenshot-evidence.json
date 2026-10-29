@@ -1,0 +1,143 @@
+{
+  "host": "https://rtb-ai-platform-pgfn960ts-rtbea.vercel.app",
+  "shots": [
+    "01-command-centre-1366.png",
+    "02-engineering-systems-1366.png",
+    "03-projects-1366.png",
+    "04-assets-1366.png",
+    "05-inspections-1366.png",
+    "06-documents-1366.png",
+    "07-technical-queries-1366.png",
+    "08-project-intelligence-1366.png",
+    "09-asset-intelligence-1366.png",
+    "10-digital-twin-1366.png",
+    "11-engineering-models-1366.png",
+    "12-project-controls-1366.png",
+    "01-command-centre-1440.png",
+    "02-engineering-systems-1440.png",
+    "03-projects-1440.png",
+    "04-assets-1440.png",
+    "05-inspections-1440.png",
+    "06-documents-1440.png",
+    "07-technical-queries-1440.png",
+    "08-project-intelligence-1440.png",
+    "09-asset-intelligence-1440.png",
+    "10-digital-twin-1440.png",
+    "11-engineering-models-1440.png",
+    "12-project-controls-1440.png",
+    "01-command-centre-1920.png",
+    "02-engineering-systems-1920.png",
+    "03-projects-1920.png",
+    "04-assets-1920.png",
+    "05-inspections-1920.png",
+    "06-documents-1920.png",
+    "07-technical-queries-1920.png",
+    "08-project-intelligence-1920.png",
+    "09-asset-intelligence-1920.png",
+    "10-digital-twin-1920.png",
+    "11-engineering-models-1920.png",
+    "12-project-controls-1920.png"
+  ],
+  "uuidHits": [],
+  "internalHits": [],
+  "jargonHits": [],
+  "lightShell": [],
+  "notes": [
+    {
+      "shot": "01-command-centre",
+      "excerpt": "Exceptions, my work, and recent change — cards open authorized records.\n\nScope: Selected project\n\nProject Health\nCRIT\nHEALTH\n\nPROJECT HEALTH\n\nCRITICAL\n\nRisks\nTechnical queries\nActions\nDecisions\nEngineering Intelligence Core\nRTB\nAI\n\nENGINEERING AI\n\nONLINE\n\nPROJECT CONTEXT CONNECTED\n\nEVIDENCE AVAILABLE\n\nSYSTEM REVIEW\n\nEngineering AI Online. Engineering Intelligence Core. Selected project\nAttention Required\n\nAttention required\n\nPending reviews\n10\nOpen risks\n2\nOpen TQs\n18\nPending decisions\n2\nLive Engineering Signals\n\nOpen TQs\n\n18\n\nCurrent\n\nOpen actions\n\n5\n\nCurrent\n\nOpen risks\n\n2\n\nCurrent\n\nPending decisions\n\n2\n\nCurrent\n\nOPEN RISKS\n\n2\n\nOPEN TQS\n\n18\n\nPENDING DECISIONS\n\n2\n\nTechnical queries\nView all",
+      "hasJarvisTheme": true,
+      "hasEngineeringOs": true,
+      "hasProjectHealth": true,
+      "hasIntelligenceCore": true
+    },
+    {
+      "shot": "02-engineering-systems",
+      "excerpt": "Installed, available, and not-included applications from canonical Commerce\nProject Intelligence\nAvailable\n\nDocuments, meetings, findings, and project decision support\n\nInspection Intelligence\nAvailable\n\nInspection planning, field capture, and review workflows\n\nAsset Intelligence\nInstalled\n\nAsset condition, criticality, reliability, and advisory signals\n\nProject Controls\nAvailable\n\nGoverned cost, schedule, progress, and controls intelligence\n\nDigital Twin\nInstalled\n\nTwin identity, state, simulation, and digital thread\n\nEngineering Models\nInstalled\n\nIFC / SPACE GASS / ETABS export federation with governed mapping",
+      "hasJarvisTheme": true,
+      "hasEngineeringOs": true,
+      "hasProjectHealth": false,
+      "hasIntelligenceCore": true
+    },
+    {
+      "shot": "08-project-intelligence",
+      "excerpt": "Project status\n\nStatus, schedule and cost signals, risks, queries, and recent activity from recorded project evidence. Insights are advisory.\n\nAsk Engineering AI\nRecent activity\n\nLatest document processing, meeting reviews, and mapping events.\n\nView activity\nAssigned work\n\nReviews and approvals that need your attention.\n\nReview queue\nDocuments\n\nIngestion, retrieval, and grounded answers from project documents.\n\nOpen documents\nMeetings\n\nCapture, minutes, and meeting follow-up.\n\nOpen meetings\nRisks / changes\n\nFindings across documents and meetings — evidence-linked.\n\nOpen findings\nForecast & reports\n\nProject reports and executive summary from recorded evidence.\n\nOpen reports\nAI Project Analyst",
+      "hasJarvisTheme": true,
+      "hasEngineeringOs": true,
+      "hasProjectHealth": false,
+      "hasIntelligenceCore": false
+    },
+    {
+      "shot": "09-asset-intelligence",
+      "excerpt": "Back\nReturn\nWorkspace RTB Engineering\nProject Selected project\nOverview\nAssets\nCondition\nCriticality\nReliability\nDegradation\nFailure Modes\nRecommendations\nEvidence\nAdministration\nAsset overview\n\nWhich assets require attention, what condition changed, what is deteriorating, and what needs engineering review.\n\nOpen asset register\nAsk Engineering AI\n\nASSETS IN SCOPE\n\n2\n\nATTENTION REQUIRED\n\n2\n\nRECENT INSPECTIONS\n\n3\n\nAttention required\n\nV-101-245013\n\nProcess vessel V-101 · high\n\nInspect\n\nCOL-01\n\nPrimary concrete column sample · high\n\nInspect\nCondition\n\nNo condition evidence has been published for this asset unless an assessment exists on the asset record. Open an asset to inspect hosted condition",
+      "hasJarvisTheme": true,
+      "hasEngineeringOs": true,
+      "hasProjectHealth": false,
+      "hasIntelligenceCore": true
+    },
+    {
+      "shot": "10-digital-twin",
+      "excerpt": "Back\nReturn\nWorkspace RTB Engineering\nProject All projects\nOverview\nTwins\nState\nHistory\nRepresentation\nTelemetry\nDigital Thread\nEvidence\nAdministration\nTwin workspace\n\nSelected twin identity, current state, latest timestamp, bound evidence, representation, telemetry, and history.\n\nBrowse twins\nAsk Engineering AI\n\nNo digital twin has been linked to this asset.\n\nTwin identity is recorded when a twin is registered against a canonical asset or project.",
+      "hasJarvisTheme": true,
+      "hasEngineeringOs": true,
+      "hasProjectHealth": false,
+      "hasIntelligenceCore": true
+    },
+    {
+      "shot": "11-engineering-models",
+      "excerpt": "Back\nReturn\nWorkspace RTB Engineering\nProject All projects\nOverview\nModels\nVersions\nElements\nMappings\nResults\nInteroperability\nEvidence\nAdministration\nEngineering Models\n\nWhat models are registered, which have results, and what needs mapping or review.\n\nOpen model register\nAsk Engineering AI\n\nLoading operational data…\n\nMODELS\n\n0\n\nMAPPINGS\n\n0\n\nRESULTS\n\n0\n\nModel register\n\nNo engineering model is registered for this project.\n\nImported models appear here after federation.\n\nSupported sources\n\nReview recorded models and results. Live solver execution is not implied.\n\nETABS\n\nModel import and exported-result federation available. Live ETABS execution is not currently certified.\n\nSPACE GASS\n\nModel im",
+      "hasJarvisTheme": true,
+      "hasEngineeringOs": true,
+      "hasProjectHealth": false,
+      "hasIntelligenceCore": true
+    },
+    {
+      "shot": "12-project-controls",
+      "excerpt": "Back\nReturn\nWorkspace RTB Engineering\nProject All projects\nOverview\nProgress\nSchedule\nCost\nChange\nProductivity\nForecast\nScenarios\nAssurance\nAdministration\nProject Controls\n\nPublished progress, schedule, cost, change, productivity, and forecast evidence for the selected project.\n\nAsk Engineering AI\n\nLoading operational data…\n\nAttention required\nView all\n\nNothing currently requires action from published controls.\n\nOutstanding actions owned by Project Controls appear here when published.\n\nChange signals\nView all\n\nNo published change evidence is available.\n\nChange intelligence is descriptive. It is not contractual authority.\n\nProgress\n\nDescriptive progress from published project status. Not earn",
+      "hasJarvisTheme": true,
+      "hasEngineeringOs": true,
+      "hasProjectHealth": false,
+      "hasIntelligenceCore": true
+    },
+    {
+      "shot": "03-projects",
+      "excerpt": "3 records · selected project\n\nNew Project\nOperational records\nPROJECT\tCLIENT\tPHASE\tSTATUS\tLAST UPDATE\nUAT2-245013-API — Founder workflow UAT-2\tUAT2R-1788366038113\tconcept\t\ndraft\n\t2026-09-02\nUAT-347102 — Controlled Pilot UAT Project\tRTB Engineering\tconcept\t\ndraft\n\t2026-09-02\nRTB-PILOT-1788193387962 — RTB Gold Coast Structural Inspection Pilot\tRTB Engineering (internal)\tdesign\t\nactive\n\t2026-08-31",
+      "hasJarvisTheme": true,
+      "hasEngineeringOs": true,
+      "hasProjectHealth": false,
+      "hasIntelligenceCore": true
+    },
+    {
+      "shot": "04-assets",
+      "excerpt": "1 records · selected project\n\nNew Asset\nOperational records\nASSET\tSYSTEM\tLOCATION\tCRITICALITY\tSTATUS\tLAST UPDATE\nCOL-01 — Primary concrete column sample\tsuperstructure\tGrid A1\t\nhigh\n\t\nactive\n\t2026-08-31",
+      "hasJarvisTheme": true,
+      "hasEngineeringOs": true,
+      "hasProjectHealth": false,
+      "hasIntelligenceCore": true
+    },
+    {
+      "shot": "05-inspections",
+      "excerpt": "",
+      "hasJarvisTheme": true,
+      "hasEngineeringOs": true,
+      "hasProjectHealth": false,
+      "hasIntelligenceCore": false
+    },
+    {
+      "shot": "06-documents",
+      "excerpt": "5 records · selected project\n\nRegister Document\nOperational records\nDOCUMENT\tNUMBER\tREVISION\tSOURCE\tINGESTION\tAI SEARCHABLE\tSTATUS\tLAST UPDATE\nimage.png\tTQ-QI-B2BCEE4C\tA\tAttached\tRegister only — source text not searchable\tNo\t\ndraft\n\t2026-09-03\nimage.png\tTQ-QI-5C5E8D95\tA\tAttached\tRegister only — source text not searchable\tNo\t\ndraft\n\t2026-09-03\nimage.png\tTQ-QI-11A331CA\tA\tAttached\tRegister only — source text not searchable\tNo\t\ndraft\n\t2026-09-03\nRFI-10159-R000-A2 CCN-FST-BWM-DAA-PI-1070.PDF\tUPL-RFI-10159-R000-A2_CCN-FST-BWM-DAA-PI-107\tA\tAttached\tPartly indexed — some content may be missing\tYes\t\ndraft\n\t2026-09-03\nColumn inspection brief (representative)\tS-001\tA\tNone\tRegister only — source text no",
+      "hasJarvisTheme": true,
+      "hasEngineeringOs": true,
+      "hasProjectHealth": false,
+      "hasIntelligenceCore": true
+    },
+    {
+      "shot": "07-technical-queries",
+      "excerpt": "Projects\n/\nSelected project\n/\nTechnical Queries\nAll\nMy Actions\nAwaiting Response\nOverdue\nClosed\n+ New Technical Query\nTQ NO.\t\nTITLE / QUERY\n\t\nPROJECT\nAll\n\t\nDISCIPLINE\nAll\nCivil\nConstruction\nElectrical\nGeotechnical\nHSE\nInstrumentation\nMarine\nMechanical\nPiping\nProcess\nProject Controls\nQuality\nStructural\n\t\nSTATUS\nAll\nDraft\nAwaiting Response\nResponse Submitted\nUnder Review\nClarification Required\nAccepted\nClosed\n\t\nINITIATOR\nAll\nRTB Pilot Launch Admin\nSilvestre Berso\n\t\nACTION BY\nAll\nRTB Pilot Launch Admin\nSilvestre Berso\n\tDUE\tAGE\t\nPRIORITY\nAll\nLow\nNormal\nHigh\nCritical\n\tLAST ACTIVITY ↕\nTQ-017\t\nBund floor cracks\n\tRTB Gold Coast Structural Inspection Pilot\tCivil\t\nAwaiting Response\n\tSilvestre Berso\tRT",
+      "hasJarvisTheme": true,
+      "hasEngineeringOs": true,
+      "hasProjectHealth": false,
+      "hasIntelligenceCore": true
+    }
+  ]
+}

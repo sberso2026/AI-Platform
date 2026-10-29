@@ -5,16 +5,22 @@ import type { SubscriptionStatus } from "@rtb/types";
 function mapSubscriptionStatus(status: SubscriptionStatus) {
   switch (status) {
     case "trial":
+    case "trialing":
       return "trialing";
     case "active":
     case "grace_period":
     case "pending_renewal":
+    case "scheduled_cancellation":
       return "active";
     case "pending_payment":
     case "paused":
+    case "past_due":
       return "past_due";
     case "cancelled":
       return "cancelled";
+    case "expired":
+    case "suspended":
+      return "expired";
     default:
       return "expired";
   }
@@ -23,6 +29,10 @@ function mapSubscriptionStatus(status: SubscriptionStatus) {
 describe("Platform Commerce Engine — status mapping", () => {
   it("maps trial subscription to trialing UI status", () => {
     expect(mapSubscriptionStatus("trial")).toBe("trialing");
+  });
+
+  it("maps trialing subscription to trialing UI status, not expired", () => {
+    expect(mapSubscriptionStatus("trialing")).toBe("trialing");
   });
 
   it("maps grace period to active UI status", () => {

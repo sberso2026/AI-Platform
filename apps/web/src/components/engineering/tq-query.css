@@ -1,0 +1,126 @@
+.tq-query-content,
+.tq-query-editor {
+  width: 100%;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--eos-text-primary);
+  caret-color: var(--eos-text-primary);
+}
+
+.tq-query-editor,
+.tq-query-editor * {
+  color: var(--eos-text-primary) !important;
+  caret-color: var(--eos-text-primary) !important;
+  -webkit-text-fill-color: var(--eos-text-primary);
+}
+
+.tq-query-editor::selection,
+.tq-query-editor *::selection {
+  background-color: color-mix(in srgb, var(--eos-accent) 45%, var(--eos-bg-secondary));
+  color: var(--eos-text-primary) !important;
+  -webkit-text-fill-color: var(--eos-text-primary);
+}
+
+.tq-query-content p,
+.tq-query-editor p {
+  margin: 0 0 0.6rem;
+}
+
+.tq-query-content ul,
+.tq-query-editor ul,
+.tq-query-content ol,
+.tq-query-editor ol {
+  margin: 0 0 0.6rem;
+  padding-left: 1.25rem;
+}
+
+.tq-query-content img,
+.tq-query-editor img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.tq-query-figure {
+  margin: 0.85rem 0;
+  max-width: 36rem;
+}
+
+.tq-query-figure figcaption {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: #475569;
+}
+
+.tq-query-figure figcaption:empty::before {
+  content: "Add caption (optional)";
+  color: #94a3b8;
+}
+
+.tq-query-editor-frame {
+  min-height: 360px;
+  max-height: 480px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid var(--eos-border);
+  border-radius: 0.375rem;
+  background: var(--eos-bg-secondary);
+  color: var(--eos-text-primary);
+  color-scheme: dark;
+}
+
+html.light .tq-query-editor-frame {
+  color-scheme: light;
+}
+
+.tq-query-editor {
+  min-height: 360px;
+  overflow: visible;
+  position: relative;
+  z-index: 1;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+
+.tq-query-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--eos-text-secondary);
+  pointer-events: none;
+}
+
+.tq-query-editor:focus {
+  outline: 2px solid var(--eos-accent);
+  outline-offset: -2px;
+}
+
+@media print {
+  .tq-query-toolbar {
+    display: none !important;
+  }
+
+  .tq-query-editor-frame,
+  .tq-query-content,
+  .tq-query-content *,
+  .tq-query-editor,
+  .tq-query-editor * {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    color: #0f172a !important;
+    caret-color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a;
+    background: #ffffff !important;
+  }
+
+  .tq-query-figure,
+  .tq-query-figure img {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}

@@ -42,6 +42,12 @@ export class SecretManagementService {
       .single();
     if (error) throw new Error(`Failed to create secret: ${error.message}`);
 
+    if (!input.externalRef && (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production")) {
+      throw new Error(
+        "SecretManagementService requires an external secret-manager reference in production. SHA-256 placeholder hashing is not encryption.",
+      );
+    }
+
     const encryptedValue = input.externalRef
       ? null
       : this.encryptPlaceholder(input.value);

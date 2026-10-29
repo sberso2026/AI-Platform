@@ -1,0 +1,118 @@
+name: Phase 13B Engineering Model IFC Federation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/engineering-model-interoperability/**"
+      - "packages/engineering-model-interoperability-certification/**"
+      - "packages/digital-twin/package.json"
+      - "packages/digital-twin/src/version.ts"
+      - "packages/platform-certification/src/phase13b*"
+      - "apps/web/src/app/api/engineering/model-interoperability/**"
+      - "apps/web/src/app/(platform)/engineering/apps/model-interoperability/**"
+      - "supabase/migrations/20260808250000_batch_86_engineering_model_interoperability_ifc.sql"
+      - "docs/architecture/ENGINEERING_MODEL_INTEROPERABILITY_*"
+      - "docs/contracts/ENGINEERING_MODEL_INTEROPERABILITY_*"
+      - ".github/workflows/phase-13b-engineering-model-ifc-federation.yml"
+
+concurrency:
+  group: phase-13b-engineering-model-ifc-federation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  CERTIFY_BROWSER: "1"
+  CERTIFY_REQUIRE_HOSTED: "1"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright Chromium
+        run: pnpm --filter @rtb/engineering-model-interoperability-certification exec playwright install chromium --with-deps
+      - name: Unit tests (IFC federation)
+        run: pnpm --filter @rtb/engineering-model-interoperability test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase13b-engineering-model-ifc-federation.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/engineering-model-interoperability-certification secret-scan
+      - name: Phase 13B certification (gates A–BT)
+        env:
+          CERTIFY_BROWSER: "1"
+          CERTIFY_REQUIRE_HOSTED: "1"
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm --filter @rtb/engineering-model-interoperability-certification certify:phase13b
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/engineering-model-interoperability-certification/artifacts/phase13b-engineering-model-ifc-federation-certification.json","utf8"));
+          const checks = [
+            ["verdict", a.verdict==="PASS"],
+            ["failedGateCount", a.failedGateCount===0],
+            ["skippedGateCount", a.skippedGateCount===0],
+            ["notExecutedGateCount", a.notExecutedGateCount===0],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===72],
+            ["version", a.version==="0.2.0-ifc-federation"],
+            ["status", a.status==="ifc_federation"],
+            ["EngineeringModelInteroperabilityRuntimeReady", a.EngineeringModelInteroperabilityRuntimeReady===true],
+            ["IFCFederationReady", a.IFCFederationReady===true],
+            ["DigitalTwinV1Intact", a.DigitalTwinV1Intact===true],
+            ["sourceModelOwnershipPreserved", a.sourceModelOwnershipPreserved===true],
+            ["solverExecutionImplemented", a.solverExecutionImplemented===false],
+            ["modelMutationImplemented", a.modelMutationImplemented===false],
+            ["analysisModelGenerationImplemented", a.analysisModelGenerationImplemented===false],
+            ["fullBimViewerImplemented", a.fullBimViewerImplemented===false],
+            ["automaticAnalysisModelCertificationEnabled", a.automaticAnalysisModelCertificationEnabled===false],
+            ["additionalExternalSolverExecutionImplemented", a.additionalExternalSolverExecutionImplemented===false],
+            ["productionMemoryRepositoryAllowed", a.productionMemoryRepositoryAllowed===false],
+            ["digitalTwinVersion", a.digitalTwinVersion==="1.0.0"],
+            ["digitalTwinV1Commit", a.digitalTwinV1Commit==="a94425ed009ca087c2f44c9d3757c0c82bd936b1"],
+            ["publicContractVersion", a.publicContractVersion==="0.2.0-ifc-federation"],
+            ["phase13CReady", a.phase13CReady===true],
+            ["releaseEligible", a.releaseEligible===true],
+            ["unexpected5xx", a.unexpected5xx===0],
+            ["artifactCommitSha", a.artifactCommitSha===a.ciHeadSha || a.artifactCommitSha===a.commit],
+            ["secretExposureDetected", a.secretExposureDetected===false],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify({ failedGates: a.failedGates }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            version: a.version,
+            EngineeringModelInteroperabilityRuntimeReady: a.EngineeringModelInteroperabilityRuntimeReady,
+            IFCFederationReady: a.IFCFederationReady,
+            DigitalTwinV1Intact: a.DigitalTwinV1Intact,
+            phase13CReady: a.phase13CReady,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase13b-engineering-model-ifc-federation-certification
+          path: packages/engineering-model-interoperability-certification/artifacts/phase13b-engineering-model-ifc-federation-certification.json
+          if-no-files-found: warn

@@ -147,7 +147,13 @@ export type JobType =
   | "notification.send"
   | "report.generate"
   | "telemetry.process"
-  | "workflow.advance";
+  | "workflow.advance"
+  | "engineering.optimization.evaluate"
+  | "engineering.analysis.execute"
+  | "engineering.thread.project"
+  | "engineering.assurance.evaluate"
+  | "engineering.m365.sharepoint.sync"
+  | "engineering.external.connector.sync";
 
 export type JobStatus =
   | "pending"

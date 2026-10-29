@@ -109,6 +109,20 @@ export interface SidebarNavContext {
   hasPermission: (resource: string, action: string) => boolean;
   /** Active domain OS ids (e.g. engineering). Empty = platform-only. */
   activeOperatingSystemIds?: string[];
+  /** Entitled commerce feature keys (capability-based nav). */
+  entitledFeatureKeys?: string[];
+  /** Entitled commerce application keys (capability-based nav). */
+  entitledApplicationKeys?: string[];
+}
+
+export const PILOT_ENGINEER_ROLE_SLUG = "pilot-engineer";
+
+export function isPilotEngineerRole(roleSlug: string | null | undefined): boolean {
+  return roleSlug === PILOT_ENGINEER_ROLE_SLUG || roleSlug === "pilot_engineer";
+}
+
+export function displayWorkspaceRole(roleSlug: string): string {
+  return isPilotEngineerRole(roleSlug) ? "pilot_engineer" : roleSlug;
 }
 
 export function resolveNavTier(roleSlug: string): NavTier {
@@ -126,10 +140,39 @@ export function isPlatformAdmin(roleSlug: string): boolean {
   return resolveNavTier(roleSlug) === "admin";
 }
 
+/** Route authority follows the selected workspace. With no selection, fail closed to the least privilege. */
+export function resolveActiveMembershipAccess(
+  memberships: Array<{ roleSlug: string }>,
+  activeRoleSlug: string | null,
+): { roleSlug: string; tier: NavTier } | null {
+  if (!memberships.length) return null;
+  if (activeRoleSlug && memberships.some((row) => row.roleSlug === activeRoleSlug)) {
+    return { roleSlug: activeRoleSlug, tier: resolveNavTier(activeRoleSlug) };
+  }
+  let strictestTier: NavTier = "admin";
+  let strictestRoleSlug = memberships[0]?.roleSlug ?? "member";
+  for (const row of memberships) {
+    const tier = resolveNavTier(row.roleSlug);
+    if (NAV_TIER_RANK[tier] <= NAV_TIER_RANK[strictestTier]) {
+      strictestTier = tier;
+      strictestRoleSlug = row.roleSlug;
+    }
+  }
+  return { roleSlug: strictestRoleSlug, tier: strictestTier };
+}
+
 export function defaultNavAudience(item: NavItem): NavTier {
   if (item.audience) return item.audience;
   const group = item.group ?? "platform";
-  if (group === "engineering" || group === "engineering_registers") return "viewer";
+  if (
+    group === "engineering" ||
+    group === "engineering_work" ||
+    group === "engineering_registers" ||
+    group === "engineering_analysis" ||
+    group === "engineering_ai"
+  ) {
+    return "viewer";
+  }
   if (group === "engineering_admin") return "manager";
   if (group === "platform" || group === "platform_advanced") return "admin";
   return "admin";
@@ -141,10 +184,32 @@ export function isOwnerOnlyCommerceRoute(pathname: string): boolean {
   );
 }
 
+const PILOT_ENGINEER_DENIED_GROUPS = new Set([
+  "platform",
+  "platform_advanced",
+  "administration",
+  "engineering_admin",
+]);
+
+const PILOT_ENGINEER_DENIED_IDS = new Set(["eng-review"]);
+
 export function canSeeNavItem(item: NavItem, context: SidebarNavContext): boolean {
   if (item.sidebarHidden) return false;
+  if (
+    isPilotEngineerRole(context.roleSlug) &&
+    (PILOT_ENGINEER_DENIED_IDS.has(item.id) || PILOT_ENGINEER_DENIED_GROUPS.has(item.group ?? ""))
+  ) {
+    return false;
+  }
 
-  const engGroups = new Set(["engineering", "engineering_registers", "engineering_admin"]);
+  const engGroups = new Set([
+    "engineering",
+    "engineering_work",
+    "engineering_registers",
+    "engineering_analysis",
+    "engineering_ai",
+    "engineering_admin",
+  ]);
   if (engGroups.has(item.group ?? "")) {
     const active = context.activeOperatingSystemIds ?? [];
     if (!active.includes("engineering")) return false;
@@ -175,6 +240,17 @@ export function canSeeNavItem(item: NavItem, context: SidebarNavContext): boolea
     return item.permissions.every((p) =>
       context.hasPermission(p.resource, p.action)
     );
+  }
+
+  if (item.featureKey) {
+    const features = context.entitledFeatureKeys;
+    // Until capability snapshot loads, hide gated items (no dead tabs).
+    if (!features || !features.includes(item.featureKey)) return false;
+  }
+
+  if (item.applicationKey) {
+    const apps = context.entitledApplicationKeys;
+    if (!apps || !apps.includes(item.applicationKey)) return false;
   }
 
   return true;

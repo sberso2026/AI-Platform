@@ -1,0 +1,144 @@
+name: Phase 10K Asset Intelligence V1.0 GA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/asset-intelligence/**"
+      - "packages/asset-intelligence-certification/**"
+      - "packages/platform-certification/src/phase10k*"
+      - "packages/platform-commerce/src/domain/commerce-access-policy.ts"
+      - "supabase/migrations/*asset_intelligence*"
+      - "apps/web/src/app/api/engineering/asset-intelligence/**"
+      - "apps/web/src/app/(platform)/engineering/apps/asset-intelligence/**"
+      - "apps/web/src/components/engineering/asset-intelligence-shell.tsx"
+      - ".github/workflows/phase-10k-asset-intelligence-ga.yml"
+      - "docs/release/ASSET_INTELLIGENCE_V1_*"
+      - "docs/runbooks/ASSET_INTELLIGENCE_V1_*"
+      - "docs/architecture/ASSET_INTELLIGENCE_V1_*"
+      - "docs/commercial/ASSET_INTELLIGENCE_V1_*"
+
+concurrency:
+  group: phase-10k-asset-intelligence-ga-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  ASSET_INTELLIGENCE_CERTIFICATION: "1"
+  ASSET_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+  CERTIFY_BROWSER: "1"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright chromium
+        run: pnpm --filter @rtb/asset-intelligence-certification exec playwright install --with-deps chromium
+      - name: Unit tests
+        run: pnpm --filter @rtb/asset-intelligence test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase10k-asset-intelligence-ga.test.ts
+      - name: Browser GA gate
+        run: pnpm --filter @rtb/asset-intelligence-certification test:e2e:v1
+      - name: Phase 10K certification (gates A–BM)
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+        run: pnpm --filter @rtb/asset-intelligence-certification certify:phase10k
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/asset-intelligence-certification/artifacts/phase10k-asset-intelligence-v1-ga-certification.json","utf8"));
+          const checks = [
+            a.verdict==="PASS",
+            a.failedGateCount===0,
+            a.skippedGateCount===0,
+            a.notExecutedGateCount===0,
+            a.requiredGates.length===65,
+            a.version==="1.0.0",
+            a.status==="ga",
+            a.previousVersion==="0.10.0-predictive-governance",
+            a.releaseTag==="asset-intelligence-v1.0.0",
+            a.releaseTagDeclared===true,
+            a.assetIntelligenceV1GaCertified===true,
+            a.assetIntelligenceV1Frozen===true,
+            a.assetIntelligenceUpgradeCertified===true,
+            a.assetIntelligenceBackupRestoreCertified===true,
+            a.productionAssetIntelligenceReady===true,
+            a.productionMemoryRepositoryAllowed===false,
+            a.moduleRegistryDriftDetected===false,
+            a.capabilityRegistryPublished===true,
+            a.serviceRegistryPublished===true,
+            a.eventContractsFrozen===true,
+            a.unavailableCapabilityMatrixPublished===true,
+            a.moduleManifestGenerated===true,
+            a.browserCertified===true,
+            a.batch60Created===false,
+            a.migrationLineage.length===6,
+            a.productionPredictiveExecutionEnabled===false,
+            a.predictiveMlEnabled===false,
+            a.predictiveMethodsCertified===false,
+            a.probabilityOfFailureCertified===false,
+            a.rulClaimsCertified===false,
+            a.accuracyClaimsCertified===false,
+            a.quantitativeReliabilityCertified===false,
+            a.predictiveHealthContributionEnabled===false,
+            a.criticalityIsHealthFactor===false,
+            a.riskCoreAutoMutationAllowed===false,
+            a.createsWorkOrder===false,
+            a.projectIntelligenceV1Intact===true,
+            a.inspectionIntelligenceV1Intact===true,
+            a.releaseEligible===true,
+            a.unexpected5xx===0,
+            a.secretExposureDetected===false,
+          ];
+          if (checks.some(x=>!x)) { console.error(a); process.exit(1); }
+          console.log(JSON.stringify({
+            verdict:a.verdict,
+            version:a.version,
+            releaseTag:a.releaseTag,
+            releaseTagExists:a.releaseTagExists,
+            tagToCreate:a.tagToCreate,
+          },null,2));
+          EOF
+      - name: Release tag instruction
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/asset-intelligence-certification/artifacts/phase10k-asset-intelligence-v1-ga-certification.json","utf8"));
+          if (a.tagToCreate) {
+            console.log(`Certification PASS. Release owner must now create the immutable tag ${a.tagToCreate} at ${a.ciHeadSha}. This workflow never creates it.`);
+          } else {
+            console.log(`Release tag ${a.releaseTag} already exists at ${a.releaseTagTarget} and points at the certified build: ${a.releaseTagPointsAtBuild}.`);
+          }
+          EOF
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase10k-asset-intelligence-v1-ga-certification
+          path: packages/asset-intelligence-certification/artifacts/phase10k-asset-intelligence-v1-ga-certification.json
+          if-no-files-found: warn
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase10k-asset-intelligence-playwright-report
+          path: packages/asset-intelligence-certification/artifacts/playwright-report.json
+          if-no-files-found: warn

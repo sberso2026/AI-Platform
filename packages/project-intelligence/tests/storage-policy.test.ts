@@ -43,6 +43,72 @@ describe("storage policy", () => {
         fileName: "big.pdf",
         sizeBytes: DOCUMENT_MAX_UPLOAD_BYTES + 1,
       }),
-    ).toThrow(/maximum upload size/i);
+    ).toThrow(/25 MB pilot upload limit/i);
+  });
+
+  it("rejects archives, path traversal names, and magic-byte mismatches", () => {
+    expect(() =>
+      validateDocumentStoragePolicy({
+        mimeType: "application/pdf",
+        fileName: "bundle.zip",
+        sizeBytes: 10,
+      }),
+    ).toThrow(DocumentIntelligenceError);
+
+    expect(() =>
+      validateDocumentStoragePolicy({
+        mimeType: "application/pdf",
+        fileName: "../secret.pdf",
+        sizeBytes: 10,
+        bytes: Buffer.from("not-a-pdf"),
+      }),
+    ).toThrow(/PDF signature/i);
+
+    expect(
+      validateDocumentStoragePolicy({
+        mimeType: "application/pdf",
+        fileName: "ok.pdf",
+        sizeBytes: 8,
+        bytes: Buffer.from("%PDF-1.7"),
+      }).ok,
+    ).toBe(true);
+  });
+
+  it("rejects MIME/extension spoofing and malformed PDF/DOCX signatures", () => {
+    expect(() =>
+      validateDocumentStoragePolicy({
+        mimeType: "application/pdf",
+        fileName: "notes.txt",
+        sizeBytes: 8,
+        bytes: Buffer.from("%PDF-1.7"),
+      }),
+    ).toThrow(DocumentIntelligenceError);
+
+    expect(() =>
+      validateDocumentStoragePolicy({
+        mimeType: "text/plain",
+        fileName: "spec.pdf",
+        sizeBytes: 8,
+        bytes: Buffer.from("hello"),
+      }),
+    ).toThrow(DocumentIntelligenceError);
+
+    expect(() =>
+      validateDocumentStoragePolicy({
+        mimeType: "application/pdf",
+        fileName: "broken.pdf",
+        sizeBytes: 6,
+        bytes: Buffer.from("notpdf"),
+      }),
+    ).toThrow(/PDF signature/i);
+
+    expect(() =>
+      validateDocumentStoragePolicy({
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        fileName: "broken.docx",
+        sizeBytes: 4,
+        bytes: Buffer.from("XXXX"),
+      }),
+    ).toThrow(/DOCX signature/i);
   });
 });

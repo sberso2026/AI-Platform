@@ -1,0 +1,87 @@
+{
+  "phase": "EOS-2.19-PILOT-EXPANSION-AND-OPERATIONAL-HARDENING",
+  "verdict": "PASS_WITH_LIMITATIONS",
+  "startHead": "0b44d657bed093209c8ef68d71b9a62a6458800c",
+  "eos218BaselineVerified": true,
+  "qualificationStatus": "QUALIFIED_BOUNDED",
+  "qualificationPreserved": true,
+  "productionBeforeHardening": {
+    "deploymentId": "dpl_eXE8meiGGdYAvBQ6uKJMFRKbiMkC",
+    "runtimeCommit": "031777b75403f6e3390c2aaff5cd909d4fe512e5",
+    "supabase": "wcydlhqiqdwgoaqrlget",
+    "ledger": 159,
+    "mode": "controlled_pilot",
+    "enrolled": 1
+  },
+  "stagingHardeningValidation": "PASS",
+  "stagingDeploymentId": "dpl_FoK4LGBZMy1DwEhZCvnd4aA3QqDQ",
+  "productionHardeningDeploymentId": "dpl_9ormC4dMrDwNbbKFoPzMSBLVz5uZ",
+  "productionHardeningSourceCommit": "7991f7f0cb6254ecb31f77ef94b6411e8892b329",
+  "productionHardeningSourceProvenanceVerified": true,
+  "productionHardeningNote": "Authoritative Production promote from committed SHA 7991f7f0 after staging Ready preview",
+  "hydration418": {
+    "rootCauseIdentified": true,
+    "status": "RESOLVED",
+    "severity": "MEDIUM"
+  },
+  "legacyOverviewCounter": {
+    "stateConsistent": "PASS",
+    "status": "UX_LIMITATION_WITH_NONMISLEADING_LABEL"
+  },
+  "mdr": {
+    "surfaceStatus": "UX_LIMITATION",
+    "deliverableUsability": "PASS_WITH_LIMITATIONS"
+  },
+  "aiRetrieval": {
+    "abstentionRootCauseIdentified": true,
+    "grounding": "PASS"
+  },
+  "performance": {
+    "baselineEstablished": true,
+    "status": "DEGRADED_NONBLOCKING"
+  },
+  "reliability": {
+    "soak": "PASS",
+    "operationCount": 28,
+    "failureCount": 0
+  },
+  "gates": {
+    "canonicalDeterministic": true,
+    "backgroundAmbiguityResolved": true,
+    "authoritativeResult": "PASS_WITH_KNOWN_MODERATE",
+    "releaseTestCount": 220
+  },
+  "livePersistenceHang": {
+    "rootCauseIdentified": true,
+    "boundedTimeoutPass": true,
+    "cause": "orchestration_unbounded_full_test_pack"
+  },
+  "dependency": {
+    "advisory": "GHSA-w5hq-g745-h8pq",
+    "disposition": "ACCEPTED_BOUNDED_RISK"
+  },
+  "recovery": {
+    "runbookComplete": true,
+    "schemaRecoverability": "PASS",
+    "pitrGaDisposition": "RECOMMENDED_FOR_GA"
+  },
+  "cohort": {
+    "candidateDiscoveryComplete": true,
+    "eligibleCandidateCount": 0,
+    "humanExpansionGo": false,
+    "aiExpansionAuthority": false,
+    "status": "NOT_EXPANDED_PENDING_HUMAN_COHORT_APPROVAL",
+    "enrolledBefore": 1,
+    "enrolledAfter": 1
+  },
+  "entitlementClassification": "INTERNAL_PILOT_ONLY",
+  "pilotFeedbackUserCount": 1,
+  "controlledPilotUserGuideReady": true,
+  "databaseSchemaChanged": false,
+  "newMigrationCreated": false,
+  "engineeringFormulasChanged": false,
+  "engineeringResultSemanticsChanged": false,
+  "qualifiedD1BaselineInvalidated": false,
+  "nextPhase": "EOS-2.20-EOS-2.0-GENERAL-AVAILABILITY-GATE",
+  "readyForNextPhase": true
+}

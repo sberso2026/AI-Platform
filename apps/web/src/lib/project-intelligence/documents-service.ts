@@ -6,17 +6,18 @@
 import { randomUUID } from "node:crypto";
 import {
   DocumentIntelligenceError,
-  GovernedEmbeddingAdapter,
   PostgresDocumentIndexAdapter,
   ProjectIntelligenceDocumentComparisonService,
   ProjectIntelligenceDocumentRetrievalService,
   ProjectIntelligenceDocumentWorker,
+  UnavailableEmbeddingAdapter,
   applyDocumentReviewAction,
   buildGroundedAnswer,
   detectConflictingCitations,
   enqueueDocumentProcessing,
   evaluateAbstention,
   isAuthoritativeAnswerAllowed,
+  tryCreateGovernedEmbeddingAdapter,
   type AnswerStatus,
   type DocumentProcessingStatus,
   type DocumentReviewAction,
@@ -579,7 +580,7 @@ export async function queryDocuments(
 
   const supabase = service();
   const index = new PostgresDocumentIndexAdapter(supabase as unknown as ConstructorParameters<typeof PostgresDocumentIndexAdapter>[0]);
-  const embeddings = new GovernedEmbeddingAdapter();
+  const embeddings = tryCreateGovernedEmbeddingAdapter() ?? new UnavailableEmbeddingAdapter();
   const retrieval = new ProjectIntelligenceDocumentRetrievalService(index, embeddings);
   const result = await retrieval.retrieve(
     {
@@ -620,7 +621,7 @@ export async function queryDocuments(
         ...new Set(result.citations.map((citation) => citation.engineeringDocumentId)),
       ],
       retrievalTraceId: result.retrievalTraceId || retrievalTraceId,
-      model: embeddings.modelId,
+    model: "modelId" in embeddings ? embeddings.modelId : "unavailable",
       promptVersion: "8c-document-1",
       processingVersions: ["1"],
       warnings: [abstention.reason],
@@ -638,7 +639,7 @@ export async function queryDocuments(
     evidence: result.citations,
     documentsUsed: [...new Set(result.citations.map((citation) => citation.engineeringDocumentId))],
     retrievalTraceId: result.retrievalTraceId || retrievalTraceId,
-    model: embeddings.modelId,
+    model: "modelId" in embeddings ? embeddings.modelId : "unavailable",
     promptVersion: "8c-document-1",
     processingVersions: ["1"],
     warnings: [],
@@ -828,9 +829,25 @@ export async function getDocumentHealth(context: CommerceHandlerContext) {
 }
 
 export async function runDocumentWorkerOnce(workerId?: string) {
+  const embeddings = tryCreateGovernedEmbeddingAdapter() ?? undefined;
   const worker = new ProjectIntelligenceDocumentWorker(service() as unknown as ConstructorParameters<typeof ProjectIntelligenceDocumentWorker>[0], {
     workerId: workerId ?? `api-drain-${randomUUID().slice(0, 8)}`,
     batchSize: 10,
+    embeddings,
   });
   return worker.processBatch();
 }
+
+export async function drainDocumentJobsInBackground(): Promise<void> {
+  try {
+    await runDocumentWorkerOnce();
+  } catch (error) {
+    console.error("document worker drain failed", error);
+  }
+}
+
+export {
+  enqueueCanonicalDocumentIngestion,
+  getEngineeringDocumentIngestionPresentation,
+} from "./document-ingestion";
+

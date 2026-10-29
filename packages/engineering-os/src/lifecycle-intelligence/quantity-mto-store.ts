@@ -1,0 +1,250 @@
+import type { SupabaseClient } from "@rtb/database";
+import {
+  COMPOSITION_EVIDENCE_FROM_TYPE,
+  COMPOSITION_EVIDENCE_RELATIONSHIP,
+  COMPOSITION_EVIDENCE_TO_TYPE,
+  type CompositionEvidenceLink,
+} from "./composition-evidence";
+import {
+  itemFromRow,
+  itemInsertRow,
+  snapshotHeaderFromRow,
+  snapshotInsertRow,
+  type PersistedMtoSnapshot,
+} from "./quantity-mto-persist";
+
+export interface QuantityMtoStore {
+  listSnapshots(workspaceId: string, projectId: string, workPlanId?: string | null): Promise<PersistedMtoSnapshot[]>;
+  getSnapshot(id: string): Promise<PersistedMtoSnapshot | null>;
+  saveSnapshot(row: PersistedMtoSnapshot): Promise<PersistedMtoSnapshot>;
+  updateSnapshotHeader(row: PersistedMtoSnapshot): Promise<PersistedMtoSnapshot>;
+  updateItem(snapshotId: string, item: PersistedMtoSnapshot["items"][number]): Promise<void>;
+  listEvidenceLinks(fromId: string, tenantId: string): Promise<CompositionEvidenceLink[]>;
+  replaceEvidenceLink(link: CompositionEvidenceLink): Promise<void>;
+}
+
+export function createMemoryQuantityMtoStore(): QuantityMtoStore {
+  const rows = new Map<string, PersistedMtoSnapshot>();
+  const evidence = new Map<string, CompositionEvidenceLink>();
+  const evidenceKey = (fromId: string, tenantId: string) => `${tenantId}|${fromId}|${COMPOSITION_EVIDENCE_RELATIONSHIP}|${COMPOSITION_EVIDENCE_TO_TYPE}`;
+  return {
+    async listSnapshots(workspaceId, projectId, workPlanId) {
+      return [...rows.values()].filter((row) =>
+        row.workspaceId === workspaceId
+        && row.projectId === projectId
+        && (workPlanId == null || row.workPlanId === workPlanId),
+      ).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    },
+    async getSnapshot(id) {
+      return rows.get(id) ?? null;
+    },
+    async saveSnapshot(row) {
+      const existing = rows.get(row.id);
+      if (existing && (existing.status === "VERIFIED" || existing.status === "SUPERSEDED") && existing.snapshotFingerprint !== row.snapshotFingerprint) {
+        throw new Error("verified_mto_immutable");
+      }
+      rows.set(row.id, structuredClone(row));
+      return structuredClone(row);
+    },
+    async updateSnapshotHeader(row) {
+      const existing = rows.get(row.id);
+      if (!existing) throw new Error("not_found");
+      if ((existing.status === "VERIFIED" || existing.status === "SUPERSEDED") && existing.snapshotFingerprint !== row.snapshotFingerprint) {
+        throw new Error("verified_mto_immutable");
+      }
+      const next = { ...existing, ...row, items: existing.items.map((item) => {
+        const replacement = row.items.find((candidate) => candidate.id === item.id);
+        return replacement ?? item;
+      }) };
+      if (row.items.length) next.items = row.items;
+      rows.set(row.id, next);
+      return structuredClone(next);
+    },
+    async updateItem(snapshotId, item) {
+      const existing = rows.get(snapshotId);
+      if (!existing) throw new Error("not_found");
+      if (existing.status === "VERIFIED" || existing.status === "SUPERSEDED") throw new Error("verified_mto_immutable");
+      existing.items = existing.items.map((row) => (row.id === item.id || row.itemCode === item.itemCode ? item : row));
+      rows.set(snapshotId, existing);
+    },
+    async listEvidenceLinks(fromId, tenantId) {
+      const row = evidence.get(evidenceKey(fromId, tenantId));
+      return row ? [structuredClone(row)] : [];
+    },
+    async replaceEvidenceLink(link) {
+      evidence.set(evidenceKey(link.fromId, link.tenantId), structuredClone(link));
+    },
+  };
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * Canonical engineering_object_links ownership is tenant_id plus endpoint resolve.
+ * Workspace is not a column on that table; it is derived from linked objects / project.
+ * MTO quantity_basis / drawing refs are not UUID object-link endpoints.
+ * relationship_governed stays false: mto_snapshot / mto_item / quantity_basis are not
+ * registered in engineering_object_link_resolve, so governed writes would fail the scope guard.
+ */
+export function objectLinkInsertRows(row: PersistedMtoSnapshot): Array<Record<string, unknown>> {
+  const seen = new Set<string>();
+  const payload: Array<Record<string, unknown>> = [];
+  for (const link of row.thread) {
+    if (!UUID_RE.test(link.fromId) || !UUID_RE.test(link.toId)) continue;
+    const key = `${link.fromType}|${link.fromId}|${link.toType}|${link.toId}|${link.relationship}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    payload.push({
+      tenant_id: row.tenantId,
+      from_type: link.fromType,
+      from_id: link.fromId,
+      to_type: link.toType,
+      to_id: link.toId,
+      relationship: link.relationship,
+      relationship_governed: false,
+      created_by: row.createdBy && UUID_RE.test(row.createdBy) ? row.createdBy : null,
+    });
+  }
+  return payload;
+}
+
+function db(client: SupabaseClient): { from(name: string): any } {
+  return client as unknown as { from(name: string): any };
+}
+
+async function loadItems(client: SupabaseClient, snapshot: ReturnType<typeof snapshotHeaderFromRow>): Promise<PersistedMtoSnapshot> {
+  const { data, error } = await db(client)
+    .from("engineering_mto_items")
+    .select("*")
+    .eq("snapshot_id", snapshot.id)
+    .order("item_code");
+  if (error) throw new Error(error.message);
+  const items = ((data ?? []) as Record<string, unknown>[]).map((row) => itemFromRow(row, snapshot));
+  return { ...snapshot, items, itemCount: items.length };
+}
+
+export class SupabaseQuantityMtoStore implements QuantityMtoStore {
+  constructor(private readonly supabase: SupabaseClient) {}
+
+  async listSnapshots(workspaceId: string, projectId: string, workPlanId?: string | null) {
+    let query = db(this.supabase)
+      .from("engineering_mto_snapshots")
+      .select("*")
+      .eq("workspace_id", workspaceId)
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false });
+    if (workPlanId) query = query.eq("work_plan_id", workPlanId);
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    const headers = ((data ?? []) as Record<string, unknown>[]).map((row) => snapshotHeaderFromRow(row, []));
+    return Promise.all(headers.map((row) => loadItems(this.supabase, row)));
+  }
+
+  async getSnapshot(id: string) {
+    const { data, error } = await db(this.supabase).from("engineering_mto_snapshots").select("*").eq("id", id).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) return null;
+    return loadItems(this.supabase, snapshotHeaderFromRow(data as Record<string, unknown>, []));
+  }
+
+  async saveSnapshot(row: PersistedMtoSnapshot) {
+    const { error } = await db(this.supabase).from("engineering_mto_snapshots").insert(snapshotInsertRow(row));
+    if (error) throw new Error(error.message);
+    if (row.items.length) {
+      const { error: itemError } = await db(this.supabase)
+        .from("engineering_mto_items")
+        .insert(row.items.map((item) => itemInsertRow(row, item)));
+      if (itemError) throw new Error(itemError.message);
+    }
+    await this.insertThread(row);
+    return row;
+  }
+
+  async updateSnapshotHeader(row: PersistedMtoSnapshot) {
+    const { error } = await db(this.supabase)
+      .from("engineering_mto_snapshots")
+      .update({
+        status: row.status,
+        verification_state: row.verificationState,
+        staleness: row.staleness,
+        verified_at: row.verifiedAt,
+        verified_by: row.verifiedBy,
+        item_count: row.itemCount,
+        export_disclaimer: row.exportDisclaimer,
+      })
+      .eq("id", row.id);
+    if (error) throw new Error(error.message);
+    return (await this.getSnapshot(row.id)) ?? row;
+  }
+
+  async updateItem(snapshotId: string, item: PersistedMtoSnapshot["items"][number]) {
+    const { error } = await db(this.supabase)
+      .from("engineering_mto_items")
+      .update({
+        verification_status: item.verificationStatus === "ENGINEER_ACCEPTED" ? "VERIFIED" : item.verificationStatus === "NEEDS_INFORMATION" ? "NEEDS_INFORMATION" : item.verificationStatus === "REJECTED" ? "REJECTED" : "UNVERIFIED",
+        verified_at: item.verifiedAt ?? null,
+        verified_by: item.verifiedBy ?? null,
+        status: item.status,
+      })
+      .eq("snapshot_id", snapshotId)
+      .eq("id", item.id);
+    if (error) throw new Error(error.message);
+  }
+
+  private async insertThread(row: PersistedMtoSnapshot) {
+    const payload = objectLinkInsertRows(row);
+    if (!payload.length) return;
+    const { error } = await db(this.supabase).from("engineering_object_links").insert(payload);
+    if (error) throw new Error(error.message);
+  }
+
+  async listEvidenceLinks(fromId: string, tenantId: string) {
+    const { data, error } = await db(this.supabase)
+      .from("engineering_object_links")
+      .select("tenant_id,from_type,from_id,to_type,to_id,relationship,created_at,created_by")
+      .eq("tenant_id", tenantId)
+      .eq("from_type", COMPOSITION_EVIDENCE_FROM_TYPE)
+      .eq("from_id", fromId)
+      .eq("to_type", COMPOSITION_EVIDENCE_TO_TYPE)
+      .eq("relationship", COMPOSITION_EVIDENCE_RELATIONSHIP)
+      .order("created_at", { ascending: false })
+      .limit(8);
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+      tenantId: String(row.tenant_id),
+      fromType: COMPOSITION_EVIDENCE_FROM_TYPE,
+      fromId: String(row.from_id),
+      toType: COMPOSITION_EVIDENCE_TO_TYPE,
+      toId: String(row.to_id),
+      relationship: COMPOSITION_EVIDENCE_RELATIONSHIP,
+      createdAt: String(row.created_at ?? ""),
+      createdBy: row.created_by ? String(row.created_by) : null,
+    }));
+  }
+
+  async replaceEvidenceLink(link: CompositionEvidenceLink) {
+    const existing = await this.listEvidenceLinks(link.fromId, link.tenantId);
+    if (existing.length) {
+      const { error: delError } = await db(this.supabase)
+        .from("engineering_object_links")
+        .delete()
+        .eq("tenant_id", link.tenantId)
+        .eq("from_type", COMPOSITION_EVIDENCE_FROM_TYPE)
+        .eq("from_id", link.fromId)
+        .eq("to_type", COMPOSITION_EVIDENCE_TO_TYPE)
+        .eq("relationship", COMPOSITION_EVIDENCE_RELATIONSHIP);
+      if (delError) throw new Error(delError.message);
+    }
+    const { error } = await db(this.supabase).from("engineering_object_links").insert({
+      tenant_id: link.tenantId,
+      from_type: link.fromType,
+      from_id: link.fromId,
+      to_type: link.toType,
+      to_id: link.toId,
+      relationship: link.relationship,
+      relationship_governed: false,
+      created_by: link.createdBy && UUID_RE.test(link.createdBy) ? link.createdBy : null,
+    });
+    if (error) throw new Error(error.message);
+  }
+}

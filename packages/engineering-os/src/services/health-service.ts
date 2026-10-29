@@ -30,6 +30,7 @@ const REGISTER_TABLES = [
   "engineering_issues",
   "engineering_technical_queries",
   "engineering_lessons",
+  "engineering_assumptions",
 ] as const;
 
 export class EngineeringHealthService {

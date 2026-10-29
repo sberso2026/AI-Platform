@@ -33,38 +33,55 @@ export class AIDirectorService {
     const agent = await this.resolveAgent(request.tenantId, request.agentId);
     const intent = await this.intentClassifier.classify(request.message, request.context);
 
-    // Capability routing lookup
-    const capabilityRoute = await this.intelligence?.capabilities.routeByIntent(
-      request.tenantId,
-      intent
-    );
+    // Capability routing lookup — must not fail generation
+    let capabilityRoute: Awaited<
+      ReturnType<NonNullable<PlatformIntelligence["capabilities"]["routeByIntent"]>>
+    > | null = null;
+    try {
+      capabilityRoute = (await this.intelligence?.capabilities.routeByIntent(
+        request.tenantId,
+        intent,
+      )) ?? null;
+    } catch {
+      capabilityRoute = null;
+    }
 
     // Feature flag check
-    const intelligenceEnabled = this.intelligence
-      ? await this.intelligence.features.evaluate({
+    let intelligenceEnabled = Boolean(this.intelligence);
+    if (this.intelligence) {
+      try {
+        intelligenceEnabled = await this.intelligence.features.evaluate({
           tenantId: request.tenantId,
           featureKey: "platform_intelligence",
           userId: request.userId,
-        })
-      : true;
+        });
+      } catch {
+        intelligenceEnabled = true;
+      }
+    }
 
-    // Start observability trace
+    // Start observability trace — must not fail generation
     let traceId: string | undefined;
     let modelSpan: { spanId: string; startedAt: string } | undefined;
     if (this.intelligence && intelligenceEnabled) {
-      const trace = await this.intelligence.observability.startTrace({
-        tenantId: request.tenantId,
-        name: "agent.run",
-        source: "ai-director",
-        metadata: { agent_id: agent.id, intent },
-      });
-      traceId = trace.id as string;
-      const span = await this.intelligence.observability.createSpan({
-        traceId,
-        name: "agent.resolve",
-        spanType: "agent",
-      });
-      modelSpan = { spanId: span.span.id as string, startedAt: span.startedAt };
+      try {
+        const trace = await this.intelligence.observability.startTrace({
+          tenantId: request.tenantId,
+          name: "agent.run",
+          source: "ai-director",
+          metadata: { agent_id: agent.id, intent },
+        });
+        traceId = trace.id as string;
+        const span = await this.intelligence.observability.createSpan({
+          traceId,
+          name: "agent.resolve",
+          spanType: "agent",
+        });
+        modelSpan = { spanId: span.span.id as string, startedAt: span.startedAt };
+      } catch {
+        traceId = undefined;
+        modelSpan = undefined;
+      }
     }
 
     const { data: run, error: runError } = await this.supabase
@@ -91,43 +108,55 @@ export class AIDirectorService {
 
     if (runError || !run) throw new Error(`Failed to create agent run: ${runError?.message}`);
 
-    await this.eventBus?.publish({
-      tenantId: request.tenantId,
-      workspaceId: request.workspaceId,
-      eventType: "agent.run.started",
-      source: "ai-director",
-      payload: { run_id: run.id as string, agent_id: agent.id as string, intent },
-    });
+    try {
+      await this.eventBus?.publish({
+        tenantId: request.tenantId,
+        workspaceId: request.workspaceId,
+        eventType: "agent.run.started",
+        source: "ai-director",
+        payload: { run_id: run.id as string, agent_id: agent.id as string, intent },
+      });
+    } catch {
+      // Event persistence must not fail generation.
+    }
 
-    await this.supabase.from("agent_messages").insert({
-      run_id: run.id,
-      role: "user",
-      content: request.message,
-    });
+    try {
+      await this.supabase.from("agent_messages").insert({
+        run_id: run.id,
+        role: "user",
+        content: request.message,
+      });
+    } catch {
+      // Message log must not fail generation.
+    }
 
     try {
       // Prompt registry selection
       let systemPrompt = agent.system_prompt as string | undefined;
       let promptVersionId: string | undefined;
       if (this.intelligence && intelligenceEnabled) {
-        const promptSelection = await this.intelligence.prompts.selectForAgent(
-          request.tenantId,
-          agent.slug as string
-        );
-        if (promptSelection) {
-          systemPrompt = promptSelection.version.content as string;
-          promptVersionId = promptSelection.version.id as string;
-          await this.intelligence.prompts.logUsage({
-            tenantId: request.tenantId,
-            promptId: promptSelection.prompt.id as string,
-            promptVersionId,
-            agentId: agent.id as string,
-            runId: run.id as string,
-          });
-          await this.supabase
-            .from("agent_runs")
-            .update({ prompt_version_id: promptVersionId })
-            .eq("id", run.id as string);
+        try {
+          const promptSelection = await this.intelligence.prompts.selectForAgent(
+            request.tenantId,
+            agent.slug as string
+          );
+          if (promptSelection) {
+            systemPrompt = promptSelection.version.content as string;
+            promptVersionId = promptSelection.version.id as string;
+            await this.intelligence.prompts.logUsage({
+              tenantId: request.tenantId,
+              promptId: promptSelection.prompt.id as string,
+              promptVersionId,
+              agentId: agent.id as string,
+              runId: run.id as string,
+            });
+            await this.supabase
+              .from("agent_runs")
+              .update({ prompt_version_id: promptVersionId })
+              .eq("id", run.id as string);
+          }
+        } catch {
+          // Prompt registry lookup must not fail generation; keep agent system prompt.
         }
       }
 
@@ -136,7 +165,12 @@ export class AIDirectorService {
         ? await this.intelligence.models.resolveRoute(request.tenantId, intent)
         : await this.resolveLegacyModelRoute(request.tenantId, intent);
 
-      const adapter = this.adapters.get(route.providerType) ?? new MockModelAdapter();
+      const adapter = this.adapters.get(route.providerType);
+      if (!adapter) {
+        throw new Error(
+          `AI_DIRECTOR_FAILURE layer=provider_adapter cause=no_adapter_registered:${route.providerType}`,
+        );
+      }
       const modelStart = Date.now();
 
       const result = await adapter.complete({
@@ -149,40 +183,44 @@ export class AIDirectorService {
 
       const modelLatency = Date.now() - modelStart;
 
-      // Cost tracking
+      // Cost tracking — must not fail generation
       if (this.intelligence && intelligenceEnabled) {
-        const inputTokens = Math.ceil(request.message.length / 4);
-        const outputTokens = Math.ceil(result.content.length / 4);
-        await this.intelligence.costs.recordModelCall({
-          tenantId: request.tenantId,
-          workspaceId: request.workspaceId,
-          runId: run.id as string,
-          agentId: agent.id as string,
-          userId: request.userId,
-          inputTokens,
-          outputTokens,
-          costInputPer1k: route.costInputPer1k,
-          costOutputPer1k: route.costOutputPer1k,
-        });
-        await this.intelligence.models.logUsage({
-          tenantId: request.tenantId,
-          modelId: route.modelId,
-          runId: run.id as string,
-          inputTokens,
-          outputTokens,
-          latencyMs: modelLatency,
-        });
-        await this.intelligence.observability.recordMetric(
-          request.tenantId,
-          "agent_latency",
-          modelLatency,
-          { intent, model: route.modelKey }
-        );
-        await this.intelligence.observability.recordMetric(
-          request.tenantId,
-          "token_usage",
-          inputTokens + outputTokens
-        );
+        try {
+          const inputTokens = Math.ceil(request.message.length / 4);
+          const outputTokens = Math.ceil(result.content.length / 4);
+          await this.intelligence.costs.recordModelCall({
+            tenantId: request.tenantId,
+            workspaceId: request.workspaceId,
+            runId: run.id as string,
+            agentId: agent.id as string,
+            userId: request.userId,
+            inputTokens,
+            outputTokens,
+            costInputPer1k: route.costInputPer1k,
+            costOutputPer1k: route.costOutputPer1k,
+          });
+          await this.intelligence.models.logUsage({
+            tenantId: request.tenantId,
+            modelId: route.modelId,
+            runId: run.id as string,
+            inputTokens,
+            outputTokens,
+            latencyMs: modelLatency,
+          });
+          await this.intelligence.observability.recordMetric(
+            request.tenantId,
+            "agent_latency",
+            modelLatency,
+            { intent, model: route.modelKey }
+          );
+          await this.intelligence.observability.recordMetric(
+            request.tenantId,
+            "token_usage",
+            inputTokens + outputTokens
+          );
+        } catch {
+          // Cost/usage/metrics must not fail generation.
+        }
       }
 
       // Policy evaluation
@@ -190,24 +228,31 @@ export class AIDirectorService {
         (agent.requires_review as boolean) || this.isEngineeringDecision(intent, request.message);
 
       if (this.intelligence && intelligenceEnabled) {
-        const policyResult = await this.intelligence.policies.evaluate({
-          tenantId: request.tenantId,
-          intent,
-          confidence: result.confidence,
-          operatingSystem: intent === "engineering" ? "engineering" : undefined,
-          modelProvider: route.providerType,
-          agentId: agent.id as string,
-        });
-        if (!policyResult.allowed) {
-          throw new Error(`Policy denied: ${policyResult.violations.join(", ")}`);
-        }
-        requiresReview = requiresReview || policyResult.requiresReview || result.confidence < 0.7;
-        if (policyResult.violations.length) {
-          await this.intelligence.observability.recordMetric(
-            request.tenantId,
-            "policy_violation_rate",
-            policyResult.violations.length
-          );
+        try {
+          const policyResult = await this.intelligence.policies.evaluate({
+            tenantId: request.tenantId,
+            intent,
+            confidence: result.confidence,
+            operatingSystem: intent === "engineering" ? "engineering" : undefined,
+            modelProvider: route.providerType,
+            agentId: agent.id as string,
+          });
+          if (!policyResult.allowed) {
+            throw new Error(
+              `AI_DIRECTOR_FAILURE layer=policy cause=denied:${policyResult.violations.join(",")}`.slice(0, 180),
+            );
+          }
+          requiresReview = requiresReview || policyResult.requiresReview || result.confidence < 0.7;
+          if (policyResult.violations.length) {
+            await this.intelligence.observability.recordMetric(
+              request.tenantId,
+              "policy_violation_rate",
+              policyResult.violations.length
+            );
+          }
+        } catch (err) {
+          if (err instanceof Error && /layer=policy/.test(err.message)) throw err;
+          requiresReview = true;
         }
       } else {
         requiresReview = requiresReview || result.confidence < 0.7;
@@ -232,48 +277,73 @@ export class AIDirectorService {
         .select()
         .single();
 
-      if (updateError) throw new Error(`Failed to update agent run: ${updateError.message}`);
-
-      await this.supabase.from("agent_messages").insert({
-        run_id: run.id,
-        role: "assistant",
-        content: result.content,
-        metadata: {
-          confidence: result.confidence,
-          evidence_refs: result.evidenceRefs,
-          prompt_version_id: promptVersionId,
-          model_route: route.modelKey,
-        } as Json,
-      });
-
-      if (this.intelligence && traceId) {
-        if (modelSpan) {
-          await this.intelligence.observability.completeSpan(
-            modelSpan.spanId,
-            modelSpan.startedAt,
-            "completed"
-          );
-        }
-        await this.intelligence.observability.completeTrace(traceId, "completed");
+      if (updateError || !updatedRun) {
+        return {
+          run: mapAgentRun({
+            ...(run as Record<string, unknown>),
+            status: "review_required",
+            output: { message: result.content },
+            confidence: result.confidence,
+            requires_review: true,
+            model_provider: route.providerType,
+            model_name: route.modelKey,
+          }),
+          message: result.content,
+          requiresReview: true,
+        };
       }
 
-      if (requiresReview) {
+      try {
+        await this.supabase.from("agent_messages").insert({
+          run_id: run.id,
+          role: "assistant",
+          content: result.content,
+          metadata: {
+            confidence: result.confidence,
+            evidence_refs: result.evidenceRefs,
+            prompt_version_id: promptVersionId,
+            model_route: route.modelKey,
+          } as Json,
+        });
+      } catch {
+        // Message log must not fail generation.
+      }
+
+      if (this.intelligence && traceId) {
+        try {
+          if (modelSpan) {
+            await this.intelligence.observability.completeSpan(
+              modelSpan.spanId,
+              modelSpan.startedAt,
+              "completed"
+            );
+          }
+          await this.intelligence.observability.completeTrace(traceId, "completed");
+        } catch {
+          // Observability completion must not fail generation.
+        }
+      }
+
+      try {
+        if (requiresReview) {
+          await this.eventBus?.publish({
+            tenantId: request.tenantId,
+            workspaceId: request.workspaceId,
+            eventType: "review.required",
+            source: "ai-director",
+            payload: { run_id: run.id as string, reason: "Agent output requires human review" },
+          });
+        }
         await this.eventBus?.publish({
           tenantId: request.tenantId,
           workspaceId: request.workspaceId,
-          eventType: "review.required",
+          eventType: "agent.run.completed",
           source: "ai-director",
-          payload: { run_id: run.id as string, reason: "Agent output requires human review" },
+          payload: { run_id: run.id as string, status: finalStatus },
         });
+      } catch {
+        // Event persistence must not fail generation.
       }
-
-      await this.eventBus?.publish({
-        tenantId: request.tenantId,
-        workspaceId: request.workspaceId,
-        eventType: "agent.run.completed",
-        source: "ai-director",
-        payload: { run_id: run.id as string, status: finalStatus },
-      });
 
       return {
         run: mapAgentRun(updatedRun),
@@ -283,19 +353,23 @@ export class AIDirectorService {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       if (this.intelligence && traceId) {
-        await this.intelligence.observability.logError({
-          tenantId: request.tenantId,
-          traceId,
-          source: "ai-director",
-          message: errorMessage,
-        });
-        await this.intelligence.observability.completeTrace(traceId, "failed");
+        try {
+          await this.intelligence.observability.logError({
+            tenantId: request.tenantId,
+            traceId,
+            source: "ai-director",
+            message: errorMessage.slice(0, 240),
+          });
+          await this.intelligence.observability.completeTrace(traceId, "failed");
+        } catch {
+          // ignore
+        }
       }
       await this.supabase
         .from("agent_runs")
         .update({
           status: "failed",
-          error_message: errorMessage,
+          error_message: errorMessage.slice(0, 500),
           completed_at: new Date().toISOString(),
         })
         .eq("id", run.id as string);

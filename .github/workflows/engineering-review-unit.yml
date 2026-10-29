@@ -1,0 +1,65 @@
+name: Engineering Review unit tests
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "packages/engineering-review/**"
+      - "packages/engineering-review-persistence/**"
+      - "supabase/migrations/*engineering_review*"
+      - "docs/engineering-review/**"
+      - ".github/workflows/engineering-review-unit.yml"
+      - "apps/web/src/app/(platform)/review/**"
+      - "apps/web/src/app/api/review/**"
+      - "apps/web/src/lib/review/**"
+      - "apps/web/src/__tests__/engineering-review-mup.test.ts"
+  pull_request:
+    paths:
+      - "packages/engineering-review/**"
+      - "packages/engineering-review-persistence/**"
+      - "supabase/migrations/*engineering_review*"
+      - "docs/engineering-review/**"
+      - ".github/workflows/engineering-review-unit.yml"
+      - "apps/web/src/app/(platform)/review/**"
+      - "apps/web/src/app/api/review/**"
+      - "apps/web/src/lib/review/**"
+      - "apps/web/src/__tests__/engineering-review-mup.test.ts"
+
+concurrency:
+  group: engineering-review-unit-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  ENGINEERING_REVIEW_RLS: "0"
+
+jobs:
+  unit:
+    name: Unit tests (not hosted RLS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rtb/engineering-review typecheck
+      - run: pnpm --filter @rtb/engineering-review test
+      - run: pnpm --filter @rtb/engineering-review-persistence typecheck
+      - name: Persistence unit tests only
+        run: pnpm --filter @rtb/engineering-review-persistence test:unit
+      - name: Review secret scan
+        run: pnpm --filter @rtb/engineering-review-persistence secret-scan
+      - name: Review-specific TypeScript gate
+        run: pnpm --filter @rtb/web typecheck:review
+      - name: Review MUP UI authorization tests
+        run: pnpm --filter @rtb/web exec vitest run src/__tests__/engineering-review-mup.test.ts
+
+      # Hosted Review/Core RLS is a separate required security workflow.
+      # Do not set ENGINEERING_REVIEW_RLS=1 here.
+      # A skipped hosted suite must never be represented as PASS.

@@ -51,7 +51,30 @@ async function resolveActiveOsIds(
       rows.push({ operatingSystemId: "reference-os", status: row.status });
     }
   }
-  return activeOperatingSystemIds(rows);
+  const active = activeOperatingSystemIds(rows);
+  if (active.includes("engineering")) return active;
+  const override = await supabase
+    .from("commercial_entitlement_overrides")
+    .select("application_key, feature_key, valid_until, revoked_at")
+    .eq("tenant_id", tenantId)
+    .eq("effect", "allow");
+  const now = Date.now();
+  const workspaceAllow = (override.data ?? []).some((row) => {
+    const record = row as {
+      application_key?: string | null;
+      feature_key?: string | null;
+      valid_until?: string | null;
+      revoked_at?: string | null;
+    };
+    if (record.revoked_at) return false;
+    if (record.application_key || record.feature_key) return false;
+    if (record.valid_until && Date.parse(record.valid_until) <= now) return false;
+    return true;
+  });
+  if (!override.error && workspaceAllow) {
+    return [...active, "engineering"];
+  }
+  return active;
 }
 
 export async function GET() {

@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/header";
 import { Card, CardContent, Badge, Button, Input } from "@rtb/ui";
 import { Send, Bot, User } from "lucide-react";
 import { cn } from "@rtb/ui";
+import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 
 interface Message {
   id: string;
@@ -46,15 +47,17 @@ export default function EngineeringAIWorkspace() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/engineering/projects").then((r) => r.json()),
-      fetch("/api/engineering/assets").then((r) => r.json()),
-      fetch("/api/engineering/documents").then((r) => r.json()),
-      fetch("/api/engineering/disciplines").then((r) => r.json()),
+      fetch("/api/engineering/projects").then((r) => parseApiJsonResponse(r)),
+      fetch("/api/engineering/assets").then((r) => parseApiJsonResponse(r)),
+      fetch("/api/engineering/documents").then((r) => parseApiJsonResponse(r)),
+      fetch("/api/engineering/disciplines").then((r) => parseApiJsonResponse(r)),
     ]).then(([p, a, d, disc]) => {
-      setProjects(Array.isArray(p.data) ? p.data : []);
-      setAssets(Array.isArray(a.data) ? a.data : []);
-      setDocuments(Array.isArray(d.data) ? d.data : []);
-      setDisciplines(Array.isArray(disc.data) ? disc.data : []);
+      setProjects(Array.isArray(p.data) ? (p.data as Record<string, unknown>[]) : []);
+      setAssets(Array.isArray(a.data) ? (a.data as Record<string, unknown>[]) : []);
+      setDocuments(Array.isArray(d.data) ? (d.data as Record<string, unknown>[]) : []);
+      setDisciplines(
+        Array.isArray(disc.data) ? (disc.data as Record<string, unknown>[]) : [],
+      );
     });
   }, []);
 
@@ -83,10 +86,30 @@ export default function EngineeringAIWorkspace() {
           agentSlug,
         }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "AI run failed");
+      const parsed = await parseApiJsonResponse<{
+        message: string;
+        requiresReview?: boolean;
+        meta?: Record<string, unknown>;
+        evidence?: Array<{ excerpt?: string; title?: string }>;
+      }>(res);
+      if (!parsed.ok || !parsed.data) {
+        const technical = parsed.errorMessage ?? "AI run failed";
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: /unexpected error/i.test(technical)
+              ? "Degraded mode: Engineering AI could not generate an answer. Retrieved authorised evidence is shown below. This is not generative reasoning."
+              : technical,
+            meta: { generationFailed: true },
+          },
+        ]);
+        return;
+      }
 
-      const { message, requiresReview, meta } = json.data;
+      const { message, requiresReview, meta, evidence } = parsed.data;
+      const degraded = Boolean(meta?.generationFailed) && (evidence?.length ?? 0) > 0;
       setMessages((prev) => [
         ...prev,
         {
@@ -95,7 +118,10 @@ export default function EngineeringAIWorkspace() {
           content: requiresReview
             ? `${message}\n\n⚠️ Human review required — no autonomous engineering approval.`
             : message,
-          meta,
+          meta: {
+            ...meta,
+            generationFailed: Boolean(meta?.generationFailed) || degraded,
+          },
         },
       ]);
     } catch (err) {
@@ -193,6 +219,18 @@ export default function EngineeringAIWorkspace() {
                 </div>
                 {message.meta && (
                   <div className="ml-8 flex flex-wrap gap-2">
+                    {Boolean(message.meta.degradedToRetrievalOnly) || Boolean(message.meta.generationFailed) ? (
+                      <Badge variant="warning" data-testid="ai-degradation">
+                        Retrieval only — not generative analysis
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">
+                        model: {String(message.meta.modelRoute ?? "—")}
+                      </Badge>
+                    )}
+                    {message.meta.grounded ? (
+                      <Badge variant="outline">Grounded in project evidence</Badge>
+                    ) : null}
                     <Badge variant="secondary">
                       confidence: {String(message.meta.confidence ?? "—")}
                     </Badge>
@@ -201,9 +239,6 @@ export default function EngineeringAIWorkspace() {
                     </Badge>
                     <Badge variant="outline">
                       prompt: {String(message.meta.promptVersionId ?? "—").slice(0, 8)}
-                    </Badge>
-                    <Badge variant="outline">
-                      model: {String(message.meta.modelRoute ?? "—")}
                     </Badge>
                     <Badge variant="outline">
                       cost: {String(message.meta.costEventRef ?? "—").slice(0, 8)}

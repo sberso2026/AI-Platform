@@ -1,0 +1,91 @@
+name: Phase 14B Engineering OS Product Integration
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/engineering-os/**"
+      - "packages/engineering-os-certification/**"
+      - "packages/types/src/engineering-modules.ts"
+      - "packages/platform-certification/src/phase14b*"
+      - "apps/web/src/app/(platform)/engineering/**"
+      - "docs/architecture/ENGINEERING_OS_V1_*"
+      - ".github/workflows/phase-14b-engineering-os-product-integration.yml"
+
+concurrency:
+  group: phase-14b-engineering-os-product-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLATFORM_CERTIFICATION: "1"
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch release tags
+        run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Unit tests (Engineering OS)
+        run: pnpm --filter @rtb/engineering-os test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec -- vitest run src/phase14b-engineering-os-product-integration.test.ts
+      - name: Secret scan
+        run: pnpm --filter @rtb/engineering-os-certification secret-scan
+      - name: Phase 14B certification (gates A–BL)
+        run: pnpm --filter @rtb/engineering-os-certification certify:phase14b
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/engineering-os-certification/artifacts/phase14b-engineering-os-product-integration-certification.json","utf8"));
+          const checks = [
+            ["verdict", a.verdict==="PASS"],
+            ["failedGateCount", a.failedGateCount===0],
+            ["skippedGateCount", a.skippedGateCount===0],
+            ["notExecutedGateCount", a.notExecutedGateCount===0],
+            ["gateCount", Array.isArray(a.requiredGates) && a.requiredGates.length===64],
+            ["version", a.version==="0.10.0-product-integration"],
+            ["status", a.status==="product_integration"],
+            ["productionEngineeringOSReady", a.productionEngineeringOSReady===false],
+            ["engineeringOSV1GaCertified", a.engineeringOSV1GaCertified===false],
+            ["phase14CReady", a.phase14CReady===true],
+            ["releaseEligible", a.releaseEligible===true],
+            ["EngineeringOSProductIntegrationReady", a.EngineeringOSProductIntegrationReady===true],
+            ["moduleRegistryTruthful", a.moduleRegistryTruthful===true],
+            ["secretExposureDetected", a.secretExposureDetected===false],
+            ["artifactIdentity", a.artifactCommitSha===a.ciHeadSha && a.ciHeadSha===a.buildIdentitySha],
+          ];
+          const failed = checks.filter(([, ok]) => !ok).map(([n]) => n);
+          if (failed.length) {
+            console.error("Assert failed:", failed);
+            console.error(JSON.stringify({ failedGates: a.failedGates }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            verdict: a.verdict,
+            version: a.version,
+            phase14CReady: a.phase14CReady,
+            productionEngineeringOSReady: a.productionEngineeringOSReady,
+          }, null, 2));
+          EOF
+      - name: Upload certification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase14b-engineering-os-product-integration-certification
+          path: packages/engineering-os-certification/artifacts/phase14b-engineering-os-product-integration-certification.json
+          if-no-files-found: warn

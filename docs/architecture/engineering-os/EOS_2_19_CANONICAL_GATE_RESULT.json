@@ -1,0 +1,69 @@
+{
+  "phase": "EOS-2.19-PILOT-EXPANSION-AND-OPERATIONAL-HARDENING",
+  "orchestration": "scripts/eos2-19-canonical-gates.mjs",
+  "authoritativeResult": "PASS_WITH_KNOWN_MODERATE",
+  "backgroundGateAmbiguityResolved": true,
+  "knownModerateAdvisory": "GHSA-w5hq-g745-h8pq",
+  "knownModerateDisposition": "ACCEPTED_BOUNDED_RISK",
+  "releaseTestCount": 220,
+  "includeLivePersistence": false,
+  "results": [
+    {
+      "id": "release-governance",
+      "label": "Release governance suite",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "timeoutMs": 180000
+    },
+    {
+      "id": "eos2-web",
+      "label": "EOS 2 web rollout/pilot tests",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "timeoutMs": 180000
+    },
+    {
+      "id": "persistence-unit",
+      "label": "Engineering review persistence unit/security guards",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "timeoutMs": 180000
+    },
+    {
+      "id": "engineering-review",
+      "label": "Engineering review package tests",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "timeoutMs": 180000
+    },
+    {
+      "id": "platform-core",
+      "label": "Platform core tests",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "timeoutMs": 180000
+    },
+    {
+      "id": "secret-scan",
+      "label": "Secret scan (correct package path)",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "timeoutMs": 60000
+    },
+    {
+      "id": "dependency-audit",
+      "label": "Production dependency audit",
+      "required": true,
+      "status": "PASS_WITH_KNOWN_MODERATE",
+      "exitCode": 1,
+      "timeoutMs": 120000
+    }
+  ],
+  "generatedAt": "2026-10-29T10:45:25.529Z"
+}

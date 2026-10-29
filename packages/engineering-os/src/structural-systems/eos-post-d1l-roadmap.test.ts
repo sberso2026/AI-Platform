@@ -1,0 +1,139 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { D1M_CAD_BIM_INTELLIGENCE_IMPLEMENTED, D1N_CONCEPT_TO_DETAILED_ORCHESTRATOR_IMPLEMENTED } from "@rtb/types";
+import { describe, expect, it } from "vitest";
+import { STRUCTURAL_CAPABILITY_MANIFEST } from "../structural-concrete/capability";
+import { D1L_R6_CANONICAL_NEXT_PHASE, D1L_R6_READY_FOR_NEXT_PHASE, D1L_R6_TRACK_COMPLETE, D1L_R6_TRACK_STATUS } from "./certification-gate-closeout";
+import { scanAnalysisFormulaBypass } from "./formula-scan";
+import {
+  D1M_0_ARCHITECTURE_AUTHORIZED,
+  D1M_0_ARCHITECTURE_READY,
+  D1M_0_CANONICAL_NON_GOALS,
+  D1M_0_CANONICAL_PHASE,
+  D1M_0_CANONICAL_SCOPE,
+  D1M_0_PHASE_TYPE,
+  D1M_CAN_GRANT_CERTIFICATION,
+  D1M_CAN_MUTATE_D1L_DECISION,
+  D1M_CANONICAL_NAME,
+  D1M_CANONICAL_PURPOSE,
+  D1M_CREATES_PARALLEL_D1K,
+  D1M_CURRENT_TRACK_STATUS,
+  D1M_FORMATS_PREAUTHORIZED,
+  D1M_IMPLEMENTED,
+  D1M_REUSES_D1K,
+  D1M_RUNTIME_COUNT,
+  D1M_RUNTIME_STARTED,
+  D1N_ABSORBED_BY_D1M,
+  D1N_CANONICAL_NAME,
+  D1N_RUNTIME_COUNT,
+  D1N_RUNTIME_STARTED,
+  D1N_TRACK_STATUS,
+  D2_D8_RUNTIME_STARTED,
+  D9_ABSORBED_BY_D1M,
+  D9_RUNTIME_COUNT,
+  D9_RUNTIME_STARTED,
+  MODEL_PARSE_SUCCESS_EQUALS_ENGINEERING_CORRECT,
+  MODEL_PRESENT_EQUALS_ENGINEERING_VALIDATED,
+  NEW_EXTERNAL_CONNECTOR_RUNTIME_COUNT,
+  POST_D1L_CANONICAL_NEXT_PHASE,
+  POST_D1L_CANONICALIZATION_STATUS,
+  POST_D1L_D1G_BLOCKER_PRESERVED,
+  POST_D1L_D1K_INTELLIGENCE_READY,
+  POST_D1L_D1K_INTERNAL_INTEGRATION_READY,
+  POST_D1L_D1L_CERTIFICATION_AUTHORITY_READY,
+  POST_D1L_D1L_CERTIFICATION_ELIGIBILITY_SATISFIED,
+  POST_D1L_D1L_CERTIFICATION_RUNTIME_READY,
+  POST_D1L_D1L_TRACK_COMPLETE,
+  POST_D1L_D1L_TRACK_STATUS,
+  POST_D1L_D2_D8_RUNTIME_COUNT,
+  POST_D1L_DATABASE_SCHEMA_CHANGED,
+  POST_D1L_DEBT_PRESERVED,
+  POST_D1L_GA_SECURITY_DEBT_BLOCKS_GENERAL_AVAILABILITY,
+  POST_D1L_GLOBAL_CYCLE_DETECTION_RUNTIME_COUNT,
+  POST_D1L_HISTORICAL_D1L_STATUS_PRESERVED,
+  POST_D1L_HISTORICAL_D1M_STATUS_PRESERVED,
+  POST_D1L_HISTORICAL_D1N_STATUS_PRESERVED,
+  POST_D1L_NEW_DEPENDENCY_ADDED,
+  POST_D1L_READY_FOR_NEXT_PHASE,
+  POST_D1L_STRUCTURAL_PACK_COMPLETE,
+} from "./post-d1l-roadmap";
+import { D1L_CURRENT_STATUS, D1M_CURRENT_STATUS, D1N_CURRENT_STATUS } from "./roadmap-after-twin-closeout";
+
+const root = dirname(fileURLToPath(import.meta.url));
+
+describe("EOS post-D1L next structural phase canonicalization", () => {
+  it("names CAD or BIM intelligence as the next architecture phase and does not start it", () => {
+    expect(POST_D1L_CANONICALIZATION_STATUS).toBe("NEXT_PHASE_CANONICALIZED");
+    expect(D1M_CANONICAL_NAME).toBe("CAD OR BIM INTELLIGENCE");
+    expect(D1M_CANONICAL_PURPOSE).toContain("not engineering validation");
+    expect(D1M_0_CANONICAL_PHASE).toBe("EOS-D1M-0-CAD-OR-BIM-INTELLIGENCE-ARCHITECTURE");
+    expect(D1M_0_PHASE_TYPE).toBe("CAD_OR_BIM_INTELLIGENCE_ARCHITECTURE");
+    expect(D1M_0_CANONICAL_SCOPE).toContain("Do not implement");
+    expect(D1M_0_CANONICAL_NON_GOALS).toContain("No CAD or BIM authoring");
+    expect(POST_D1L_CANONICAL_NEXT_PHASE).toBe(D1M_0_CANONICAL_PHASE);
+    expect(POST_D1L_READY_FOR_NEXT_PHASE).toBe(true);
+    expect(D1M_0_ARCHITECTURE_AUTHORIZED).toBe(true);
+    expect(D1M_0_ARCHITECTURE_READY).toBe(false);
+    expect(D1M_CURRENT_TRACK_STATUS).toBe("NOT_STARTED");
+    expect(D1M_RUNTIME_STARTED).toBe(false);
+    expect(D1M_RUNTIME_COUNT).toBe(0);
+    expect(D1M_IMPLEMENTED).toBe(false);
+    expect(D1M_CAD_BIM_INTELLIGENCE_IMPLEMENTED).toBe(false);
+    expect(D1M_FORMATS_PREAUTHORIZED).toBe(false);
+    expect(D1M_CAN_GRANT_CERTIFICATION).toBe(false);
+    expect(D1M_CAN_MUTATE_D1L_DECISION).toBe(false);
+    expect(MODEL_PRESENT_EQUALS_ENGINEERING_VALIDATED).toBe(false);
+    expect(MODEL_PARSE_SUCCESS_EQUALS_ENGINEERING_CORRECT).toBe(false);
+    const row = STRUCTURAL_CAPABILITY_MANIFEST.find((item) => item.capabilityId === "D1M.0.CAD_OR_BIM_INTELLIGENCE_ARCHITECTURE");
+    expect(row?.implementationState).toBe("ARCHITECTURE_DEFINED");
+    expect(row?.validationState).toBe("NOT_VALIDATED");
+    const source = readFileSync(join(root, "post-d1l-roadmap.ts"), "utf8");
+    expect(source).not.toContain(["from", '"@rtb/engineering-review"'].join(" "));
+    expect(scanAnalysisFormulaBypass(join(root, "post-d1l-roadmap.ts"), source)).toEqual([]);
+    const roadmap = readFileSync(join(root, "../../../../docs/architecture/engineering-os/EOS_POST_D1L_CANONICAL_ROADMAP.md"), "utf8");
+    expect(roadmap).toContain("EOS-D1M-0-CAD-OR-BIM-INTELLIGENCE-ARCHITECTURE");
+    expect(scanAnalysisFormulaBypass(join(root, "roadmap.md"), roadmap)).toEqual([]);
+  });
+
+  it("keeps D1L closed and keeps D1N, D1K, and D9 outside D1M", () => {
+    expect(D1L_R6_TRACK_COMPLETE).toBe(true);
+    expect(D1L_R6_TRACK_STATUS).toBe("COMPLETE_BOUNDED_WITH_LIMITATIONS");
+    expect(D1L_R6_CANONICAL_NEXT_PHASE).toBe("NOT_CANONICALIZED");
+    expect(D1L_R6_READY_FOR_NEXT_PHASE).toBe(false);
+    expect(POST_D1L_D1L_TRACK_COMPLETE).toBe(true);
+    expect(POST_D1L_D1L_TRACK_STATUS).toBe("COMPLETE_BOUNDED_WITH_LIMITATIONS");
+    expect(POST_D1L_D1L_CERTIFICATION_RUNTIME_READY).toBe(true);
+    expect(POST_D1L_D1L_CERTIFICATION_ELIGIBILITY_SATISFIED).toBe(false);
+    expect(POST_D1L_D1L_CERTIFICATION_AUTHORITY_READY).toBe(true);
+    expect(D1L_CURRENT_STATUS).toBe("NOT_STARTED");
+    expect(POST_D1L_HISTORICAL_D1L_STATUS_PRESERVED).toBe("NOT_STARTED");
+    expect(D1M_CURRENT_STATUS).toBe("NOT_ABSORBED");
+    expect(POST_D1L_HISTORICAL_D1M_STATUS_PRESERVED).toBe("NOT_ABSORBED");
+    expect(D1N_CURRENT_STATUS).toBe("NOT_ABSORBED");
+    expect(POST_D1L_HISTORICAL_D1N_STATUS_PRESERVED).toBe("NOT_ABSORBED");
+    expect(D1N_CANONICAL_NAME).toBe("CONCEPT-TO-DETAILED ORCHESTRATION");
+    expect(D1N_TRACK_STATUS).toBe("NOT_ABSORBED");
+    expect(D1N_ABSORBED_BY_D1M).toBe(false);
+    expect(D1N_RUNTIME_STARTED).toBe(false);
+    expect(D1N_RUNTIME_COUNT).toBe(0);
+    expect(D1N_CONCEPT_TO_DETAILED_ORCHESTRATOR_IMPLEMENTED).toBe(false);
+    expect(D9_ABSORBED_BY_D1M).toBe(false);
+    expect(D9_RUNTIME_STARTED).toBe(false);
+    expect(D9_RUNTIME_COUNT).toBe(0);
+    expect(POST_D1L_GLOBAL_CYCLE_DETECTION_RUNTIME_COUNT).toBe(0);
+    expect(D1M_REUSES_D1K).toBe(true);
+    expect(D1M_CREATES_PARALLEL_D1K).toBe(false);
+    expect(POST_D1L_D1K_INTERNAL_INTEGRATION_READY).toBe(false);
+    expect(POST_D1L_D1K_INTELLIGENCE_READY).toBe(false);
+    expect(D2_D8_RUNTIME_STARTED).toBe(false);
+    expect(POST_D1L_D2_D8_RUNTIME_COUNT).toBe(0);
+    expect(NEW_EXTERNAL_CONNECTOR_RUNTIME_COUNT).toBe(0);
+    expect(POST_D1L_DATABASE_SCHEMA_CHANGED).toBe(false);
+    expect(POST_D1L_NEW_DEPENDENCY_ADDED).toBe(false);
+    expect(POST_D1L_STRUCTURAL_PACK_COMPLETE).toBe(false);
+    expect(POST_D1L_D1G_BLOCKER_PRESERVED).toBe(true);
+    expect(POST_D1L_DEBT_PRESERVED).toContain("NOT_AVAILABLE");
+    expect(POST_D1L_GA_SECURITY_DEBT_BLOCKS_GENERAL_AVAILABILITY).toBe(true);
+  });
+});

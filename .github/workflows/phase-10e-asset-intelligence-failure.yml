@@ -1,0 +1,96 @@
+name: Phase 10E Asset Intelligence Failure
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main, release/**, cursor/**]
+    paths:
+      - "packages/asset-intelligence/**"
+      - "packages/asset-intelligence-certification/**"
+      - "packages/platform-certification/src/phase10e*"
+      - "supabase/migrations/*asset_intelligence*"
+      - "apps/web/src/app/api/engineering/asset-intelligence/**"
+      - ".github/workflows/phase-10e-asset-intelligence-failure.yml"
+      - "docs/architecture/ASSET_INTELLIGENCE_FAILURE*"
+
+concurrency:
+  group: phase-10e-asset-intelligence-failure-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+  ASSET_INTELLIGENCE_CERTIFICATION: "1"
+  ASSET_INTELLIGENCE_CERTIFICATION_PROJECT_REF: wcydlhqiqdwgoaqrlget
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git fetch --tags --force
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Hosted schema note
+        run: echo "batch_54 must be applied to hosted staging; certify verifies failure tables via service role"
+      - name: Unit tests
+        run: pnpm --filter @rtb/asset-intelligence test
+      - name: Architecture tests
+        run: pnpm --filter @rtb/platform-certification exec vitest run src/phase10e-asset-intelligence-failure.test.ts
+      - name: Phase 10E certification (gates A–AW)
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          CERT_USER_PASSWORD: ${{ secrets.CERT_USER_PASSWORD }}
+          AI_CERT_VIEWER_EMAIL: ${{ secrets.AI_CERT_VIEWER_EMAIL }}
+          AI_CERT_ENGINEER_EMAIL: ${{ secrets.AI_CERT_ENGINEER_EMAIL }}
+          AI_CERT_REVIEWER_EMAIL: ${{ secrets.AI_CERT_REVIEWER_EMAIL }}
+          AI_CERT_MANAGER_EMAIL: ${{ secrets.AI_CERT_MANAGER_EMAIL }}
+          AI_CERT_OWNER_EMAIL: ${{ secrets.AI_CERT_OWNER_EMAIL }}
+        run: pnpm --filter @rtb/asset-intelligence-certification certify:phase10e
+      - name: Assert PASS artifact
+        run: |
+          node <<'EOF'
+          const a = JSON.parse(require("fs").readFileSync("packages/asset-intelligence-certification/artifacts/phase10e-asset-intelligence-failure-certification.json","utf8"));
+          const checks = [
+            a.verdict==="PASS",
+            a.failedGateCount===0,
+            a.skippedGateCount===0,
+            a.notExecutedGateCount===0,
+            a.hostedAssetIntelligencePersistenceReady===true,
+            a.healthCompositionEngineReady===true,
+            a.evidenceConfidenceEngineReady===true,
+            a.criticalityIsHealthFactor===false,
+            a.failureTaxonomyRegistryReady===true,
+            a.failureIntelligenceReady===true,
+            a.productionMemoryRepositoryAllowed===false,
+            a.productionAssetIntelligenceReady===false,
+            a.accuracyClaimsCertified===false,
+            a.rulClaimsCertified===false,
+            a.probabilityOfFailureCertified===false,
+            a.releaseEligible===true,
+            a.phase10FReady===true,
+            a.requiredGates.length===49,
+            a.unexpected5xx===0,
+          ];
+          if (checks.some(x=>!x)) { console.error(a); process.exit(1); }
+          console.log(JSON.stringify({verdict:a.verdict, version:a.version, phase10FReady:a.phase10FReady},null,2));
+          EOF
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase10e-asset-intelligence-failure-certification
+          path: packages/asset-intelligence-certification/artifacts/phase10e-asset-intelligence-failure-certification.json
+          if-no-files-found: warn

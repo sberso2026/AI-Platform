@@ -1,0 +1,447 @@
+/**
+ * Thin service facades over the Asset Intelligence Engine.
+ */
+
+import type {
+  AssetIntelligenceEngine,
+  AssessConditionCommand,
+  AssessCriticalityCommand,
+  AssessDegradationCommand,
+  AssessFailureCommand,
+  AssessLifecycleCommand,
+  AssessMaintenanceRecommendationCommand,
+  AssessPriorityCommand,
+  AssessReliabilityCommand,
+  AssessRiskCommand,
+  AssessRiskPriorityBundleCommand,
+  ComposeDecisionContextCommand,
+  ReviewCriticalityCommand,
+  ReviewDegradationCommand,
+  ReviewFailureCommand,
+  ReviewLifecycleCommand,
+  ReviewMaintenanceRecommendationCommand,
+  ReviewPriorityCommand,
+  ReviewRiskCommand,
+  AssessFusionCommand,
+  AssessFusionBundleCommand,
+  AssessPredictiveReadinessCommand,
+  ReviewFusionCommand,
+  ReviewPredictiveReadinessCommand,
+  AssessObjectivePredictiveReadinessCommand,
+  AssessPredictiveGovernanceBundleCommand,
+  EvaluateMethodEligibilityCommand,
+  ReviewMethodQualificationCommand,
+  StartMethodQualificationCommand,
+} from "./engine";
+
+export class AssetConditionService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assessFromInspection(cmd: AssessConditionCommand) {
+    return this.engine.assessConditionFromInspection(cmd);
+  }
+
+  read(tenantId: string, workspaceId: string, assetId: string, asOf?: string) {
+    return this.engine.getCondition(tenantId, workspaceId, assetId, asOf);
+  }
+}
+
+export class AssetCriticalityService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessCriticalityCommand) {
+    return this.engine.assessCriticality(cmd);
+  }
+
+  review(cmd: ReviewCriticalityCommand) {
+    return this.engine.reviewCriticality(cmd);
+  }
+
+  read(tenantId: string, workspaceId: string, assetId: string, asOf?: string) {
+    return this.engine.getCriticality(tenantId, workspaceId, assetId, asOf);
+  }
+}
+
+export class AssetReliabilityService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessReliabilityCommand) {
+    return this.engine.assessReliability(cmd);
+  }
+}
+
+export class AssetFailureService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessFailureCommand) {
+    return this.engine.assessFailure(cmd);
+  }
+
+  review(cmd: ReviewFailureCommand) {
+    return this.engine.reviewFailure(cmd);
+  }
+}
+
+export class AssetDegradationService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessDegradationCommand) {
+    return this.engine.assessDegradation(cmd);
+  }
+
+  review(cmd: ReviewDegradationCommand) {
+    return this.engine.reviewDegradation(cmd);
+  }
+}
+
+export class AssetLifecycleService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessLifecycleCommand) {
+    return this.engine.assessLifecycle(cmd);
+  }
+
+  review(cmd: ReviewLifecycleCommand) {
+    return this.engine.reviewLifecycle(cmd);
+  }
+}
+
+export class AssetDecisionContextService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  compose(cmd: ComposeDecisionContextCommand) {
+    return this.engine.composeDecisionContext(cmd);
+  }
+}
+
+export class AssetRiskService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessRiskCommand) {
+    return this.engine.assessRisk(cmd);
+  }
+
+  review(cmd: ReviewRiskCommand) {
+    return this.engine.reviewRisk(cmd);
+  }
+}
+
+export class AssetMaintenanceRecommendationService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessMaintenanceRecommendationCommand) {
+    return this.engine.assessMaintenanceRecommendation(cmd);
+  }
+
+  review(cmd: ReviewMaintenanceRecommendationCommand) {
+    return this.engine.reviewMaintenanceRecommendation(cmd);
+  }
+}
+
+export class AssetPriorityService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessPriorityCommand) {
+    return this.engine.assessPriority(cmd);
+  }
+
+  review(cmd: ReviewPriorityCommand) {
+    return this.engine.reviewPriority(cmd);
+  }
+}
+
+export class AssetFusionService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessFusionCommand) {
+    return this.engine.assessFusion(cmd);
+  }
+
+  review(cmd: ReviewFusionCommand) {
+    return this.engine.reviewFusion(cmd);
+  }
+
+  read(tenantId: string, workspaceId: string, assetId: string) {
+    return this.engine.getFusionState(tenantId, workspaceId, assetId);
+  }
+
+  history(tenantId: string, workspaceId: string, assetId: string) {
+    return this.engine.listFusionHistory(tenantId, workspaceId, assetId);
+  }
+
+  reconciliations(tenantId: string, workspaceId: string, assetId: string) {
+    return this.engine.listReconciliationRecords(tenantId, workspaceId, assetId);
+  }
+}
+
+export class AssetPredictiveReadinessService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assess(cmd: AssessPredictiveReadinessCommand) {
+    return this.engine.assessPredictiveReadiness(cmd);
+  }
+
+  review(cmd: ReviewPredictiveReadinessCommand) {
+    return this.engine.reviewPredictiveReadiness(cmd);
+  }
+
+  read(tenantId: string, workspaceId: string, assetId: string) {
+    return this.engine.getPredictiveReadiness(tenantId, workspaceId, assetId);
+  }
+}
+
+/**
+ * Phase 10J — predictive governance facade. Nothing here executes a predictive
+ * method or returns a predicted value.
+ */
+export class AssetPredictiveGovernanceService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  assessObjectiveReadiness(cmd: AssessObjectivePredictiveReadinessCommand) {
+    return this.engine.assessObjectivePredictiveReadiness(cmd);
+  }
+
+  evaluateMethodEligibility(cmd: EvaluateMethodEligibilityCommand) {
+    return this.engine.evaluateMethodEligibility(cmd);
+  }
+
+  createMethodCandidate(cmd: EvaluateMethodEligibilityCommand) {
+    return this.engine.createMethodCandidate(cmd);
+  }
+
+  startQualification(cmd: StartMethodQualificationCommand) {
+    return this.engine.startMethodQualification(cmd);
+  }
+
+  reviewQualification(cmd: ReviewMethodQualificationCommand) {
+    return this.engine.reviewMethodQualification(cmd);
+  }
+
+  assessBundle(cmd: AssessPredictiveGovernanceBundleCommand) {
+    return this.engine.assessPredictiveGovernanceBundle(cmd);
+  }
+
+  listObjectiveReadiness(
+    tenantId: string,
+    workspaceId: string,
+    assetId: string,
+    objectiveId?: string,
+  ) {
+    return this.engine.listObjectivePredictiveReadiness(
+      tenantId,
+      workspaceId,
+      assetId,
+      objectiveId,
+    );
+  }
+
+  listCandidates(tenantId: string, workspaceId: string, assetId: string, objectiveId?: string) {
+    return this.engine.listPredictiveMethodCandidates(
+      tenantId,
+      workspaceId,
+      assetId,
+      objectiveId,
+    );
+  }
+
+  listQualifications(tenantId: string, workspaceId: string, methodId?: string) {
+    return this.engine.listPredictiveMethodQualifications(tenantId, workspaceId, methodId);
+  }
+
+  readLocks() {
+    return this.engine.readPredictiveGovernanceLocks();
+  }
+}
+
+export class AssetHealthIndexService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  read(tenantId: string, workspaceId: string, assetId: string, asOf?: string) {
+    return this.engine.getHealthIndex(tenantId, workspaceId, assetId, asOf);
+  }
+}
+
+export class AssetTimelineService {
+  constructor(private readonly engine: AssetIntelligenceEngine) {}
+
+  list(assetId: string, asOf?: string) {
+    return this.engine.listTimeline(assetId, asOf);
+  }
+}
+
+export class AssetIntelligenceService {
+  readonly condition: AssetConditionService;
+  readonly criticality: AssetCriticalityService;
+  readonly reliability: AssetReliabilityService;
+  readonly failure: AssetFailureService;
+  readonly degradation: AssetDegradationService;
+  readonly lifecycle: AssetLifecycleService;
+  readonly decisionContext: AssetDecisionContextService;
+  readonly risk: AssetRiskService;
+  readonly maintenanceRecommendation: AssetMaintenanceRecommendationService;
+  readonly priority: AssetPriorityService;
+  readonly fusion: AssetFusionService;
+  readonly predictiveReadiness: AssetPredictiveReadinessService;
+  readonly predictiveGovernance: AssetPredictiveGovernanceService;
+  readonly health: AssetHealthIndexService;
+  readonly timeline: AssetTimelineService;
+
+  constructor(private readonly engine: AssetIntelligenceEngine) {
+    this.condition = new AssetConditionService(engine);
+    this.criticality = new AssetCriticalityService(engine);
+    this.reliability = new AssetReliabilityService(engine);
+    this.failure = new AssetFailureService(engine);
+    this.degradation = new AssetDegradationService(engine);
+    this.lifecycle = new AssetLifecycleService(engine);
+    this.decisionContext = new AssetDecisionContextService(engine);
+    this.risk = new AssetRiskService(engine);
+    this.maintenanceRecommendation = new AssetMaintenanceRecommendationService(engine);
+    this.priority = new AssetPriorityService(engine);
+    this.fusion = new AssetFusionService(engine);
+    this.predictiveReadiness = new AssetPredictiveReadinessService(engine);
+    this.predictiveGovernance = new AssetPredictiveGovernanceService(engine);
+    this.health = new AssetHealthIndexService(engine);
+    this.timeline = new AssetTimelineService(engine);
+  }
+
+  composeDecisionContext(cmd: ComposeDecisionContextCommand) {
+    return this.engine.composeDecisionContext(cmd);
+  }
+
+  assessRisk(cmd: AssessRiskCommand) {
+    return this.engine.assessRisk(cmd);
+  }
+
+  reviewRisk(cmd: ReviewRiskCommand) {
+    return this.engine.reviewRisk(cmd);
+  }
+
+  assessMaintenanceRecommendation(cmd: AssessMaintenanceRecommendationCommand) {
+    return this.engine.assessMaintenanceRecommendation(cmd);
+  }
+
+  reviewMaintenanceRecommendation(cmd: ReviewMaintenanceRecommendationCommand) {
+    return this.engine.reviewMaintenanceRecommendation(cmd);
+  }
+
+  assessPriority(cmd: AssessPriorityCommand) {
+    return this.engine.assessPriority(cmd);
+  }
+
+  reviewPriority(cmd: ReviewPriorityCommand) {
+    return this.engine.reviewPriority(cmd);
+  }
+
+  assessRiskPriorityBundle(cmd: AssessRiskPriorityBundleCommand) {
+    return this.engine.assessRiskPriorityBundle(cmd);
+  }
+
+  assessFusion(cmd: AssessFusionCommand) {
+    return this.engine.assessFusion(cmd);
+  }
+
+  reviewFusion(cmd: ReviewFusionCommand) {
+    return this.engine.reviewFusion(cmd);
+  }
+
+  assessPredictiveReadiness(cmd: AssessPredictiveReadinessCommand) {
+    return this.engine.assessPredictiveReadiness(cmd);
+  }
+
+  reviewPredictiveReadiness(cmd: ReviewPredictiveReadinessCommand) {
+    return this.engine.reviewPredictiveReadiness(cmd);
+  }
+
+  assessFusionBundle(cmd: AssessFusionBundleCommand) {
+    return this.engine.assessFusionBundle(cmd);
+  }
+
+  assessObjectivePredictiveReadiness(cmd: AssessObjectivePredictiveReadinessCommand) {
+    return this.engine.assessObjectivePredictiveReadiness(cmd);
+  }
+
+  evaluateMethodEligibility(cmd: EvaluateMethodEligibilityCommand) {
+    return this.engine.evaluateMethodEligibility(cmd);
+  }
+
+  createMethodCandidate(cmd: EvaluateMethodEligibilityCommand) {
+    return this.engine.createMethodCandidate(cmd);
+  }
+
+  startMethodQualification(cmd: StartMethodQualificationCommand) {
+    return this.engine.startMethodQualification(cmd);
+  }
+
+  reviewMethodQualification(cmd: ReviewMethodQualificationCommand) {
+    return this.engine.reviewMethodQualification(cmd);
+  }
+
+  assessPredictiveGovernanceBundle(cmd: AssessPredictiveGovernanceBundleCommand) {
+    return this.engine.assessPredictiveGovernanceBundle(cmd);
+  }
+
+  assessConditionFromInspection(cmd: AssessConditionCommand) {
+    return this.engine.assessConditionFromInspection(cmd);
+  }
+
+  assessCriticality(cmd: AssessCriticalityCommand) {
+    return this.engine.assessCriticality(cmd);
+  }
+
+  assessReliability(cmd: AssessReliabilityCommand) {
+    return this.engine.assessReliability(cmd);
+  }
+
+  assessFailure(cmd: AssessFailureCommand) {
+    return this.engine.assessFailure(cmd);
+  }
+
+  assessDegradation(cmd: AssessDegradationCommand) {
+    return this.engine.assessDegradation(cmd);
+  }
+
+  reviewDegradation(cmd: ReviewDegradationCommand) {
+    return this.engine.reviewDegradation(cmd);
+  }
+
+  assessLifecycle(cmd: AssessLifecycleCommand) {
+    return this.engine.assessLifecycle(cmd);
+  }
+
+  reviewLifecycle(cmd: ReviewLifecycleCommand) {
+    return this.engine.reviewLifecycle(cmd);
+  }
+
+  reviewFailure(cmd: ReviewFailureCommand) {
+    return this.engine.reviewFailure(cmd);
+  }
+
+  reviewCriticality(cmd: ReviewCriticalityCommand) {
+    return this.engine.reviewCriticality(cmd);
+  }
+
+  getSnapshot(input: {
+    tenantId: string;
+    workspaceId: string;
+    assetId: string;
+    asOf?: string;
+  }) {
+    return this.engine.getSnapshot(input);
+  }
+
+  listTimeline(assetId: string, asOf?: string) {
+    return this.engine.listTimeline(assetId, asOf);
+  }
+
+  getHealthIndex(tenantId: string, workspaceId: string, assetId: string, asOf?: string) {
+    return this.engine.getHealthIndex(tenantId, workspaceId, assetId, asOf);
+  }
+
+  getCondition(tenantId: string, workspaceId: string, assetId: string, asOf?: string) {
+    return this.engine.getCondition(tenantId, workspaceId, assetId, asOf);
+  }
+
+  getCriticality(tenantId: string, workspaceId: string, assetId: string, asOf?: string) {
+    return this.engine.getCriticality(tenantId, workspaceId, assetId, asOf);
+  }
+}

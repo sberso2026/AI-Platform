@@ -1,0 +1,55 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+export type ModuleNavLink = {
+  href: string;
+  label: string;
+  /** Exact match only (default: prefix match for nested routes). */
+  exact?: boolean;
+  testId?: string;
+};
+
+function hrefPath(href: string): string {
+  return href.split("?")[0] ?? href;
+}
+
+export function ModuleSectionNav({
+  links,
+  ariaLabel,
+}: {
+  links: readonly ModuleNavLink[];
+  ariaLabel: string;
+}) {
+  const pathname = usePathname() ?? "";
+
+  return (
+    <nav className="mt-3 flex flex-wrap gap-2 text-sm" aria-label={ariaLabel} role="tablist">
+      {links.map((link) => {
+        const path = hrefPath(link.href);
+        const active = link.exact
+          ? pathname === path
+          : pathname === path || pathname.startsWith(`${path}/`);
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            role="tab"
+            aria-selected={active}
+            aria-current={active ? "page" : undefined}
+            {...(link.testId ? { "data-testid": link.testId } : {})}
+            data-active={active ? "true" : "false"}
+            className={
+              active
+                ? "eos-tab-active inline-flex min-h-11 items-center rounded-md px-3 py-2 font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--eos-accent)]"
+                : "inline-flex min-h-11 items-center rounded-md px-3 py-2 text-[color:var(--eos-text-secondary)] underline-offset-2 hover:bg-[color:var(--eos-accent-soft)] hover:text-[color:var(--eos-text-primary)] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--eos-accent)]"
+            }
+          >
+            {link.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}

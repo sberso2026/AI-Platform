@@ -8,6 +8,7 @@ import type {
 import { EntitlementDeniedError } from "@rtb/platform-commerce";
 import { createCommerceExecutionContext } from "@rtb/platform-commerce/server";
 import type { CommerceExecutionContext } from "@rtb/types";
+import { handleCommerceDomainError } from "@/lib/lifecycle-api";
 
 export interface CommerceHandlerContext {
   ctx: AuthContext;
@@ -88,22 +89,21 @@ export function withCommerceEntitlement(
     const result = await enforceCommercePolicy(ctx, policy);
     if (result instanceof NextResponse) return result;
 
-    const commerce = createCommerceExecutionContext({
-      tenantId: ctx.tenantId,
-      workspaceId: ctx.workspaceId,
-      actorUserId: ctx.userId,
-      correlationId: cid,
-      decision: result,
-      policy,
-    });
-
     try {
+      const commerce = createCommerceExecutionContext({
+        tenantId: ctx.tenantId,
+        workspaceId: ctx.workspaceId,
+        actorUserId: ctx.userId,
+        correlationId: cid,
+        decision: result,
+        policy,
+      });
       return await handler({ ctx, decision: result, correlationId: cid, commerce }, request);
     } catch (err) {
       if (err instanceof EntitlementDeniedError) {
         return NextResponse.json({ error: err.message, code: err.reasonCode }, { status: 403 });
       }
-      throw err;
+      return handleCommerceDomainError(err, cid);
     }
   };
 }

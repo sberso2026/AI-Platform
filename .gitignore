@@ -5,6 +5,7 @@ node_modules/
 # Build
 dist/
 .next/
+.next-staging/
 out/
 .turbo/
 
@@ -41,6 +42,8 @@ packages/installation-certification/artifacts/
 packages/installation-certification/test-results/
 packages/platform-certification/artifacts/
 packages/project-intelligence-certification/artifacts/
+packages/inspection-intelligence-certification/artifacts/
+packages/asset-intelligence-certification/artifacts/
 packages/project-intelligence-certification/test-results/
 test-results/customer-administration/
 .tmp/customer-administration/
@@ -72,6 +75,8 @@ out/
 
 .vercel
 .env*
+!.env.example
+!apps/web/.env.vercel.example
 
 # Operator scratch (never commit)
 secret value
@@ -80,3 +85,12 @@ secret value
 Ignore.txt
 
 tmp-cert-7b/
+tmp-cert-*/
+
+# Generated test / coverage reports (repo root and packages)
+playwright-report/
+test-results/
+coverage/
+**/node_modules/.vite/
+
+tmp/

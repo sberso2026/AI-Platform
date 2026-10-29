@@ -1,5 +1,5 @@
-import type { Json, SupabaseClient } from "@rtb/database";
-import type { PlatformKernel } from "@rtb/platform-kernel";
+﻿import type { Json, SupabaseClient } from "@rtb/database";
+import { parseDirectorFailure, type PlatformKernel } from "@rtb/platform-kernel";
 import type {
   CommerceExecutionContext,
   EngineeringApplication,
@@ -8,13 +8,58 @@ import type {
   EngineeringDiscipline,
   EngineeringSettings,
 } from "@rtb/types";
-import { assertEngineeringService } from "../commerce/service-guard";
+import { assertEngineeringService, assertEngineeringTenantScope } from "../commerce/service-guard";
 import {
   EngineeringAssetService,
   EngineeringDocumentService,
   EngineeringProjectService,
 } from "./core-services";
 import { dedupeDisciplinesForDisplay } from "./discipline-dedupe";
+import { isOperationalRegisterQuery } from "./engineering-evidence";
+import { prepareEngineeringAskScope } from "../phase-e5/general-methodology";
+import type { DocumentBodyRetrievalProbe } from "./engineering-retrieval-service";
+
+type RegisterOps = {
+  search: (
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    q: string,
+    options?: { aggregate?: boolean },
+  ) => Promise<unknown[]>;
+  list: (
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    projectId?: string,
+    limit?: number,
+    options?: { aggregate?: boolean },
+  ) => Promise<unknown[]>;
+};
+
+type InspectionOps = {
+  list: (
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    projectId?: string,
+  ) => Promise<unknown[]>;
+};
+
+function rowProjectId(row: unknown): string | null {
+  if (!row || typeof row !== "object") return null;
+  const record = row as Record<string, unknown>;
+  const value = record.project_id ?? record.engineering_project_id;
+  return typeof value === "string" ? value : null;
+}
+
+function filterRowsToProject<T>(rows: T[], projectId?: string, entity: "project" | "record" = "record"): T[] {
+  if (!projectId) return rows;
+  return rows.filter((row) => {
+    if (!row || typeof row !== "object") return false;
+    const record = row as Record<string, unknown>;
+    if (entity === "project") return record.id === projectId;
+    const pid = rowProjectId(row);
+    return !pid || pid === projectId;
+  });
+}
 
 export class EngineeringDisciplineService {
   constructor(private readonly supabase: SupabaseClient) {}
@@ -311,13 +356,14 @@ export class EngineeringSearchService {
     private readonly documents: EngineeringDocumentService,
     private readonly kernel?: PlatformKernel,
     private readonly registers?: {
-      decisions: { search: (commerce: CommerceExecutionContext, tenantId: string, q: string, options?: { aggregate?: boolean }) => Promise<unknown[]> };
-      actions: { search: (commerce: CommerceExecutionContext, tenantId: string, q: string, options?: { aggregate?: boolean }) => Promise<unknown[]> };
-      risks: { search: (commerce: CommerceExecutionContext, tenantId: string, q: string, options?: { aggregate?: boolean }) => Promise<unknown[]> };
-      issues: { search: (commerce: CommerceExecutionContext, tenantId: string, q: string, options?: { aggregate?: boolean }) => Promise<unknown[]> };
-      technicalQueries: { search: (commerce: CommerceExecutionContext, tenantId: string, q: string, options?: { aggregate?: boolean }) => Promise<unknown[]> };
-      lessons: { search: (commerce: CommerceExecutionContext, tenantId: string, q: string, options?: { aggregate?: boolean }) => Promise<unknown[]> };
-    }
+      decisions: RegisterOps;
+      actions: RegisterOps;
+      risks: RegisterOps;
+      issues: RegisterOps;
+      technicalQueries: RegisterOps;
+      lessons: RegisterOps;
+    },
+    private readonly inspections?: InspectionOps,
   ) {}
 
   async search(commerce: CommerceExecutionContext, tenantId: string, query: string, filters?: {
@@ -326,31 +372,57 @@ export class EngineeringSearchService {
     status?: string;
     includeKnowledgeGraph?: boolean;
   }) {
-    assertEngineeringService(commerce, "search.query", tenantId);
+    if (commerce.authorization?.action === "ai.execute") {
+      assertEngineeringTenantScope(commerce, tenantId);
+    } else {
+      assertEngineeringService(commerce, "search.query", tenantId);
+    }
     const type = filters?.type ?? "all";
+    const projectId = filters?.projectId;
     const aggregate = { aggregate: true as const };
-    const [projects, assets, documents, decisions, actions, risks, issues, technicalQueries, lessons] =
+    const operational = isOperationalRegisterQuery(query);
+
+    const loadRegister = (ops: RegisterOps | undefined, wanted: boolean) => {
+      if (!wanted || !ops) return Promise.resolve([] as unknown[]);
+      if (operational) return ops.list(commerce, tenantId, projectId, 30, aggregate);
+      return ops.search(commerce, tenantId, query, aggregate).then((rows) =>
+        filterRowsToProject(rows, projectId),
+      );
+    };
+
+    const [projects, assets, documents, decisions, actions, risks, issues, technicalQueries, lessons, inspections] =
       await Promise.all([
-        type === "all" || type === "project" ? this.projects.search(commerce, tenantId, query, aggregate) : Promise.resolve([]),
-        type === "all" || type === "asset" ? this.assets.search(commerce, tenantId, query, aggregate) : Promise.resolve([]),
-        type === "all" || type === "document" ? this.documents.search(commerce, tenantId, query, aggregate) : Promise.resolve([]),
-        (type === "all" || type === "decision") && this.registers
-          ? this.registers.decisions.search(commerce, tenantId, query, aggregate)
+        type === "all" || type === "project"
+          ? operational
+            ? this.projects.list(commerce, tenantId, 20, aggregate).then((rows) =>
+                filterRowsToProject(rows, projectId, "project"),
+              )
+            : this.projects.search(commerce, tenantId, query, aggregate).then((rows) =>
+                filterRowsToProject(rows, projectId, "project"),
+              )
           : Promise.resolve([]),
-        (type === "all" || type === "action") && this.registers
-          ? this.registers.actions.search(commerce, tenantId, query, aggregate)
+        type === "all" || type === "asset"
+          ? operational
+            ? this.assets.list(commerce, tenantId, projectId, 20, aggregate)
+            : this.assets.search(commerce, tenantId, query, aggregate).then((rows) =>
+                filterRowsToProject(rows, projectId),
+              )
           : Promise.resolve([]),
-        (type === "all" || type === "risk") && this.registers
-          ? this.registers.risks.search(commerce, tenantId, query, aggregate)
+        type === "all" || type === "document"
+          ? operational
+            ? this.documents.list(commerce, tenantId, projectId, 20, aggregate)
+            : this.documents.search(commerce, tenantId, query, aggregate).then((rows) =>
+                filterRowsToProject(rows, projectId),
+              )
           : Promise.resolve([]),
-        (type === "all" || type === "issue") && this.registers
-          ? this.registers.issues.search(commerce, tenantId, query, aggregate)
-          : Promise.resolve([]),
-        (type === "all" || type === "technical_query") && this.registers
-          ? this.registers.technicalQueries.search(commerce, tenantId, query, aggregate)
-          : Promise.resolve([]),
-        (type === "all" || type === "lesson") && this.registers
-          ? this.registers.lessons.search(commerce, tenantId, query, aggregate)
+        loadRegister(this.registers?.decisions, type === "all" || type === "decision"),
+        loadRegister(this.registers?.actions, type === "all" || type === "action"),
+        loadRegister(this.registers?.risks, type === "all" || type === "risk"),
+        loadRegister(this.registers?.issues, type === "all" || type === "issue"),
+        loadRegister(this.registers?.technicalQueries, type === "all" || type === "technical_query"),
+        loadRegister(this.registers?.lessons, type === "all" || type === "lesson"),
+        (type === "all" || type === "inspection") && this.inspections
+          ? this.inspections.list(commerce, tenantId, projectId)
           : Promise.resolve([]),
       ]);
 
@@ -380,6 +452,7 @@ export class EngineeringSearchService {
       issues,
       technicalQueries,
       lessons,
+      inspections,
       knowledgeNodes,
     };
   }
@@ -388,7 +461,9 @@ export class EngineeringSearchService {
 export class EngineeringAIService {
   constructor(
     private readonly supabase: SupabaseClient,
-    private readonly kernel: PlatformKernel
+    private readonly kernel: PlatformKernel,
+    private readonly search?: EngineeringSearchService,
+    private readonly documentBody?: DocumentBodyRetrievalProbe,
   ) {}
 
   async run(commerce: CommerceExecutionContext, input: {
@@ -401,7 +476,15 @@ export class EngineeringAIService {
     documentId?: string;
     disciplineId?: string;
     agentSlug?: string;
-  }) {
+      objectType?: string;
+      objectId?: string;
+      scope?: string;
+      sessionId?: string;
+      toolAction?: string;
+      toolInputs?: Record<string, unknown>;
+      toolUnits?: Record<string, string>;
+      requireCertifiedToolPath?: boolean;
+    }) {
     assertEngineeringService(commerce, "ai.execute", input.tenantId);
     const enabled = await this.kernel.intelligence.features.evaluate({
       tenantId: input.tenantId,
@@ -410,6 +493,258 @@ export class EngineeringAIService {
     });
     if (!enabled) {
       throw new Error("Engineering OS is not enabled for this tenant");
+    }
+
+    // E2/E3 grounded path: context resolver enriches retrieval; degrades to E2 on failure.
+    if (this.search) {
+      try {
+      const { EngineeringRetrievalService } = await import("./engineering-retrieval-service");
+      const { runGroundedEngineeringAsk } = await import("./grounded-ask");
+      const { createSupabaseContextProvider } = await import("./supabase-context-provider");
+      const { PlatformEngineeringMemoryAdapter } = await import("../phase-e7/store");
+      const { EngineeringMemoryCaptureService } = await import("../phase-e7/capture");
+      const { EngineeringIntelligenceService } = await import("../phase-e9/invocation");
+      const retrieval = new EngineeringRetrievalService(
+        this.search,
+        { available: false },
+        { enabled: false },
+        this.documentBody ?? {},
+      );
+      const memoryStore = new PlatformEngineeringMemoryAdapter(this.kernel.memory);
+      const memoryCapture = new EngineeringMemoryCaptureService(memoryStore);
+      const intelligence = new EngineeringIntelligenceService();
+
+      const prepared = prepareEngineeringAskScope(input);
+      if (!prepared.ok) {
+        return {
+          message: prepared.message,
+          requiresReview: true,
+          evidence: [],
+          evidenceState: "INSUFFICIENT" as const,
+          scope: prepared.scope,
+          limitations: [prepared.message],
+          diagnosticLimitations: [],
+          retrievalMode: "retrieval_only",
+          grounded: { abstained: true, answer: prepared.message },
+          why: null,
+          recommendedNextActions: [],
+          basis: [],
+          assumptions: [],
+          authorityStatus: "ABSTAINED",
+          explanationStatus: "unsupported",
+          meta: { policyApplied: true, phase: "E5", scopeGate: prepared.scope },
+        };
+      }
+      const objectType = prepared.objectType;
+      const objectId = prepared.objectId;
+
+      const contextProvider = createSupabaseContextProvider(this.supabase, input.tenantId);
+      const contextAuth = {
+        tenantId: input.tenantId,
+        workspaceId: input.workspaceId ?? null,
+        canAccessObject: (ref: {
+          objectType: string;
+          objectId: string;
+          tenantId: string;
+          workspaceId?: string | null;
+          projectId?: string | null;
+        }) => ref.tenantId === input.tenantId,
+      };
+
+      const grounded = await runGroundedEngineeringAsk({
+        commerce,
+        retrieval,
+        query: {
+          tenantId: input.tenantId,
+          workspaceId: input.workspaceId,
+          userId: input.userId,
+          projectId: prepared.projectId,
+          objectType,
+          objectId,
+          query: input.message,
+          scope: prepared.retrievalScope,
+          limit: 12,
+        },
+          contextProvider,
+          contextAuth,
+          toolAction: input.toolAction,
+          toolInputs: input.toolInputs,
+          toolUnits: input.toolUnits,
+          requireCertifiedToolPath: input.requireCertifiedToolPath,
+          memoryStore,
+          memoryCapture,
+          captureToolResultToMemory: Boolean(input.toolAction),
+          intelligence,
+          tryGenerate: async ({ message }) => {
+            try {
+              let agentId: string | undefined;
+              const slug = input.agentSlug ?? "engineering-director";
+              const { data: agent } = await this.supabase
+                .from("agents")
+                .select("id")
+                .eq("tenant_id", input.tenantId)
+                .eq("slug", slug)
+                .maybeSingle();
+              agentId = agent?.id as string | undefined;
+
+              const result = await this.kernel.aiDirector.run({
+                tenantId: input.tenantId,
+                workspaceId: input.workspaceId,
+                userId: input.userId,
+                agentId,
+                sessionId: input.sessionId,
+                message,
+                context: {
+                  operating_system: "engineering",
+                  project_id: prepared.projectId,
+                  asset_id: prepared.retrievalScope === "asset" ? input.assetId : undefined,
+                  document_id: prepared.retrievalScope === "document" ? input.documentId : undefined,
+                  discipline_id: input.disciplineId,
+                  grounded: true,
+                  phase: input.toolAction ? "E6" : "E5",
+                },
+              });
+              const provider = (result.run.model_provider ?? "mock").toLowerCase();
+              if (provider === "mock") {
+                return {
+                  content: "",
+                  failed: true,
+                  failureLayer: "provider_adapter",
+                  failureCause: "mock_adapter_selected",
+                };
+              }
+              return {
+                content: result.message ?? "",
+                failed: false,
+                provider,
+                model: result.run.model_name ?? null,
+              };
+            } catch (error) {
+              const failure = parseDirectorFailure(error);
+              return {
+                content: "",
+                failed: true,
+                failureLayer: failure.layer,
+                failureCause: failure.cause,
+              };
+            }
+          },
+        });
+
+        try {
+          await this.kernel.eventBus.publish({
+            tenantId: input.tenantId,
+            workspaceId: input.workspaceId,
+            eventType: "engineering.ai.run.completed",
+            source: "engineering-os",
+            payload: {
+              grounded: true,
+              evidence_state: grounded.evidenceState,
+              requires_review: grounded.requiresReview,
+              sources: grounded.evidence.length,
+              explanation_status: grounded.reasoning?.explanationStatus ?? null,
+              tool_invocation_id: grounded.toolResult?.invocationId ?? null,
+              memory_hit_count: grounded.memoryHits?.length ?? 0,
+            },
+          });
+        } catch {
+          // Event persistence must not discard a grounded answer.
+        }
+
+        const { presentAskLimitations } = await import("./engineering-retrieval-service");
+        const presented = presentAskLimitations(grounded.limitations);
+        const generationFailed = Boolean(grounded.meta?.generationFailed);
+        const degradedMessage =
+          generationFailed && grounded.evidence.length > 0
+            ? (grounded.message ?? "").trim() ||
+              "Degraded mode: Engineering AI could not generate an answer. Retrieved authorised evidence is shown below. This is not generative reasoning."
+            : (grounded.message ?? "").trim() ||
+              grounded.grounded?.answer?.trim() ||
+              "Engineering OS does not have enough authorised evidence to answer this reliably. No sources were invented.";
+        return {
+          message: degradedMessage,
+          requiresReview: grounded.requiresReview,
+          evidence: grounded.evidence,
+          evidenceState: grounded.evidenceState,
+          scope: prepared.publicScope,
+          limitations: (presented.user.length
+            ? presented.user
+            : grounded.evidence.length
+              ? generationFailed
+                ? ["Degraded mode: Engineering AI could not generate an answer. Retrieved authorised evidence is shown below. This is not generative reasoning."]
+                : []
+              : [prepared.publicScope === "all_engineering"
+                  ? "General methodology is not authorised project evidence."
+                  : "Insufficient authorised project evidence is available to provide a project-specific conclusion."]
+          ).map((item) =>
+            prepared.publicScope === "all_engineering"
+              ? item
+                  .replace("Searched scope: workspace.", "Searched scope: all_engineering.")
+                  .replace(
+                    "No certified intelligence capability advertised for this intent; using evidence/reasoning fallback.",
+                    "No certified calculation capability applies. This is general engineering guidance, not authorised project evidence.",
+                  )
+              : item,
+          ),
+          diagnosticLimitations: presented.details,
+          retrievalMode: grounded.retrievalMode,
+          grounded: {
+            ...grounded.grounded,
+            abstained: Boolean(grounded.grounded?.abstained),
+            answer: degradedMessage,
+          },
+          reasoning: grounded.reasoning ?? null,
+          why: grounded.why ?? null,
+          recommendedNextActions: grounded.recommendedNextActions ?? [],
+          basis: grounded.reasoning?.basis ?? [],
+          assumptions: grounded.reasoning?.assumptions ?? [],
+          authorityStatus: grounded.reasoning?.authorityStatus ?? null,
+          explanationStatus: grounded.reasoning?.explanationStatus ?? null,
+          toolResult: grounded.toolResult ?? null,
+          memoryHits: grounded.memoryHits ?? [],
+          memoryChips: grounded.memoryChips ?? null,
+          meta: {
+            ...grounded.meta,
+            confidence: grounded.reasoning?.confidence ?? (grounded.grounded.abstained ? 0 : 0.7),
+            requiresReview: grounded.requiresReview,
+            policyApplied: true,
+            phase: grounded.meta.phase ?? (input.toolAction ? "E6" : "E5"),
+          },
+        };
+      } catch (error) {
+        return {
+          message:
+            "Engineering AI could not generate an answer. No fabricated answer was generated.",
+          requiresReview: true,
+          evidence: [],
+          evidenceState: "INSUFFICIENT" as const,
+          limitations: ["Engineering AI could not complete this request."],
+          diagnosticLimitations: [
+            error instanceof Error ? error.message : "grounded_ask_failed",
+          ],
+          retrievalMode: "retrieval_only",
+          grounded: {
+            abstained: true,
+            answer:
+              "Engineering AI could not generate an answer. No fabricated answer was generated.",
+          },
+          why: null,
+          recommendedNextActions: [],
+          basis: [],
+          assumptions: [],
+          authorityStatus: null,
+          explanationStatus: null,
+          toolResult: null,
+          memoryHits: [],
+          memoryChips: null,
+          meta: {
+            generationFailed: true,
+            grounded: true,
+            phase: "E2",
+            policyApplied: true,
+          },
+        };
+      }
     }
 
     let agentId: string | undefined;
@@ -484,9 +819,23 @@ export class EngineeringAIService {
       .resolveRoute(input.tenantId, result.run.intent ?? "engineering")
       .catch(() => ({ modelKey: result.run.model_name ?? "mock-gpt", providerType: "mock" }));
 
+    const fallbackMessage =
+      (result.message ?? "").trim() ||
+      "Engineering OS does not have enough authorised evidence to answer this reliably. No sources were invented.";
+
     return {
       ...result,
+      message: fallbackMessage,
+      grounded: {
+        abstained: true,
+        answer: fallbackMessage,
+      },
       requiresReview,
+      evidence: [],
+      evidenceState: "INSUFFICIENT" as const,
+      limitations: [
+        "Grounded retrieval service was not wired; refusing to present ungrounded evidence.",
+      ],
       meta: {
         confidence: result.run.confidence,
         requiresReview,
@@ -497,6 +846,7 @@ export class EngineeringAIService {
         traceId: (result.run as { trace_id?: string }).trace_id,
         costEventRef: result.run.id,
         policyApplied: true,
+        grounded: false,
       },
     };
   }
@@ -519,25 +869,33 @@ export class EngineeringDashboardService {
     }
   ) {}
 
-  async getDashboard(commerce: CommerceExecutionContext, tenantId: string) {
+  async getDashboard(
+    commerce: CommerceExecutionContext,
+    tenantId: string,
+    options?: { projectId?: string },
+  ) {
     assertEngineeringService(commerce, "dashboard.read", tenantId);
     const aggregate = { aggregate: true as const };
+    const projectId = options?.projectId?.trim() || undefined;
     const [projects, assets, documents, apps, runs, actions, decisions, risks, issues, technicalQueries, lessons] =
       await Promise.all([
-      this.projects.list(commerce, tenantId, 10, aggregate),
-      this.assets.list(commerce, tenantId, undefined, 10, aggregate),
-      this.documents.list(commerce, tenantId, undefined, 10, aggregate),
+      this.projects.list(commerce, tenantId, 50, aggregate),
+      this.assets.list(commerce, tenantId, projectId, 50, aggregate),
+      this.documents.list(commerce, tenantId, projectId, 50, aggregate),
       this.applications.listApplications(commerce, aggregate),
       this.kernel?.aiDirector.listRuns(tenantId, 10) ?? Promise.resolve([]),
-      this.registers?.actions.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
-      this.registers?.decisions.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
-      this.registers?.risks.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
-      this.registers?.issues.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
-      this.registers?.technicalQueries.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
-      this.registers?.lessons.list(commerce, tenantId, undefined, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.actions.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.decisions.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.risks.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.issues.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.technicalQueries.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
+      this.registers?.lessons.list(commerce, tenantId, projectId, undefined, aggregate) ?? Promise.resolve([]),
     ]);
 
-    const activeProjects = projects.filter((p) => p.status === "active");
+    const scopedProjects = projectId
+      ? projects.filter((p) => String(p.id) === projectId)
+      : projects;
+    const activeProjects = scopedProjects.filter((p) => p.status === "active");
     const highRiskAssets = assets.filter(
       (a) => a.criticality === "high" || a.criticality === "critical"
     );
@@ -546,7 +904,21 @@ export class EngineeringDashboardService {
     const pendingDecisions = decisions.filter((d) => d.approval_status !== "approved");
     const openRisks = risks.filter((r) => r.status !== "closed");
     const openIssues = issues.filter((i) => !["resolved", "closed"].includes(String(i.status)));
-    const openTqs = technicalQueries.filter((t) => t.status !== "answered" && t.status !== "closed");
+    const openTqs = technicalQueries.filter((t) => {
+      const status = String(t.status ?? "");
+      return !["closed", "cancelled", "canceled", "superseded", "answered", "draft"].includes(status);
+    });
+
+    const highRisks = openRisks.filter((r) => {
+      const score = Number(r.score ?? Number(r.probability ?? 0) * Number(r.consequence ?? 0));
+      return score >= 15;
+    });
+    const overdueActions = openActions.filter((a) => {
+      const due = a.due_date ?? a.dueAt ?? a.due_at;
+      if (typeof due !== "string" || !due.trim()) return false;
+      const ts = Date.parse(due);
+      return Number.isFinite(ts) && ts < Date.now();
+    });
 
     return {
       activeProjects,
@@ -561,12 +933,28 @@ export class EngineeringDashboardService {
       openIssuesCount: openIssues.length,
       openTechnicalQueriesCount: openTqs.length,
       lessonsCount: lessons.length,
+      attention: {
+        openActions: openActions.slice(0, 8),
+        overdueActions: overdueActions.slice(0, 8),
+        pendingDecisions: pendingDecisions.slice(0, 8),
+        openRisks: openRisks.slice(0, 8),
+        highRisks: (highRisks.length ? highRisks : openRisks).slice(0, 8),
+        openTqs: openTqs.slice(0, 8),
+        openIssues: openIssues.slice(0, 8),
+        projects: scopedProjects.slice(0, 8),
+      },
       platformHealth: {
         engineeringOs: "operational",
         aiDirector: "operational",
         knowledgeGraph: "operational",
         digitalTwin: "operational",
       },
+      meta: {
+        projectId: projectId ?? null,
+        scoped: Boolean(projectId),
+        scopeLabel: projectId ? "selected_project" : "all_projects",
+      },
     };
   }
 }
+

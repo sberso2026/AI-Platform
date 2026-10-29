@@ -1,0 +1,512 @@
+"use client";
+
+import type { ReactNode } from "react";
+import Link from "next/link";
+import { Card, CardContent, EmptyState, StatusChip, cn } from "@rtb/ui";
+import { AskThisObjectLink } from "@/components/engineering/ask-this-object-link";
+import { ModuleSectionNav, type ModuleNavLink } from "@/components/engineering/module-section-nav";
+import {
+  formatOperationalDate,
+  humanizeOperationalError,
+  pickExistingField,
+} from "@/lib/engineering/enterprise-ux";
+import { displayOperationalText } from "@/lib/engineering/module-ops";
+
+export type OperationalRow = Record<string, unknown>;
+
+export function recordLabel(row: OperationalRow, keys: string[]): string {
+  for (const key of keys) {
+    const value = row[key];
+    if (typeof value === "string" && value.trim() && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
+      return value;
+    }
+  }
+  return "Record";
+}
+
+export function recordHref(base: string, row: OperationalRow): string {
+  const id = row.id;
+  if (typeof id === "string" && id.trim()) return `${base.replace(/\/$/, "")}/${id}`;
+  return base;
+}
+
+export function OperationalPageIntro({
+  title,
+  purpose,
+  primaryAction,
+  testId,
+}: {
+  title?: string;
+  purpose: string;
+  primaryAction?: ReactNode;
+  testId?: string;
+}) {
+  return (
+    <div
+      className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+      data-testid={testId}
+    >
+      <div className="min-w-0">
+        {title ? <h2 className="text-lg font-semibold text-[color:var(--eos-text-primary)]">{title}</h2> : null}
+        <p className={cn("max-w-2xl text-sm text-[color:var(--eos-text-secondary)]", title && "mt-1")}>{purpose}</p>
+      </div>
+      {primaryAction ? <div className="shrink-0">{primaryAction}</div> : null}
+    </div>
+  );
+}
+
+export function OperationalMetricCard({
+  label,
+  value,
+  href,
+  tone = "neutral",
+  testId,
+}: {
+  label: string;
+  value: string | number;
+  href: string;
+  tone?: "neutral" | "attention" | "critical" | "ok";
+  testId?: string;
+}) {
+  const ring =
+    tone === "critical"
+      ? "border-[color:color-mix(in_srgb,var(--eos-danger)_45%,transparent)] hover:border-[color:var(--eos-danger)]"
+      : tone === "attention"
+        ? "border-[color:color-mix(in_srgb,var(--eos-warning)_45%,transparent)] hover:border-[color:var(--eos-warning)]"
+        : tone === "ok"
+          ? "border-[color:color-mix(in_srgb,var(--eos-success)_45%,transparent)] hover:border-[color:var(--eos-success)]"
+          : "border-[color:var(--eos-border)] hover:border-[color:var(--eos-border-active)]";
+  return (
+    <Link href={href} className="block focus-visible:outline-none" data-testid={testId}>
+      <Card className={cn("h-full transition-colors", ring)}>
+        <CardContent className="p-4">
+          <p className="text-[0.75rem] font-semibold uppercase tracking-wide text-[color:var(--eos-text-secondary)]">
+            {label}
+          </p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-[color:var(--eos-text-primary)]">{value}</p>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
+export function AttentionSummary({
+  items,
+}: {
+  items: Array<{ id: string; label: string; count: number; href: string }>;
+}) {
+  const attention = items.filter((item) => item.count > 0);
+  return (
+    <div
+      className="rounded-xl border border-[color:var(--eos-border)] bg-[color:var(--eos-panel-elevated)] p-4"
+      data-testid="attention-summary"
+    >
+      <p className="text-sm font-semibold text-[color:var(--eos-text-primary)]">Attention required</p>
+      {attention.length === 0 ? (
+        <p className="mt-2 text-sm text-[color:var(--eos-text-secondary)]">Nothing needs attention in the current scope.</p>
+      ) : (
+        <ul className="mt-3 flex flex-wrap gap-2">
+          {attention.map((item) => (
+            <li key={item.id}>
+              <Link
+                href={item.href}
+                className="inline-flex min-h-11 items-center rounded-md border border-[color:color-mix(in_srgb,var(--eos-warning)_45%,transparent)] bg-[color:color-mix(in_srgb,var(--eos-warning)_12%,transparent)] px-3 text-sm font-medium text-[color:var(--eos-warning)] hover:border-[color:var(--eos-warning)]"
+              >
+                {item.label}
+                <span className="ml-2 tabular-nums">{item.count}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export function WorkQueue({
+  title,
+  href,
+  rows,
+  labelKeys,
+  statusKey,
+  emptyTitle,
+  emptyDescription,
+  testId,
+  itemHref,
+}: {
+  title: string;
+  href: string;
+  rows: OperationalRow[];
+  labelKeys: string[];
+  statusKey?: string;
+  emptyTitle: string;
+  emptyDescription: string;
+  testId?: string;
+  /** When omitted, each row opens the queue destination (no invented detail routes). */
+  itemHref?: (row: OperationalRow) => string;
+}) {
+  return (
+    <section className="eos-command-panel p-4" data-testid={testId}>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-[color:var(--eos-text-primary)]">{title}</h3>
+        <Link href={href} className="text-xs font-medium text-[color:var(--eos-accent)] underline-offset-2 hover:underline">
+          View all
+        </Link>
+      </div>
+      {rows.length === 0 ? (
+        <EmptyState title={emptyTitle} description={emptyDescription} className="px-4 py-5" />
+      ) : (
+        <ul className="divide-y divide-slate-100">
+          {rows.map((row) => {
+            const id = String(row.id ?? recordLabel(row, labelKeys));
+            const dest = itemHref?.(row) ?? href;
+            const meta = [
+              displayOperationalText(pickExistingField(row, ["assigned_to_name", "owner_name", "assigned_to", "owner_id", "owner"]), ""),
+              formatOperationalDate(row.due_date ?? row.response_due ?? row.dueDate),
+              formatOperationalDate(row.updated_at ?? row.updatedAt),
+            ].filter((part) => part && part !== "—");
+            return (
+              <li key={id}>
+                <Link
+                  href={dest}
+                  className="flex min-h-11 items-center justify-between gap-3 py-2 text-sm text-[color:var(--eos-text-primary)] hover:text-[color:var(--eos-accent)]"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate">{recordLabel(row, labelKeys)}</span>
+                    {meta.length > 0 ? (
+                      <span className="block truncate text-xs text-slate-500">{meta.join(" · ")}</span>
+                    ) : null}
+                  </span>
+                  {statusKey ? <StatusChip value={String(row[statusKey] ?? "")} /> : null}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+export function StatusTable({
+  columns,
+  rows,
+  emptyTitle,
+  emptyDescription,
+  testId,
+  emptyTestId,
+}: {
+  columns: Array<{ key: string; label: string; hrefKey?: boolean; status?: boolean }>;
+  rows: OperationalRow[];
+  emptyTitle: string;
+  emptyDescription: string;
+  testId?: string;
+  emptyTestId?: string;
+}) {
+  if (rows.length === 0) {
+    return (
+      <div data-testid={emptyTestId ?? testId}>
+        <EmptyState title={emptyTitle} description={emptyDescription} />
+      </div>
+    );
+  }
+  return (
+    <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white" data-testid={testId}>
+      <table className="min-w-full text-left text-sm">
+        <caption className="sr-only">{testId ?? "Operational records"}</caption>
+        <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <tr>
+            {columns.map((col) => (
+              <th key={col.key} scope="col" className="px-4 py-3 font-semibold">
+                {col.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {rows.map((row, index) => (
+            <tr
+                key={String(row.id ?? index)}
+                className={typeof row.href === "string" ? "relative hover:bg-slate-50" : "hover:bg-slate-50"}
+              >
+              {columns.map((col) => {
+                const raw = row[col.key];
+                const text = displayOperationalText(raw);
+                const href = typeof row.href === "string" ? row.href : null;
+                return (
+                  <td key={col.key} className="px-4 py-3 text-slate-800">
+                    {col.status ? (
+                      <StatusChip value={text === "—" ? null : text}>{text === "—" ? undefined : text}</StatusChip>
+                    ) : col.hrefKey && href ? (
+                      <Link href={href} className="font-medium underline-offset-2 hover:underline after:absolute after:inset-0">
+                        {text}
+                      </Link>
+                    ) : href && col.key === columns[0]?.key ? (
+                      <Link href={href} className="font-medium underline-offset-2 hover:underline after:absolute after:inset-0">
+                        {text}
+                      </Link>
+                    ) : (
+                      text
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function ContextTabs({
+  links,
+  ariaLabel,
+}: {
+  links: readonly ModuleNavLink[];
+  ariaLabel: string;
+}) {
+  return <ModuleSectionNav links={links} ariaLabel={ariaLabel} />;
+}
+
+export function EmptyOperationalState({
+  title,
+  description,
+  action,
+  testId,
+}: {
+  title: string;
+  description: string;
+  action?: ReactNode;
+  testId?: string;
+}) {
+  return (
+    <div data-testid={testId ?? "empty-operational-state"}>
+      <EmptyState title={title} description={description} action={action} />
+    </div>
+  );
+}
+
+export function EntitlementLimitedState({
+  title = "This feature is not included in your current plan",
+  description = "The application is not licensed for this workspace. Direct URL authorization remains enforced.",
+  testId,
+}: {
+  title?: string;
+  description?: string;
+  testId?: string;
+}) {
+  return (
+    <div
+      className="rounded-lg border border-amber-200 bg-amber-50 px-6 py-7"
+      data-testid={testId ?? "entitlement-limited-state"}
+      role="status"
+    >
+      <p className="text-sm font-semibold text-amber-950">{title}</p>
+      <p className="mt-1.5 max-w-prose text-sm text-amber-900">{description}</p>
+    </div>
+  );
+}
+
+export type BreadcrumbItem = { href?: string; label: string };
+
+export function EngineeringBreadcrumb({
+  items,
+  testId,
+}: {
+  items: BreadcrumbItem[];
+  testId?: string;
+}) {
+  if (items.length < 2) return null;
+  return (
+    <nav
+      className="mb-4 text-sm text-slate-600"
+      aria-label="Breadcrumb"
+      data-testid={testId ?? "engineering-breadcrumb"}
+    >
+      <ol className="flex flex-wrap items-center gap-1">
+        {items.map((item, index) => {
+          const last = index === items.length - 1;
+          return (
+            <li key={`${item.label}-${index}`} className="flex items-center gap-1">
+              {index > 0 ? <span aria-hidden className="text-slate-400">/</span> : null}
+              {last || !item.href ? (
+                <span className="font-medium text-slate-900" aria-current={last ? "page" : undefined}>
+                  {item.label}
+                </span>
+              ) : (
+                <Link href={item.href} className="underline-offset-2 hover:underline">
+                  {item.label}
+                </Link>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+export function ProvenanceLink({ href, label = "Methodology & provenance" }: { href: string; label?: string }) {
+  return (
+    <Link
+      href={href}
+      className="text-xs font-medium text-slate-600 underline-offset-2 hover:underline"
+      data-testid="provenance-link"
+    >
+      {label}
+    </Link>
+  );
+}
+
+export function ProjectContextHeader({
+  code,
+  name,
+  status,
+  phase,
+  projectId,
+}: {
+  code?: string;
+  name?: string;
+  status?: string;
+  phase?: string;
+  projectId: string;
+}) {
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-2" data-testid="project-context-header">
+      {status ? <StatusChip value={status} /> : null}
+      {phase ? <StatusChip value={phase} /> : null}
+      <span className="text-sm text-slate-600">
+        {code ? `${code} — ` : ""}
+        {name ?? "Project"}
+      </span>
+      <AskEngineeringAI
+        label="Ask Engineering AI"
+        projectId={projectId}
+        objectType="project"
+        objectId={projectId}
+        q="What needs my attention on this project?"
+        testId="ask-this-project"
+      />
+    </div>
+  );
+}
+
+export function AssetContextHeader({
+  tag,
+  name,
+  assetId,
+  projectId,
+  status,
+}: {
+  tag?: string;
+  name?: string;
+  assetId: string;
+  projectId?: string | null;
+  status?: string;
+}) {
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-2" data-testid="asset-context-header">
+      {status ? <StatusChip value={status} /> : null}
+      <span className="text-sm text-slate-600">
+        {tag ? `${tag} — ` : ""}
+        {name ?? "Asset"}
+      </span>
+      <AskEngineeringAI
+        label="Ask Engineering AI"
+        projectId={projectId}
+        objectType="asset"
+        objectId={assetId}
+        q="Explain this asset condition from recorded evidence."
+        testId="ask-this-asset"
+      />
+    </div>
+  );
+}
+
+export function AskEngineeringAI(props: {
+  label?: string;
+  projectId?: string | null;
+  objectType?: string | null;
+  objectId?: string | null;
+  q?: string | null;
+  testId?: string;
+}) {
+  return (
+    <AskThisObjectLink
+      label={props.label ?? "Ask Engineering AI"}
+      projectId={props.projectId}
+      objectType={props.objectType}
+      objectId={props.objectId}
+      q={props.q ?? "What needs my attention?"}
+      testId={props.testId ?? "ask-engineering-ai"}
+    />
+  );
+}
+
+export function OperationalSkeleton({
+  label = "Loading operational data…",
+  rows = 6,
+}: {
+  label?: string;
+  rows?: number;
+}) {
+  return (
+    <div data-testid="operational-loading" role="status" aria-live="polite" aria-busy="true">
+      <p className="sr-only">{label}</p>
+      <div className="mb-6 h-16 animate-pulse rounded-lg border border-slate-200 bg-slate-100" />
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="h-10 border-b border-slate-200 bg-slate-50" />
+        {Array.from({ length: rows }).map((_, index) => (
+          <div
+            key={index}
+            className="h-12 border-b border-slate-100 bg-white last:border-0"
+          >
+            <div className="mx-4 mt-4 h-4 w-2/3 animate-pulse rounded bg-slate-100" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function OperationalError({
+  message,
+  retryHref,
+  onRetry,
+}: {
+  message: string;
+  retryHref?: string;
+  onRetry?: () => void;
+}) {
+  const copy = humanizeOperationalError(message);
+  return (
+    <div
+      className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+      role="alert"
+      data-testid="operational-error"
+    >
+      <p className="font-semibold">{copy.title}</p>
+      <p className="mt-1">{copy.description}</p>
+      {copy.diagnostic ? (
+        <p className="mt-2 font-mono text-xs text-red-700/80" data-testid="operational-error-diagnostic">
+          {copy.diagnostic}
+        </p>
+      ) : null}
+      {onRetry ? (
+        <button
+          type="button"
+          className="mt-2 inline-block font-medium underline"
+          data-testid="operational-retry"
+          onClick={onRetry}
+        >
+          Retry
+        </button>
+      ) : retryHref ? (
+        <Link href={retryHref} className="mt-2 inline-block font-medium underline">
+          Retry
+        </Link>
+      ) : null}
+    </div>
+  );
+}

@@ -1,0 +1,34 @@
+{
+  "name": "@rtb/project-controls-certification",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "certify:phase11a": "tsx scripts/run-phase11a-certification.ts",
+    "certify:phase11b": "tsx scripts/run-phase11b-certification.ts",
+    "certify:phase11c": "tsx scripts/run-phase11c-certification.ts",
+    "certify:phase11d": "tsx scripts/run-phase11d-certification.ts",
+    "certify:phase11e": "tsx scripts/run-phase11e-certification.ts",
+    "certify:phase11f": "tsx scripts/run-phase11f-certification.ts",
+    "certify:phase11h": "tsx scripts/run-phase11h-certification.ts",
+    "certify:phase11j": "tsx scripts/run-phase11j-certification.ts",
+    "certify:phase11k": "tsx scripts/run-phase11k-certification.ts",
+    "certify:phase11l": "tsx scripts/run-phase11l-certification.ts",
+    "certify:phase11m": "tsx scripts/run-phase11m-certification.ts",
+    "certify:phase11n": "tsx scripts/run-phase11n-certification.ts",
+    "generate:manifest": "tsx scripts/generate-module-manifest.ts",
+    "secret-scan": "tsx scripts/secret-exposure-scan.ts",
+    "test:e2e:v1": "playwright test playwright/v1-ga.spec.ts"
+  },
+  "dependencies": {
+    "@rtb/engineering-shared-project-domain": "workspace:*",
+    "@rtb/project-controls": "workspace:*",
+    "@supabase/supabase-js": "^2.49.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^22.15.29",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3"
+  }
+}

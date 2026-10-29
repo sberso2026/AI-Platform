@@ -1,0 +1,87 @@
+import { describe, expect, it } from "vitest";
+import { EU_CONCRETE_PACK_CERTIFIED, EU_CONCRETE_PRODUCT_CLAIM_LEVEL, EU_CONCRETE_STANDARD_CONFORMANCE_STATE } from "@rtb/types";
+import { CONCRETE_CAPABILITY_MANIFEST, D1E_INTERNAL_ROADMAP } from "./capability";
+import { D1E_CANONICAL_CAPABILITY_MATRIX } from "./d1e-closeout";
+import { DEFLECTION_RUNTIME_CAPABILITY } from "./eu-c7/deflection-authority";
+import {
+  EU_C8_BASIC_ANCHORAGE_EQUALS_DESIGN_ANCHORAGE,
+  EU_C8_BOUNDED_TRACK_COMPLETE,
+  EU_C8_CAPABILITY_CLASSIFICATIONS,
+  EU_C8_CLOSEOUT_RUNTIME_METHOD_IDS,
+  EU_C8_COMPLETE_EN1992_DETAILING,
+  EU_C8_DESIGN_ANCHORAGE_CAPABILITY,
+  EU_C8_ENGINEER_VALIDATED_METHOD_COUNT,
+  EU_C8_LAP_AUTONOMOUS_RECOVERY_REOPENED,
+  EU_C8_LAP_PROFILE_PRESENT,
+  EU_C8_LAP_RULE_AUTHORITY_STATE,
+  EU_C8_LAP_RUNTIME_CAPABILITY,
+  EU_C8_MATURITY_STATE,
+  EU_C8_NEXT_ROADMAP_PHASE,
+  EU_C8_R5_BLOCKED_FOR_C8_CLOSEOUT,
+  EU_C8_R5_BLOCKED_FOR_LAP_IMPLEMENTATION,
+  EU_C8_VALIDATION_MATRIX,
+  EU_C9_ORCHESTRATION_CAN_INVENT_MISSING_METHODS,
+  HIDDEN_DESIGN_ANCHORAGE_CAPABILITY_CLAIM,
+  HIDDEN_LAP_CAPABILITY_CLAIM,
+  NEW_C8_ENGINEERING_FORMULA_IMPLEMENTED,
+  assertEuC8CloseoutPreservesPriorFlags,
+} from "./eu-c8/closeout";
+import { NEW_C8_LAP_RUNTIME_METHOD_IMPLEMENTED } from "./eu-c8/profile";
+
+describe("EOS-D1E-EU-C8-R6 closeout", () => {
+  it("closes the bounded track without a lap or design-anchorage method", () => {
+    expect(EU_C8_BOUNDED_TRACK_COMPLETE).toBe(true);
+    expect(EU_C8_COMPLETE_EN1992_DETAILING).toBe(false);
+    expect(EU_C8_MATURITY_STATE).toBe("FRAMEWORK_PLUS_BOUNDED_METHODS");
+    expect(EU_C8_CAPABILITY_CLASSIFICATIONS.COVER_ASSEMBLY).toBe("IMPLEMENTED_NUMERICALLY_VALIDATED");
+    expect(EU_C8_CAPABILITY_CLASSIFICATIONS.MINIMUM_CLEAR_SPACING).toBe("IMPLEMENTED_NUMERICALLY_VALIDATED");
+    expect(EU_C8_CAPABILITY_CLASSIFICATIONS.BASIC_REQUIRED_STRAIGHT_BAR_ANCHORAGE).toBe("IMPLEMENTED_NUMERICALLY_VALIDATED");
+    expect(EU_C8_CAPABILITY_CLASSIFICATIONS.LAPS).toBe("DEFERRED_RULE_AUTHORITY");
+    expect(EU_C8_DESIGN_ANCHORAGE_CAPABILITY).toBe("NOT_IMPLEMENTED");
+    expect(EU_C8_BASIC_ANCHORAGE_EQUALS_DESIGN_ANCHORAGE).toBe(false);
+    expect(EU_C8_LAP_RUNTIME_CAPABILITY).toBe("NOT_IMPLEMENTED");
+    expect(EU_C8_LAP_RULE_AUTHORITY_STATE).toBe("DEFERRED_RULE_AUTHORITY");
+    expect(EU_C8_LAP_PROFILE_PRESENT).toBe(false);
+    expect(EU_C8_R5_BLOCKED_FOR_LAP_IMPLEMENTATION).toBe(true);
+    expect(EU_C8_R5_BLOCKED_FOR_C8_CLOSEOUT).toBe(false);
+    expect(EU_C8_LAP_AUTONOMOUS_RECOVERY_REOPENED).toBe(false);
+    expect(HIDDEN_LAP_CAPABILITY_CLAIM).toBe(false);
+    expect(HIDDEN_DESIGN_ANCHORAGE_CAPABILITY_CLAIM).toBe(false);
+    expect(NEW_C8_ENGINEERING_FORMULA_IMPLEMENTED).toBe(false);
+    expect(NEW_C8_LAP_RUNTIME_METHOD_IMPLEMENTED).toBe(false);
+    expect(EU_C8_ENGINEER_VALIDATED_METHOD_COUNT).toBe(0);
+    expect(EU_C8_CLOSEOUT_RUNTIME_METHOD_IDS).toEqual([
+      "EU_RC_COVER_ASSEMBLY_EN1992_REFERENCE",
+      "EU_RC_MIN_CLEAR_SPACING_EN1992_REFERENCE",
+      "EU_RC_BASIC_REQUIRED_ANCHORAGE_EN1992_REFERENCE",
+    ]);
+    expect(EU_C8_VALIDATION_MATRIX.LAPS.implemented).toBe(false);
+    expect(EU_C8_VALIDATION_MATRIX.LAPS.state).toBe("DEFERRED_RULE_AUTHORITY");
+    expect(EU_C8_VALIDATION_MATRIX.DESIGN_ANCHORAGE.implemented).toBe(false);
+    expect(EU_C8_VALIDATION_MATRIX.BASIC_ANCHORAGE.numericallyValidated).toBe(true);
+    expect(EU_C8_NEXT_ROADMAP_PHASE).toBe("EOS-D1E-EU-C9-R1-MEMBER-ORCHESTRATION-FOUNDATION");
+    expect(EU_C9_ORCHESTRATION_CAN_INVENT_MISSING_METHODS).toBe(false);
+    expect(() => assertEuC8CloseoutPreservesPriorFlags()).not.toThrow();
+    expect(DEFLECTION_RUNTIME_CAPABILITY).toBe("NOT_IMPLEMENTED");
+    expect(EU_CONCRETE_PRODUCT_CLAIM_LEVEL).toBe("EU_CONCRETE_MECHANICS_REFERENCE_CAPABILITY");
+    expect(EU_CONCRETE_PACK_CERTIFIED).toBe(false);
+    expect(EU_CONCRETE_STANDARD_CONFORMANCE_STATE).toBe("INTENDED_PROFILE");
+  });
+
+  it("keeps the manifest, matrix, and roadmap truthful", () => {
+    const row = (id: string) => CONCRETE_CAPABILITY_MANIFEST.find((item) => item.capabilityId === id);
+    expect(row("D1E.EU.C8.COVER_ASSEMBLY")?.validationState).toBe("NUMERICALLY_VALIDATED");
+    expect(row("D1E.EU.C8.MIN_CLEAR_SPACING")?.validationState).toBe("NUMERICALLY_VALIDATED");
+    expect(row("D1E.EU.C8.BASIC_REQUIRED_ANCHORAGE")?.validationState).toBe("NUMERICALLY_VALIDATED");
+    expect(row("D1E.EU.C8.LAPS")?.implementationState).toBe("DEFERRED_RULE_AUTHORITY");
+    expect(row("D1E.EU.C8.DESIGN_ANCHORAGE")?.implementationState).toBe("NOT_IMPLEMENTED");
+    expect(row("D1E.EU.C8.DURABILITY_COVER_LOOKUP")?.implementationState).toBe("NOT_IMPLEMENTED");
+    const matrix = (name: string) => D1E_CANONICAL_CAPABILITY_MATRIX.find((item) => item.capability === name);
+    expect(matrix("laps")?.EU.implemented).toBe(false);
+    expect(matrix("laps")?.EU.limitation).toContain("DEFERRED_RULE_AUTHORITY");
+    expect(matrix("anchorage")?.EU.numericallyValidated).toBe(true);
+    expect(matrix("anchorage")?.EU.limitation).toContain("design anchorage not implemented");
+    expect(D1E_INTERNAL_ROADMAP.find((item) => item.id === "EOS-D1E-EU-C8-R6-CLOSEOUT")?.status).toBe("CLOSED");
+    expect(D1E_INTERNAL_ROADMAP.find((item) => item.id === "EOS-D1E-EU-C9-R1-MEMBER-ORCHESTRATION-FOUNDATION")?.status).toBe("CLOSED");
+  });
+});

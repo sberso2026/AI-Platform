@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle, Badge } from "@rtb/ui";
@@ -96,6 +97,137 @@ export default function EngineeringSettingsPage() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">External Tools & Integrations</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Canonical configuration for SPACE GASS, ETABS, IFC, Microsoft 365, and other external systems.
+              Installation, licence, and automation are platform/admin settings — not project options.
+              <div className="mt-3">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/external-tools">
+                  Open External Tools & Integrations
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Disciplines</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Canonical Multidiscipline Intelligence Foundation. Capability status, standards references, and tool bindings.
+              <div className="mt-3">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/disciplines">
+                  Open Disciplines
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Assurance</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Governed enable/disable of approved Assurance catalog rules. Rule logic stays in code. Ordinary
+              engineers cannot change rule governance from the Assurance workspace.
+              <div className="mt-3">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/assurance">
+                  Open Assurance rule settings
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Lifecycle</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Governed Engineering lifecycle profile, stage applicability, allowed transitions, and gate criteria.
+              Profile logic stays in code. Ordinary engineers cannot authorize stage transitions from settings.
+              <div className="mt-3">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/lifecycle">
+                  Open Lifecycle profile settings
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Deliverables</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Governed deliverable definitions, lifecycle/discipline applicability, and maturity profile version.
+              Example catalog items are not mandatory for every FEED project. Ordinary engineers cannot change
+              catalog governance from the Deliverables workspace.
+              <div className="mt-3">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/deliverables">
+                  Open Deliverable settings
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Information</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Governed information type catalog and purpose-specific source authority policy. Ordinary
+              engineers can inspect effective authority but cannot silently redefine it.
+              <div className="mt-3">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/information">
+                  Open Information settings
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Work Context</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Managed engineering repositories and capture policy. Default capture is DENY. Ordinary
+              engineers cannot silently broaden repository scope or enable desktop surveillance.
+              <div className="mt-3">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/work-context">
+                  Open Managed Repositories
+                </Link>
+              </div>
+              <div className="mt-2">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/integrations">
+                  Open Microsoft 365 / SharePoint
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Information Requirements</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Governed information-requirement templates and lifecycle profiles. Templates stay
+              in the catalog. Ordinary engineers cannot silently redefine required information.
+              <div className="mt-3">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/information-requirements">
+                  Open Information Requirement settings
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Artifact Templates</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Company official and project/client presentation templates. EOS Professional Default remains the SME fallback.
+              Ordinary engineers cannot change template policy. Company shells do not certify calculation formulas.
+              <div className="mt-3">
+                <Link className="font-medium underline-offset-2 hover:underline" href="/engineering/settings/templates">
+                  Open Artifact Template settings
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Permissions & Policies</CardTitle>

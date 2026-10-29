@@ -6,6 +6,13 @@ import type {
   IndexedDocumentChunk,
   ProjectIntelligenceDocumentIndexAdapter,
 } from "./index-adapter";
+import { planEngineeringQuery } from "./query-plan";
+import { contentContainsTerm, termSearchVariants } from "./lexical-overlap";
+
+function maxNullable(left: number | null | undefined, right: number | null | undefined): number | null {
+  if (left == null && right == null) return null;
+  return Math.max(left ?? Number.NEGATIVE_INFINITY, right ?? Number.NEGATIVE_INFINITY);
+}
 
 function toVectorLiteral(values: readonly number[]): string {
   return `[${values.join(",")}]`;
@@ -57,11 +64,25 @@ export class PostgresDocumentIndexAdapter implements ProjectIntelligenceDocument
       p_document_ids: filter.engineeringDocumentIds ?? null,
       p_revisions: filter.revisions ?? null,
     });
-    if (error) {
-      // Fallback: filtered ILIKE when RPC not yet applied in older envs
-      return this.lexicalFallback(query, filter, limit);
+    const rpcHits = error
+      ? []
+      : (data as Array<Record<string, unknown>> ?? []).map((row) => this.rowToHit(row, "lexical", [], "fts"));
+    const fallbackHits = await this.lexicalFallback(query, filter, limit);
+    const merged = new Map<string, DocumentIndexHit>();
+    for (const hit of [...rpcHits, ...fallbackHits]) {
+      const existing = merged.get(hit.chunk.stableChunkId);
+      if (!existing) {
+        merged.set(hit.chunk.stableChunkId, hit);
+        continue;
+      }
+      merged.set(hit.chunk.stableChunkId, {
+        ...existing,
+        score: Math.max(existing.score, hit.score),
+        ftsScore: maxNullable(existing.ftsScore, hit.ftsScore),
+        fallbackScore: maxNullable(existing.fallbackScore, hit.fallbackScore),
+      });
     }
-    return (data as Array<Record<string, unknown>>).map((row) => this.rowToHit(row, "lexical"));
+    return [...merged.values()].sort((a, b) => b.score - a.score).slice(0, Math.max(limit, fallbackHits.length));
   }
 
   async vectorSearch(embedding: readonly number[], filter: DocumentIndexFilter, limit = 10): Promise<readonly DocumentIndexHit[]> {
@@ -79,26 +100,47 @@ export class PostgresDocumentIndexAdapter implements ProjectIntelligenceDocument
   }
 
   private async lexicalFallback(query: string, filter: DocumentIndexFilter, limit: number): Promise<readonly DocumentIndexHit[]> {
+    const plan = planEngineeringQuery(query);
+    const terms = (plan.distinctiveTerms.length ? plan.distinctiveTerms : plan.retrievalQueries[0]?.split(/\s+/) ?? [])
+      .slice(0, 8);
+    const searchTerms = [...new Set(
+      (terms.length ? terms : [query.replace(/[% ,]/g, " ").trim() || query])
+        .flatMap((term) => termSearchVariants(term)),
+    )].slice(0, 12);
+    const orClause = searchTerms
+      .map((term) => `content.ilike.%${term.replace(/[%*,()]/g, "")}%`)
+      .join(",");
     let builder = this.supabase
       .from("project_intelligence_document_chunks")
       .select("*")
       .eq("tenant_id", filter.tenantId)
       .eq("workspace_id", filter.workspaceId)
       .is("deleted_at", null)
-      .ilike("content", `%${query.split(/\s+/).filter(Boolean)[0] ?? query}%`)
-      .limit(limit);
+      .or(orClause)
+      .limit(Math.max(limit * 12, 200));
     if (filter.engineeringDocumentIds?.length) {
       builder = builder.in("engineering_document_id", [...filter.engineeringDocumentIds]);
+    }
+    if (filter.engineeringProjectIds?.length) {
+      builder = builder.in("engineering_project_id", [...filter.engineeringProjectIds]);
     }
     if (filter.revisions?.length) {
       builder = builder.in("source_revision", [...filter.revisions]);
     }
     const { data, error } = await builder;
     if (error) throw new Error(error.message);
-    return (data ?? []).map((row) => this.rowToHit(row as Record<string, unknown>, "lexical"));
+    return (data ?? [])
+      .map((row) => this.rowToHit(row as Record<string, unknown>, "lexical", searchTerms, "fallback"))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
   }
 
-  private rowToHit(row: Record<string, unknown>, source: "lexical" | "vector"): DocumentIndexHit {
+  private rowToHit(
+    row: Record<string, unknown>,
+    source: "lexical" | "vector",
+    queryTerms: readonly string[] = [],
+    channel: "fts" | "fallback" | "vector" = source === "vector" ? "vector" : "fts",
+  ): DocumentIndexHit {
     const chunk: DocumentChunk = {
       id: String(row.chunk_id ?? row.id),
       engineeringDocumentId: String(row.engineering_document_id),
@@ -115,8 +157,26 @@ export class PostgresDocumentIndexAdapter implements ProjectIntelligenceDocument
       tenantId: String(row.tenant_id),
       workspaceId: String(row.workspace_id),
       engineeringProjectId: row.engineering_project_id ? String(row.engineering_project_id) : undefined,
+      metadata: row.metadata && typeof row.metadata === "object"
+        ? (row.metadata as Record<string, unknown>)
+        : undefined,
     };
-    const score = Number(row.score ?? row.rank ?? 0.5);
-    return { chunk, score, source };
+    const rawScore = Number(row.score ?? row.rank);
+    const overlapHay = `${chunk.sectionPath ?? ""} ${chunk.content}`;
+    const overlap = queryTerms.length
+      ? queryTerms.filter((term) => contentContainsTerm(overlapHay, term)).length / queryTerms.length
+      : 0;
+    const score = Number.isFinite(rawScore) && rawScore > 0
+      ? rawScore
+      : source === "lexical"
+        ? (overlap > 0 ? overlap : 0)
+        : 0;
+    return {
+      chunk,
+      score,
+      source,
+      ftsScore: channel === "fts" ? score : null,
+      fallbackScore: channel === "fallback" ? score : null,
+    };
   }
 }
