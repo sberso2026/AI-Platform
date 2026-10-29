@@ -2,7 +2,15 @@
 
 ## Policy
 
-The first Production cohort is one workspace named by the human release authority at GO. It is not chosen by this document, because no person or workspace is appointed here.
+The first Production cohort is the existing EOS 1 controlled pilot workspace. It is not enrolled in this plan.
+
+| Item | Value |
+| --- | --- |
+| Tenant | `eos-controlled-pilot` |
+| Workspace | `Default Workspace` |
+| Workspace ID | `5c85d773-3b79-43b2-b138-c6251f566768` |
+
+EOS 2 enrollment occurs only during EOS 2.17 execution after pre-enablement Production security and smoke tests pass. The workspace keeps its existing `engineering-os` allow override. That override does not enroll EOS 2.
 
 Do not enroll public users, unrelated workspaces, or all current `engineering-os` installations. Production currently has 396 active installations of that product. They are not the EOS 2 cohort.
 

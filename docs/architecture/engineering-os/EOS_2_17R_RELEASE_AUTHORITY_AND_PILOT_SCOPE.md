@@ -18,15 +18,15 @@ The D1 attestation `EOS_D1_QUALIFIED_STRUCTURAL_REVIEWER_ATTESTATION.md` names S
 
 ## PR-003
 
-`PRODUCTION_PILOT_WORKSPACE_IDENTIFIED=NO`
+`PRODUCTION_PILOT_WORKSPACE_IDENTIFIED=YES`
+
+`PRODUCTION_PILOT_WORKSPACE_ID=5c85d773-3b79-43b2-b138-c6251f566768`
 
 `PRODUCTION_PILOT_WORKSPACE_EOS_2_ENROLLED=NO`
 
-The EOS 2.16 cohort plan says the first Production workspace is named by the human release authority at GO. It explicitly does not choose one. Staging workspace `eos-qa-a` and synthetic project `EOS-QA-001` are not Production candidates.
+`PR_003_RESOLVED=YES`
 
-Production does contain the EOS 1 tenant `eos-controlled-pilot` and one workspace in that tenant. That tenant has no active `engineering-os` installation in the commerce join used for this check. The tenant was not enrolled for EOS 2, because the enrollment table does not exist. It is not designated here as the EOS 2 cohort.
-
-Production still has 396 active `engineering-os` installations. They are not the cohort. No workspace id is recorded as the EOS 2 pilot.
+The first EOS 2 Production cohort is the existing EOS 1 controlled pilot: tenant `eos-controlled-pilot`, workspace `Default Workspace`, id `5c85d773-3b79-43b2-b138-c6251f566768`. It is the only workspace in that tenant. It has one active `pilot-engineer` membership. Its `engineering-os` access is the existing allow override `EOS 1.0.0 controlled pilot workspace access`. It has no installation, subscription, or licence, and none was added. The other 396 active `engineering-os` installations were not selected. Staging workspace `eos-qa-a` and synthetic project `EOS-QA-001` are not Production candidates. EOS 2 enrollment remains absent.
 
 ## Scope that a future signatory would approve
 
