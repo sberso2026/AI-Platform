@@ -2,6 +2,11 @@
   "phase": "EOS-3-DOMAIN-1-WORK-PACKAGE-EXECUTION-MODEL",
   "architectureStatus": "FROZEN_FOR_IMPLEMENTATION_VALIDATION",
   "requiredStartHead": "35eb138c28b7d166c491bfe6ffd2bcc800c38b3a",
+  "endHead": "51ed9ccfabd07ca027f021df724182d9aab93429",
+  "commitSha": "51ed9ccfabd07ca027f021df724182d9aab93429",
+  "controlledPilotDeploymentId": "dpl_HL7BnxgvCbHtSVePMiQgg3W38Kad",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "verdict": "PASS",
   "artifacts": {
     "domainModel": "docs/architecture/engineering-os/EOS_3_WORK_PACKAGE_DOMAIN_MODEL.md",
     "executionBoundary": "docs/architecture/engineering-os/EOS_3_WORK_PACKAGE_EXECUTION_BOUNDARY.md",
