@@ -366,9 +366,11 @@ export function WorkPackagesPanel({ projectId }: { projectId: string }) {
                       {contract.cards.needsAttention.length === 0 ? (
                         <p className="text-xs text-slate-500">No open blockers</p>
                       ) : (
-                        <ul className="space-y-1 text-xs text-amber-900">
+                        <ul className="space-y-1 text-xs text-amber-900" data-testid="wp-impact-needs-attention">
                           {contract.cards.needsAttention.map((b) => (
-                            <li key={b.id}>{b.label}</li>
+                            <li key={b.id} data-eos-impact-contextual="yes">
+                              {b.label}
+                            </li>
                           ))}
                         </ul>
                       )}

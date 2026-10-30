@@ -588,6 +588,29 @@ export function deriveBlockers(projectId: string, workPackageIdOrStable: string)
         material: true,
       });
     }
+    // Intelligence-1: material impact states on associated engineering objects
+    const impactState = String(obj?.payload?.impactState ?? "");
+    if (
+      a.objectType === "Calculation" &&
+      (impactState === "STALE" || impactState === "REVIEW_REQUIRED")
+    ) {
+      blockers.push({
+        id: `blk-impact-calc-${a.id}`,
+        kind: "calculation_requires_review",
+        label: `${a.objectStableId} requires review`,
+        sourceObjectStableId: a.objectStableId,
+        material: true,
+      });
+    }
+    if (a.objectType === "Decision" && impactState === "REASSESSMENT_REQUIRED") {
+      blockers.push({
+        id: `blk-impact-dec-${a.id}`,
+        kind: "decision_requires_reassessment",
+        label: `${a.objectStableId} requires reassessment`,
+        sourceObjectStableId: a.objectStableId,
+        material: true,
+      });
+    }
   }
   // Missing vendor input placeholder when mass assumption present
   if (associations.some((a) => a.objectStableId === "ASM-001")) {
@@ -606,6 +629,12 @@ export function deriveNextAction(projectId: string, workPackageIdOrStable: strin
   const blockers = deriveBlockers(projectId, workPackageIdOrStable);
   if (blockers.some((b) => b.kind === "missing_vendor_input")) {
     return "Review revised vendor load";
+  }
+  if (blockers.some((b) => b.kind === "calculation_requires_review")) {
+    return "Review calculation affected by upstream change";
+  }
+  if (blockers.some((b) => b.kind === "decision_requires_reassessment")) {
+    return "Reassess decision under human authority";
   }
   if (blockers.some((b) => b.kind === "stale_or_unconfirmed_assumption")) {
     return "Confirm material engineering assumption";

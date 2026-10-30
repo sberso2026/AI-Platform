@@ -1,0 +1,30 @@
+{
+  "phase": "EOS-3-INTELLIGENCE-1-STALENESS-AND-IMPACT-PROPAGATION",
+  "requiredStartHead": "2acee79939bb4265907bd48b84acd90760e977cb",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "ownerAuthorizedIntelligenceContinuation": true,
+  "broadUxRedesignInThisPhase": false,
+  "currentSidebarPreserved": true,
+  "uiInformationArchitectureChanged": false,
+  "intelligenceUiChangesContextualOnly": true,
+  "stalenessImpactPropagationCore": true,
+  "propagationRequiresLiveLlm": false,
+  "automaticCalculationInvalidation": false,
+  "automaticDecisionReversal": false,
+  "automaticDeliverableWithdrawal": false,
+  "automaticEngineeringApproval": false,
+  "riskPrioritizedMyWorkImplemented": false,
+  "impactProcessingBlocksHomeRender": false,
+  "databaseSchemaChanged": false,
+  "migrationCountAdded": 0,
+  "artifacts": {
+    "staleness": "docs/architecture/engineering-os/EOS_3_STALENESS_AND_IMPACT_PROPAGATION.md",
+    "stateSemantics": "docs/architecture/engineering-os/EOS_3_IMPACT_STATE_SEMANTICS.md",
+    "rules": "docs/architecture/engineering-os/EOS_3_IMPACT_PROPAGATION_RULES.md",
+    "authority": "docs/architecture/engineering-os/EOS_3_IMPACT_RESOLUTION_AND_AUTHORITY.md",
+    "uiContract": "docs/architecture/engineering-os/EOS_3_IMPACT_UI_DATA_CONTRACT.md",
+    "pilotValidation": "docs/architecture/engineering-os/EOS_3_INTELLIGENCE1_PILOT_VALIDATION.md",
+    "manifest": "docs/architecture/engineering-os/EOS_3_INTELLIGENCE_1_MANIFEST.json"
+  },
+  "nextPhase": "EOS-3-CONTEXT-2-RISK-PRIORITIZED-MY-WORK-ENGINE"
+}

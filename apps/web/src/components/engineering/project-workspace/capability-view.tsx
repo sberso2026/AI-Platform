@@ -25,6 +25,7 @@ import { ProjectSetupPanel } from "./setup-panel";
 import { WorkPackagesPanel } from "./work-packages-panel";
 import { AssetsSystemsPanel } from "./assets-systems-panel";
 import { useProjectWorkspace } from "./use-workspace";
+import { ImpactAttentionBanner } from "@/components/engineering/impact-attention-banner";
 
 export function ProjectCapabilityView({
   projectId,
@@ -325,6 +326,10 @@ function EngineeringDesignPanel({
 }) {
   const calcs = snapshot.objects.filter((o) => o.objectType === "Calculation");
   const assumptions = snapshot.objects.filter((o) => o.objectType === "Assumption");
+  const impactedCalcs = calcs.filter((c) => {
+    const state = String(c.payload?.impactState ?? c.governedState ?? "");
+    return ["STALE", "REVIEW_REQUIRED", "IMPACT_CANDIDATE", "POTENTIALLY_AFFECTED"].includes(state);
+  });
   return (
     <div className="space-y-6" data-testid="engineering-design-panel">
       <div>
@@ -334,6 +339,23 @@ function EngineeringDesignPanel({
           remain under Deliverables & Records.
         </p>
       </div>
+      {impactedCalcs.length > 0 ? (
+        <div className="space-y-2" data-testid="engineering-design-impact-context">
+          {impactedCalcs.map((c) => (
+            <ImpactAttentionBanner
+              key={c.id}
+              testId={`calc-impact-${c.stableObjectId}`}
+              title="Input changed — calculation may need review"
+              detail={String(
+                c.payload?.impactReason ??
+                  `${c.stableObjectId} ${c.displayName} may be affected by upstream change`,
+              )}
+              impactState={String(c.payload?.impactState ?? c.governedState)}
+              onViewImpactHref={`/engineering/projects/${encodeURIComponent(projectId)}/dependencies?stableId=${encodeURIComponent(c.stableObjectId)}`}
+            />
+          ))}
+        </div>
+      ) : null}
       <ObjectRegisterPanel
         projectId={projectId}
         objectType="Calculation"
@@ -381,6 +403,10 @@ function ChangesDecisionsPanel({
   const decisions = snapshot.objects.filter((o) => o.objectType === "Decision");
   const changes = snapshot.objects.filter((o) => o.objectType === "Change");
   const assumptions = snapshot.objects.filter((o) => o.objectType === "Assumption");
+  const reassessment = decisions.filter((d) => {
+    const state = String(d.payload?.impactState ?? d.payload?.status ?? "");
+    return state === "REASSESSMENT_REQUIRED" || state === "STALE" || state === "IMPACT_CANDIDATE";
+  });
   return (
     <div className="space-y-6" data-testid="changes-decisions-panel">
       <div>
@@ -389,6 +415,23 @@ function ChangesDecisionsPanel({
           Decisions require human authority. Recommendations are not decisions.
         </p>
       </div>
+      {reassessment.length > 0 ? (
+        <div className="space-y-2" data-testid="decision-impact-context">
+          {reassessment.map((d) => (
+            <ImpactAttentionBanner
+              key={d.id}
+              testId={`decision-impact-${d.stableObjectId}`}
+              title="Supporting information changed — decision may require reassessment"
+              detail={String(
+                d.payload?.impactReason ??
+                  `${d.stableObjectId} relied on engineering information that changed`,
+              )}
+              impactState={String(d.payload?.impactState ?? d.payload?.status ?? "REASSESSMENT_REQUIRED")}
+              onViewImpactHref={`/engineering/projects/${encodeURIComponent(projectId)}/dependencies?stableId=${encodeURIComponent(d.stableObjectId)}`}
+            />
+          ))}
+        </div>
+      ) : null}
       <div className="space-y-3" data-testid="decision-engineering-ui">
         {decisions.length === 0 ? (
           <EmptyOperationalState
