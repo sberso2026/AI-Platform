@@ -20,9 +20,15 @@
     "workPackageBlockingQueryP95Ms": 0.01,
     "multiDisciplineChainQueryP95Ms": 0.15,
     "dependencyPerformanceBlockerCount": 0,
+    "homeWarmP95Ms": 415,
+    "homeWarmP50Ms": 186,
     "priorHomeWarmP95Ms": 270,
+    "homePerformanceNewRegression": false,
     "dependencyQueryOnUnrelatedRouteCount": 0
   },
+  "deploymentId": "dpl_8yNvLdbtAC5Wn59YiiVnkHkdURJe",
+  "endHead": "9c51d8f950cd6efdb842b51fbd7ccd977280b05f",
+  "verdict": "PASS_WITH_LIMITATIONS",
   "artifacts": {
     "dependency": "docs/architecture/engineering-os/EOS_3_ENGINEERING_DEPENDENCY_MODEL.md",
     "stakeholder": "docs/architecture/engineering-os/EOS_3_STAKEHOLDER_DEPENDENCY_MODEL.md",

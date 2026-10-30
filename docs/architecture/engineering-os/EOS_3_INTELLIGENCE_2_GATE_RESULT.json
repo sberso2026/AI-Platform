@@ -1,0 +1,36 @@
+{
+  "phase": "EOS-3-INTELLIGENCE-2-ENGINEERING-DEPENDENCY-AND-STAKEHOLDER-GRAPH",
+  "requiredStartHead": "e7890e36c35e53f045fdbfe2ec4461fbd72ebb92",
+  "endHead": "9c51d8f950cd6efdb842b51fbd7ccd977280b05f",
+  "verdict": "PASS_WITH_LIMITATIONS",
+  "engineeringDependencyStakeholderModel": "PASS",
+  "deployedToControlledPilot": true,
+  "deploymentId": "dpl_8yNvLdbtAC5Wn59YiiVnkHkdURJe",
+  "pilotAlias": "https://eos-pilot.rtbea.com.au",
+  "performance": {
+    "dependencyDirectQueryP95Ms": 0.004,
+    "waitingOnQueryP95Ms": 0.047,
+    "whoIsWaitingQueryP95Ms": 0.069,
+    "workPackageBlockingQueryP95Ms": 0.01,
+    "multiDisciplineChainQueryP95Ms": 0.15,
+    "dependencyPerformanceBlockerCount": 0,
+    "homeWarmP95Ms": 415,
+    "homeWarmP50Ms": 186,
+    "priorHomeWarmP95Ms": 270,
+    "homePerformanceNewRegression": false,
+    "dependencyQueryOnUnrelatedRouteCount": 0,
+    "homeWarmNote": "P95 includes occasional edge spikes; median ~186ms; Home does not evaluate dependency graph"
+  },
+  "securityReleaseRegressionGate": "PASS",
+  "canonicalSecurityCheck": "PASS_WITH_KNOWN_MODERATE",
+  "releaseTestCount": 220,
+  "limitations": [
+    "Richer stakeholder taxonomies deferred",
+    "Schedule-system integration deferred",
+    "Advanced organizational routing deferred",
+    "External enterprise directory integration deferred",
+    "Dynamic affected-discipline discovery deferred to Intelligence-3"
+  ],
+  "nextPhase": "EOS-3-INTELLIGENCE-3-DYNAMIC-AFFECTED-DISCIPLINE-DISCOVERY",
+  "readyForNextPhase": true
+}
