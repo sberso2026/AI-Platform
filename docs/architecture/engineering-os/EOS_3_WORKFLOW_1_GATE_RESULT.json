@@ -1,14 +1,31 @@
 {
   "phase": "EOS-3-WORKFLOW-1-ENGINEERING-PATTERN-ENGINE",
   "requiredStartHead": "2e0e4f9a15fce7c93861451d6d8c989be69b51b6",
+  "endHead": "3a7e3050be656b1cc078853329f3768d6471c494",
   "verdict": "PASS_WITH_LIMITATIONS",
   "engineeringPatternEngine": "PASS",
-  "securityReleaseRegressionGate": "PENDING_LAST",
+  "deployedToControlledPilot": true,
+  "deploymentId": "dpl_Cn6t7w4u8NyuG29WfyjzvqE7LZDG",
+  "pilotAlias": "https://eos-pilot.rtbea.com.au",
+  "performance": {
+    "patternResolutionP95Ms": 0.24,
+    "patternReadinessP95Ms": 0.012,
+    "patternTransitionValidationP95Ms": 0.014,
+    "patternPerformanceBlockerCount": 0,
+    "homeWarmP95Ms": 388,
+    "priorHomeWarmP95Ms": 461,
+    "homePerformanceNewRegression": false,
+    "patternQueryOnUnrelatedRouteCount": 0
+  },
+  "securityReleaseRegressionGate": "PASS",
+  "canonicalSecurityCheck": "PASS_WITH_KNOWN_MODERATE",
+  "releaseTestCount": 220,
   "limitations": [
     "Organization-specific pattern authoring UI deferred",
     "Richer pattern libraries deferred",
     "Full conditional discipline discovery deferred",
     "Multi-level maturity orchestration deferred to EOS-3-WORKFLOW-2"
   ],
-  "nextPhase": "EOS-3-WORKFLOW-2-MULTI-LEVEL-MATURITY-MODEL"
+  "nextPhase": "EOS-3-WORKFLOW-2-MULTI-LEVEL-MATURITY-MODEL",
+  "readyForNextPhase": true
 }

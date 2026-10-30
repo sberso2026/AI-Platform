@@ -23,7 +23,6 @@ import {
 } from "../lib/engineering/eos3-engineering-pattern-registry";
 import {
   __resetEngineeringPatternEngineForTests,
-  assignEngineeringPattern,
   auditPatternEngineFoundations,
   changeEngineeringPattern,
   ensurePilot001BrownfieldPattern,

@@ -18,9 +18,14 @@
     "patternReadinessP95Ms": 0.012,
     "patternTransitionValidationP95Ms": 0.014,
     "patternPerformanceBlockerCount": 0,
+    "homeWarmP95Ms": 388,
     "priorHomeWarmP95Ms": 461,
+    "homePerformanceNewRegression": false,
     "patternQueryOnUnrelatedRouteCount": 0
   },
+  "deploymentId": "dpl_Cn6t7w4u8NyuG29WfyjzvqE7LZDG",
+  "endHead": "3a7e3050be656b1cc078853329f3768d6471c494",
+  "verdict": "PASS_WITH_LIMITATIONS",
   "artifacts": {
     "engine": "docs/architecture/engineering-os/EOS_3_ENGINEERING_PATTERN_ENGINE.md",
     "registry": "docs/architecture/engineering-os/EOS_3_ENGINEERING_PATTERN_REGISTRY.md",
