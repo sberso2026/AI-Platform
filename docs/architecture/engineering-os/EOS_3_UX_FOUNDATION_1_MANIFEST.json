@@ -1,17 +1,35 @@
 ﻿{
   "phase": "EOS-3-UX-FOUNDATION-1-APPROVED-ENGINEERING-WORKSPACE-SHELL",
-  "verdict_target": "PASS",
-  "database_schema_changed": false,
-  "qualification_boundary_changed": false,
-  "ui_shadow_engineering_state_created": false,
-  "full_graph_primary_navigation": false,
-  "pilot_feedback_primary_navigation": false,
+  "architectureStatus": "FROZEN_FOR_IMPLEMENTATION_VALIDATION",
+  "requiredStartHead": "bd204e2ff2e7c67b8cc3259ee257a6710e1359f9",
+  "endHead": "0bc9b9207378572a3f726e6ffc9a2d37969529bc",
+  "commitSha": "0bc9b9207378572a3f726e6ffc9a2d37969529bc",
+  "controlledPilotDeploymentId": "dpl_2GEqSJQwjZ53c4zECfmHgbHVmDqx",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "verdict": "PASS",
+  "databaseSchemaChanged": false,
+  "uiShadowEngineeringStateCreated": false,
+  "fullGraphPrimaryNavigation": false,
+  "pilotFeedbackPrimaryNavigation": false,
+  "performance": {
+    "measured": true,
+    "method": "https_ttfb_style_wall_ms_p95_n12_against_eos_pilot",
+    "EOS_HOME_ROUTE_P95_MS": 442,
+    "EOS_MY_WORK_ROUTE_P95_MS": 92,
+    "EOS_WORK_PACKAGE_ROUTE_P95_MS": 90
+  },
+  "release": {
+    "canonicalGates": "PASS_WITH_KNOWN_MODERATE",
+    "releaseTestCount": 220,
+    "secretScan": "PASS"
+  },
   "artifacts": [
-    "EOS_3_APPROVED_ENGINEERING_UI_FOUNDATION.md",
-    "EOS_3_ENGINEERING_LANGUAGE_INFORMATION_ARCHITECTURE.md",
-    "EOS_3_WORK_PACKAGE_COCKPIT_UI.md",
-    "EOS_3_MY_WORK_UI_FOUNDATION.md",
-    "EOS_3_UI_PROGRESSIVE_DISCLOSURE.md",
-    "EOS_3_UX_FOUNDATION_PILOT_VALIDATION.md"
-  ]
+    "docs/architecture/engineering-os/EOS_3_APPROVED_ENGINEERING_UI_FOUNDATION.md",
+    "docs/architecture/engineering-os/EOS_3_ENGINEERING_LANGUAGE_INFORMATION_ARCHITECTURE.md",
+    "docs/architecture/engineering-os/EOS_3_WORK_PACKAGE_COCKPIT_UI.md",
+    "docs/architecture/engineering-os/EOS_3_MY_WORK_UI_FOUNDATION.md",
+    "docs/architecture/engineering-os/EOS_3_UI_PROGRESSIVE_DISCLOSURE.md",
+    "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_PILOT_VALIDATION.md"
+  ],
+  "nextPhase": "EOS-3-CONTEXT-2-RISK-PRIORITIZED-MY-WORK-ENGINE"
 }
