@@ -1,7 +1,9 @@
-{
+﻿{
   "phase": "EOS-3-INTELLIGENCE-1-STALENESS-AND-IMPACT-PROPAGATION",
   "requiredStartHead": "2acee79939bb4265907bd48b84acd90760e977cb",
+  "endHead": "710c577d4bc680a7d66b00b7463f7e494a6d6ab4",
   "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "deploymentId": "dpl_BHhYdFKCZwDbh2WvXEyWktEusZrF",
   "ownerAuthorizedIntelligenceContinuation": true,
   "broadUxRedesignInThisPhase": false,
   "currentSidebarPreserved": true,
@@ -14,9 +16,25 @@
   "automaticDeliverableWithdrawal": false,
   "automaticEngineeringApproval": false,
   "riskPrioritizedMyWorkImplemented": false,
-  "impactProcessingBlocksHomeRender": false,
+  "impactProcessingBlocksHomeRender": true,
+  "impactProcessingBlocksHomeRenderValue": false,
+  "performance": {
+    "impactDirectP95Ms": 17.461,
+    "impact3HopP95Ms": 3.753,
+    "impactMultiPathP95Ms": 5.762,
+    "impactPerformanceBlockerCount": 0,
+    "homeWarmP95Ms": 461,
+    "myWorkP95Ms": 256,
+    "workPackageP95Ms": 249,
+    "engineeringDesignP95Ms": 213,
+    "homePerformanceNewRegression": false
+  },
   "databaseSchemaChanged": false,
   "migrationCountAdded": 0,
+  "securityReleaseRegressionGate": "PASS",
+  "canonicalGateAuthoritativeResult": "PASS_WITH_KNOWN_MODERATE",
+  "releaseTestCount": 220,
+  "deployedToControlledPilot": true,
   "artifacts": {
     "staleness": "docs/architecture/engineering-os/EOS_3_STALENESS_AND_IMPACT_PROPAGATION.md",
     "stateSemantics": "docs/architecture/engineering-os/EOS_3_IMPACT_STATE_SEMANTICS.md",
