@@ -1,0 +1,41 @@
+{
+  "phase": "EOS-3-INTELLIGENCE-3-DYNAMIC-AFFECTED-DISCIPLINE-DISCOVERY",
+  "requiredStartHead": "c634e69add855f0adbef0fc7b4f3cae3b01dbeab",
+  "endHead": "f6fe9f5c8f464120b9de074af9117c44c13ce77c",
+  "verdict": "PASS_WITH_LIMITATIONS",
+  "dynamicAffectedDisciplineDiscovery": "PASS",
+  "deployedToControlledPilot": true,
+  "deploymentId": "dpl_BKfX36eWjfN3TjdofBVBr7Du2KM6",
+  "pilotAlias": "https://eos-pilot.rtbea.com.au",
+  "performance": {
+    "affectedDisciplineQueryP95Ms": 0.046,
+    "disciplineExplanationQueryP95Ms": 0.054,
+    "projectDisciplineProfileP95Ms": 0.131,
+    "workPackageDisciplineContextP95Ms": 0.037,
+    "disciplinePerformanceBlockerCount": 0,
+    "homeWarmP95Ms": 394,
+    "homeWarmP50Ms": 182,
+    "homeMeasurementMethod": "unauth_GET_/engineering_post_settle_n15_gap200ms",
+    "homeMeasurementSampleCount": 15,
+    "homePerformanceMeasurementComparabilityAssessed": true,
+    "priorComparable": {
+      "workflow1_p95": 388,
+      "workflow2_p95": 270,
+      "intelligence2_p95": 415
+    },
+    "homeNewDisciplineDiscoveryRegression": false,
+    "disciplineDiscoveryOnUnrelatedRouteCount": 0
+  },
+  "securityReleaseRegressionGate": "PASS",
+  "canonicalSecurityCheck": "PASS_WITH_KNOWN_MODERATE",
+  "releaseTestCount": 220,
+  "limitations": [
+    "Richer discipline taxonomy deferred",
+    "Organization-specific discipline mapping deferred",
+    "AI-assisted ambiguous discovery deferred",
+    "Richer document-derived signals deferred",
+    "Context Resolution Engine deferred to next phase"
+  ],
+  "nextPhase": "EOS-3-CONTEXT-1-CONTEXT-RESOLUTION-ENGINE",
+  "readyForNextPhase": true
+}

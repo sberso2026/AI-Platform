@@ -16,9 +16,18 @@
     "projectDisciplineProfileP95Ms": 0.131,
     "workPackageDisciplineContextP95Ms": 0.037,
     "disciplinePerformanceBlockerCount": 0,
+    "homeWarmP95Ms": 394,
+    "homeWarmP50Ms": 182,
+    "homeMeasurementMethod": "unauth_GET_/engineering_post_settle_n15_gap200ms",
+    "homeMeasurementSampleCount": 15,
+    "homePerformanceMeasurementComparabilityAssessed": true,
     "priorHomeWarmP95Ms": 415,
+    "homeNewDisciplineDiscoveryRegression": false,
     "disciplineDiscoveryOnUnrelatedRouteCount": 0
   },
+  "deploymentId": "dpl_BKfX36eWjfN3TjdofBVBr7Du2KM6",
+  "endHead": "f6fe9f5c8f464120b9de074af9117c44c13ce77c",
+  "verdict": "PASS_WITH_LIMITATIONS",
   "artifacts": {
     "discovery": "docs/architecture/engineering-os/EOS_3_DYNAMIC_AFFECTED_DISCIPLINE_DISCOVERY.md",
     "roles": "docs/architecture/engineering-os/EOS_3_DISCIPLINE_ROLE_MODEL.md",
