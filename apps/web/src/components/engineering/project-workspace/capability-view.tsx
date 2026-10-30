@@ -21,6 +21,7 @@ import { ObjectRegisterPanel } from "./object-register";
 import { GuidedEngineeringPanel } from "./guided-panel";
 import { ProjectSetupPanel } from "./setup-panel";
 import { WorkPackagesPanel } from "./work-packages-panel";
+import { AssetsSystemsPanel } from "./assets-systems-panel";
 import { useProjectWorkspace } from "./use-workspace";
 
 export function ProjectCapabilityView({
@@ -53,6 +54,9 @@ export function ProjectCapabilityView({
   }
   if (slug === "work-packages") {
     return <WorkPackagesPanel projectId={projectId} />;
+  }
+  if (slug === "assets") {
+    return <AssetsSystemsPanel projectId={projectId} />;
   }
   if (slug === "setup") {
     return (

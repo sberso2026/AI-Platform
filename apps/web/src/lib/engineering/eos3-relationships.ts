@@ -37,6 +37,15 @@ export const EOS3_RELATIONSHIP_TYPES = [
   "OPTIMIZATION_RUN_INFORMS_DECISION",
   "ENGINEERING_BASIS_RELATES_TO",
   "EVIDENCE_SUPPORTS_OBJECT",
+  // EOS-3-DOMAIN-2 Asset/System context edges (Phase-3 graph compatible)
+  "LOCATED_IN",
+  "PART_OF_SYSTEM",
+  "PART_OF_ASSET",
+  "SUPPORTS",
+  "CONNECTED_TO",
+  "SERVES",
+  "CONTAINS",
+  "ASSOCIATED_WITH",
 ] as const;
 
 export type Eos3RelationshipType = (typeof EOS3_RELATIONSHIP_TYPES)[number];

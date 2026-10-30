@@ -297,9 +297,10 @@ export const PROJECT_WORKSPACE_NAV_GROUPS: ProjectWorkspaceNavGroup[] = [
       {
         id: "assets",
         slug: "assets",
-        label: "Assets",
+        label: "Assets & Systems",
         emptyTitle: "No assets linked",
-        emptyDescription: "Map project outputs to assets for handover continuity.",
+        emptyDescription:
+          "Plant, area, system, and equipment context for what this project’s work packages affect.",
         objectType: "Asset",
         bridgeHref: (id) => `/engineering/assets?projectId=${id}`,
         core: true,

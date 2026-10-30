@@ -1,0 +1,29 @@
+{
+  "phase": "EOS-3-DOMAIN-2-ASSET-SYSTEM-ONTOLOGY-AND-CONTEXT",
+  "architectureStatus": "FROZEN_FOR_IMPLEMENTATION_VALIDATION",
+  "requiredStartHead": "d782192115bf4194c71051adcee1c8aae4e80c71",
+  "artifacts": {
+    "ontology": "docs/architecture/engineering-os/EOS_3_ASSET_SYSTEM_ONTOLOGY.md",
+    "contextModel": "docs/architecture/engineering-os/EOS_3_ASSET_SYSTEM_CONTEXT_MODEL.md",
+    "proposedInstalledContinuity": "docs/architecture/engineering-os/EOS_3_PROPOSED_TO_INSTALLED_ASSET_CONTINUITY.md",
+    "configurationFoundation": "docs/architecture/engineering-os/EOS_3_ASSET_CONFIGURATION_FOUNDATION.md",
+    "uiDataContract": "docs/architecture/engineering-os/EOS_3_ASSET_SYSTEM_UI_DATA_CONTRACT.md",
+    "brownfieldGreenfieldValidation": "docs/architecture/engineering-os/EOS_3_DOMAIN2_BROWNFIELD_GREENFIELD_VALIDATION.md"
+  },
+  "keyCode": [
+    "apps/web/src/lib/engineering/eos3-asset-system-context.ts",
+    "apps/web/src/app/api/engineering/projects/[projectId]/assets-systems/route.ts",
+    "apps/web/src/components/engineering/project-workspace/assets-systems-panel.tsx",
+    "supabase/migrations/20261030160000_eos_3_domain_2_asset_system_context.sql",
+    "apps/web/src/__tests__/eos3-domain-2-asset-system.test.ts"
+  ],
+  "passCriteria": {
+    "EOS_ASSET_SYSTEM_FIRST_CLASS_CONTEXT": "YES",
+    "EOS_ASSET_ONTOLOGY_NOT_RIGID_SINGLE_TREE": "PASS",
+    "EOS_DUPLICATE_ASSET_MODEL_CREATED": "NO",
+    "EOS_DUPLICATE_SYSTEM_MODEL_CREATED": "NO",
+    "EOS_NEW_IN_PROCESS_ASSET_SHADOW_MODEL_CREATED": "NO",
+    "EOS_DOMAIN2_RELATIONSHIP_GRAPH_COMPATIBLE": "YES"
+  },
+  "nextPhase": "EOS-3-DOMAIN-3-RELATIONSHIP-GRAPH-CORE"
+}
