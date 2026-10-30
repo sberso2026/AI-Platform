@@ -2,19 +2,45 @@
   "phase": "EOS-3-UX-FOUNDATION-1B-APPROVED-FUNCTIONAL-REFERENCE-DESIGN-IMPLEMENTATION",
   "phaseType": "CORRECTIVE_FUNCTIONAL_VISUAL_IMPLEMENTATION_PHASE",
   "requiredStartHead": "296ccbcad91da74b10a0e8c7a51894beda3c6639",
+  "implementationHead": "81159b9ee6a0b1464663ceae5be10bc683480f11",
   "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
   "previousVisualAcceptanceOwnerOverride": "FAIL",
   "approvedReferenceIsGoldenTarget": true,
   "approvedReferenceIsFunctionalUiSpecification": true,
   "productOwnerVisualAcceptance": "AWAITING_OWNER_REVIEW",
+  "referenceVisualConformity": "PENDING_OWNER",
+  "referenceFunctionalInteraction": "PASS",
   "databaseSchemaChanged": false,
+  "migrationCountAdded": 0,
   "uiShadowEngineeringStateCreated": false,
+  "screenshotCount": 16,
+  "screenshotDirectory": "docs/architecture/engineering-os/visual-acceptance/ux-foundation-1b/",
+  "performance": {
+    "investigated": true,
+    "rootCause": "Serverless cold start / first-hit TTFB dominates Home P95",
+    "homeP95Ms": 1852,
+    "myWorkP95Ms": 256,
+    "projectP95Ms": 218,
+    "workPackageP95Ms": 207,
+    "engineeringDesignP95Ms": 247
+  },
+  "securityReleaseRegressionGate": "PASS",
+  "canonicalGateAuthoritativeResult": "PASS_WITH_KNOWN_MODERATE",
+  "releaseTestCount": 220,
+  "deployedToControlledPilot": true,
   "artifacts": {
     "visualSpec": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1B_VISUAL_SPEC.md",
     "functionalContract": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1B_FUNCTIONAL_CONTRACT.md",
     "visualComparison": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1B_VISUAL_COMPARISON.md",
     "performance": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1B_PERFORMANCE.md",
-    "screenshotDirectory": "docs/architecture/engineering-os/visual-acceptance/ux-foundation-1b/"
+    "screenshotDirectory": "docs/architecture/engineering-os/visual-acceptance/ux-foundation-1b/",
+    "manifest": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1B_MANIFEST.json"
   },
+  "limitations": [
+    "Product owner visual acceptance not granted by Cursor",
+    "Home P95 remains cold-start dominated (~1852 ms)",
+    "Screenshots 08-15 seeded from UX-1A pending owner live light-canvas confirmation"
+  ],
+  "readyForOwnerVisualReview": true,
   "nextPhase": "EOS-3-CONTEXT-2-RISK-PRIORITIZED-MY-WORK-ENGINE"
 }

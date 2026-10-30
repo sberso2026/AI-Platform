@@ -3,7 +3,10 @@
 `EOS_VISUAL_ACCEPTANCE_SEMANTIC_ONLY=NO`  
 `EOS_PRODUCT_OWNER_VISUAL_ACCEPTANCE=AWAITING_OWNER_REVIEW`
 
-Screenshots: `docs/architecture/engineering-os/visual-acceptance/ux-foundation-1b/`
+Screenshots: `docs/architecture/engineering-os/visual-acceptance/ux-foundation-1b/`  
+`EOS_REFERENCE_SCREENSHOT_COUNT=16` (01 Home … 16 Administration).
+
+Live pilot after 1B deploy was used for 01–07 and 16. Capability route shots 08–15 were seeded from UX-1A captures where soft client navigation blocked a clean hard-reload pass; owner must confirm those routes on the live light canvas at `https://eos-pilot.rtbea.com.au`.
 
 ## Comparison method
 

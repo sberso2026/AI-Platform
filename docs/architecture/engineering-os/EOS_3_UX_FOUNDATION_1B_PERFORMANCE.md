@@ -38,4 +38,14 @@ Contributing factors reviewed:
 
 ## Post-1B measurement
 
-Recorded after controlled-pilot deploy (same unauthenticated wall-ms P95 n=12 method). See phase output fields.
+Recorded after controlled-pilot deploy (same unauthenticated wall-ms P95 n=12 method).
+
+| Route | P95 ms | Field |
+| --- | --- | --- |
+| Home | 1852 | `EOS_HOME_ROUTE_P95_MS` |
+| My Work | 256 | `EOS_MY_WORK_ROUTE_P95_MS` |
+| Project | 218 | `EOS_PROJECT_ROUTE_P95_MS` |
+| Work Package | 207 | `EOS_WORK_PACKAGE_ROUTE_P95_MS` |
+| Engineering Design | 247 | `EOS_ENGINEERING_DESIGN_ROUTE_P95_MS` |
+
+Home P95 remains cold-start dominated (comparable to UX-1A 1819 ms). Warm Home samples were materially lower (~160–666 ms). Non-Home routes stayed near UX-1A warm levels.
