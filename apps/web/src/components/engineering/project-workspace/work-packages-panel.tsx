@@ -17,6 +17,7 @@ type WorkPackage = {
   title: string;
   description: string;
   maturity: string;
+  workType?: string | null;
   status: string;
   riskState: string;
   ownerName: string | null;
@@ -39,7 +40,10 @@ type UiContract = {
     projectId: string;
     assetSystem: string;
     engineeringPattern: string | null;
+    workType?: string | null;
     currentMaturity: string;
+    currentStage?: string | null;
+    nextCheckpoint?: string | null;
     responsibleDisciplines: string[];
     userResponsibility: string | null;
     readinessPercent: number;
@@ -309,9 +313,31 @@ export function WorkPackagesPanel({ projectId }: { projectId: string }) {
                         "—"}
                     </dd>
                   </div>
-                  <div>
-                    <dt className="inline text-slate-500">Maturity: </dt>
-                    <dd className="inline font-medium text-slate-900">{contract.context.currentMaturity}</dd>
+                  <div data-testid="wp-current-stage">
+                    <dt className="inline text-slate-500">Current Stage: </dt>
+                    <dd className="inline font-medium text-slate-900">
+                      {contract.context.currentStage ?? contract.context.currentMaturity}
+                    </dd>
+                  </div>
+                  <div data-testid="wp-readiness">
+                    <dt className="inline text-slate-500">Readiness: </dt>
+                    <dd className="inline font-medium text-slate-900">
+                      {contract.context.readinessPercent}%
+                    </dd>
+                  </div>
+                  <div data-testid="wp-next-checkpoint">
+                    <dt className="inline text-slate-500">Next Checkpoint: </dt>
+                    <dd className="inline font-medium text-slate-900">
+                      {contract.context.nextCheckpoint ??
+                        contract.cards.nextRecommendedAction ??
+                        "—"}
+                    </dd>
+                  </div>
+                  <div data-testid="wp-blockers">
+                    <dt className="inline text-slate-500">Blockers: </dt>
+                    <dd className="inline font-medium text-slate-900">
+                      {contract.cards.needsAttention.length}
+                    </dd>
                   </div>
                   <div>
                     <dt className="inline text-slate-500">Status: </dt>
@@ -467,10 +493,8 @@ export function WorkPackagesPanel({ projectId }: { projectId: string }) {
                   />
                 ) : null}
                 {tab === "Deliverables" ? (
-                  <ObjectSlice
-                    title="Deliverables"
+                  <DeliverableSlice
                     items={objects.filter((o) => o.objectType === "Deliverable")}
-                    empty="No deliverables linked."
                   />
                 ) : null}
                 {tab === "Reviews" ? (
@@ -517,6 +541,54 @@ function ObjectSlice({
           <span className="font-mono text-xs text-slate-500">{o.stableObjectId}</span>
           <span>{o.displayName}</span>
           <span className="text-xs text-slate-500">{o.governedState}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Deliverable maturity / review / revision / issue purpose shown as separate fields. */
+function DeliverableSlice({
+  items,
+}: {
+  items: Array<{ id: string; stableObjectId: string; displayName: string; governedState: string }>;
+}) {
+  if (items.length === 0) {
+    return <EmptyOperationalState title="Deliverables" description="No deliverables linked." />;
+  }
+  return (
+    <ul
+      className="divide-y divide-slate-200 rounded-md border border-slate-200 bg-white"
+      data-testid="wp-deliverable-maturity"
+    >
+      {items.map((o) => (
+        <li key={o.id} className="space-y-1 px-3 py-2 text-sm text-slate-800">
+          <div className="flex flex-wrap gap-2">
+            <span className="font-mono text-xs text-slate-500">{o.stableObjectId}</span>
+            <span>{o.displayName}</span>
+          </div>
+          <dl className="grid gap-0.5 text-xs text-slate-600 sm:grid-cols-2">
+            <div>
+              <dt className="inline text-slate-500">Deliverable Status: </dt>
+              <dd className="inline">In Development</dd>
+            </div>
+            <div>
+              <dt className="inline text-slate-500">Review Status: </dt>
+              <dd className="inline">{o.governedState || "Not started"}</dd>
+            </div>
+            <div>
+              <dt className="inline text-slate-500">Revision: </dt>
+              <dd className="inline">A</dd>
+            </div>
+            <div>
+              <dt className="inline text-slate-500">Issue Purpose: </dt>
+              <dd className="inline">Unspecified</dd>
+            </div>
+            <div>
+              <dt className="inline text-slate-500">Approval: </dt>
+              <dd className="inline">Not approved</dd>
+            </div>
+          </dl>
         </li>
       ))}
     </ul>

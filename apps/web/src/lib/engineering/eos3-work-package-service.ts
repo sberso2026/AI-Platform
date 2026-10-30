@@ -136,6 +136,8 @@ export type WorkPackageUiContract = {
     engineeringPattern: string | null;
     workType: string | null;
     currentMaturity: WorkPackageMaturity;
+    currentStage: string;
+    nextCheckpoint: string | null;
     responsibleDisciplines: string[];
     userResponsibility: string | null;
     readinessPercent: number;
@@ -680,6 +682,10 @@ export function buildWorkPackageUiContract(
       engineeringPattern: wp.engineeringPatternRef,
       workType: wp.workType,
       currentMaturity: wp.maturity,
+      // Pattern-native stage label preferred; legacy maturity remains separate reporting field
+      currentStage:
+        wp.maturity === "Detailed Engineering" ? "Engineering Design" : wp.maturity,
+      nextCheckpoint: deriveNextAction(projectId, workPackageIdOrStable),
       responsibleDisciplines: disciplines,
       userResponsibility: wp.ownerName ?? wp.responsibleEngineeringLead,
       readinessPercent: readiness.percent,

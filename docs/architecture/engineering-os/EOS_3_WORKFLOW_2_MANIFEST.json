@@ -1,0 +1,36 @@
+{
+  "phase": "EOS-3-WORKFLOW-2-MULTI-LEVEL-MATURITY-MODEL",
+  "requiredStartHead": "42decd0910d3f31dd51c4210bd94e410ef1ccc58",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "broadUxRedesignInThisPhase": false,
+  "currentSidebarPreserved": true,
+  "multiLevelMaturityModel": true,
+  "workPackagePrimaryBoundary": true,
+  "newAssetMaturityModelCreated": false,
+  "automaticMaturityAdvancement": false,
+  "maturityTransitionAutoApproval": false,
+  "impactAutoMaturityChange": false,
+  "manualMaturityPercentRequired": false,
+  "databaseSchemaChanged": true,
+  "migrationCountAdded": 1,
+  "migration": "supabase/migrations/20261030230000_eos_3_workflow_2_multi_level_maturity.sql",
+  "performance": {
+    "projectMaturityProfileP95Ms": 0.021,
+    "workPackageMaturityQueryP95Ms": 0.191,
+    "nextStageReadinessP95Ms": 0.052,
+    "deliverableMaturityQueryP95Ms": 0.002,
+    "maturityPerformanceBlockerCount": 0,
+    "priorHomeWarmP95Ms": 388,
+    "maturityQueryOnUnrelatedRouteCount": 0
+  },
+  "artifacts": {
+    "model": "docs/architecture/engineering-os/EOS_3_MULTI_LEVEL_MATURITY_MODEL.md",
+    "projectProfile": "docs/architecture/engineering-os/EOS_3_PROJECT_MATURITY_PROFILE.md",
+    "workPackage": "docs/architecture/engineering-os/EOS_3_WORK_PACKAGE_MATURITY_AND_TRANSITIONS.md",
+    "deliverable": "docs/architecture/engineering-os/EOS_3_DELIVERABLE_MATURITY_MODEL.md",
+    "readiness": "docs/architecture/engineering-os/EOS_3_MATURITY_READINESS_SEPARATION.md",
+    "pilotValidation": "docs/architecture/engineering-os/EOS_3_WORKFLOW2_PILOT_VALIDATION.md",
+    "manifest": "docs/architecture/engineering-os/EOS_3_WORKFLOW_2_MANIFEST.json"
+  },
+  "nextPhase": "EOS-3-UX-5-STAGE-AWARE-GUIDED-ENGINEERING"
+}
