@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Button, Input } from "@rtb/ui";
 import {
@@ -7,6 +8,8 @@ import {
   OperationalError,
   OperationalSkeleton,
 } from "@/components/engineering/operational";
+import { workspaceHref } from "@/lib/engineering/project-workspace-ia";
+import { useProjectWorkspace } from "./use-workspace";
 
 type WorkPackage = {
   id: string;
@@ -22,7 +25,12 @@ type WorkPackage = {
     lead: string | null;
     participating: string[];
   };
-  affectedAssets: Array<{ displayName: string }>;
+  affectedAssets: Array<{ displayName: string; role?: string }>;
+  facilityArea?: string | null;
+  systemName?: string | null;
+  readinessPercent?: number;
+  blockerCount?: number;
+  nextRecommendedAction?: string | null;
 };
 
 type UiContract = {
@@ -37,6 +45,13 @@ type UiContract = {
     readinessPercent: number;
     status: string;
     riskState: string;
+    facilityArea?: string | null;
+    systemName?: string | null;
+    primaryAsset?: string | null;
+    relatedAssets?: string[];
+    ownerName?: string | null;
+    leadDiscipline?: string | null;
+    participatingDisciplines?: string[];
   };
   cards: {
     needsAttention: Array<{ id: string; kind: string; label: string }>;
@@ -46,10 +61,25 @@ type UiContract = {
   };
 };
 
+const COCKPIT_TABS = [
+  "Overview",
+  "Engineering Design",
+  "Inputs",
+  "Dependencies",
+  "Decisions",
+  "Deliverables",
+  "Reviews",
+  "Changes",
+] as const;
+
+type CockpitTab = (typeof COCKPIT_TABS)[number];
+
 export function WorkPackagesPanel({ projectId }: { projectId: string }) {
+  const { snapshot } = useProjectWorkspace(projectId);
   const [packages, setPackages] = useState<WorkPackage[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [contract, setContract] = useState<UiContract | null>(null);
+  const [tab, setTab] = useState<CockpitTab>("Overview");
   const [title, setTitle] = useState("");
   const [assetHint, setAssetHint] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -143,18 +173,20 @@ export function WorkPackagesPanel({ projectId }: { projectId: string }) {
     return <OperationalError message={error} retryHref={`/engineering/projects/${projectId}/work-packages`} />;
   }
 
+  const selectedWp = packages.find((p) => p.stableId === selected) ?? null;
+  const objects = snapshot?.objects ?? [];
+
   return (
     <div className="space-y-6" data-testid="work-packages-panel">
       <div>
-        <h2 className="text-lg font-semibold text-slate-100">Work Packages</h2>
-        <p className="mt-1 text-sm text-slate-400">
-          Bounded units of engineering work beneath this project. Maturity is independent of project
-          stage.
+        <h2 className="text-lg font-semibold text-slate-900">Work Packages</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          Primary execution view — bounded units of engineering work beneath this project.
         </p>
       </div>
 
-      <div className="rounded-lg border border-slate-700 bg-slate-950/60 p-4 space-y-3">
-        <p className="text-sm font-medium text-slate-200">Create work package</p>
+      <div className="rounded-md border border-slate-200 bg-white p-4 space-y-3">
+        <p className="text-sm font-medium text-slate-800">Create work package</p>
         <p className="text-xs text-slate-500">
           Required: what work needs to be done. Asset and owner only if EOS cannot derive them.
         </p>
@@ -180,7 +212,7 @@ export function WorkPackagesPanel({ projectId }: { projectId: string }) {
         >
           {creating ? "Creating…" : "Create Work Package"}
         </Button>
-        {error ? <p className="text-sm text-rose-300">{error}</p> : null}
+        {error ? <p className="text-sm text-rose-700">{error}</p> : null}
       </div>
 
       {packages.length === 0 ? (
@@ -189,92 +221,262 @@ export function WorkPackagesPanel({ projectId }: { projectId: string }) {
           description="Create a work package to bound engineering execution beneath this project."
         />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
-          <ul className="space-y-2" data-testid="wp-list">
-            {packages.map((wp) => (
-              <li key={wp.id}>
-                <button
-                  type="button"
-                  className={`w-full rounded-md border px-3 py-2 text-left text-sm ${
-                    selected === wp.stableId
-                      ? "border-sky-500/60 bg-sky-500/10 text-sky-100"
-                      : "border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-500"
-                  }`}
-                  onClick={() => setSelected(wp.stableId)}
-                  data-testid={`wp-list-item-${wp.stableId}`}
-                >
-                  <span className="font-medium">
-                    {wp.stableId} {wp.title}
-                  </span>
-                  <span className="mt-1 block text-xs text-slate-400">
-                    {wp.maturity} · {wp.disciplines.lead ?? "—"}
-                  </span>
-                </button>
-              </li>
-            ))}
+        <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
+          <ul className="space-y-2" data-testid="wp-list" role="list">
+            {packages.map((wp) => {
+              const primary =
+                wp.affectedAssets.find((a) => a.role === "PRIMARY")?.displayName ??
+                wp.affectedAssets[0]?.displayName ??
+                "—";
+              return (
+                <li key={wp.id}>
+                  <button
+                    type="button"
+                    className={`w-full rounded-md border px-3 py-2 text-left text-sm ${
+                      selected === wp.stableId
+                        ? "border-[color:var(--eos-gold,#c4a35a)] bg-[color:var(--eos-navy,#0b1f3a)] text-white"
+                        : "border-slate-200 bg-white text-slate-800 hover:border-slate-400"
+                    }`}
+                    onClick={() => {
+                      setSelected(wp.stableId);
+                      setTab("Overview");
+                    }}
+                    data-testid={`wp-list-item-${wp.stableId}`}
+                    aria-current={selected === wp.stableId ? "true" : undefined}
+                  >
+                    <span className="font-medium">
+                      {wp.stableId} {wp.title}
+                    </span>
+                    <span className="mt-1 block text-xs opacity-80">
+                      {primary} · {wp.maturity} · {wp.disciplines.lead ?? "—"} · {wp.status}
+                    </span>
+                    <span className="mt-0.5 block text-[11px] opacity-70">
+                      Participants: {wp.disciplines.participating.join(", ") || "—"}
+                      {typeof wp.blockerCount === "number" ? ` · ${wp.blockerCount} attention` : ""}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
 
-          {contract ? (
+          {contract && selectedWp ? (
             <div className="space-y-4" data-testid="wp-cockpit-foundation">
-              <div>
-                <h3 className="text-base font-semibold text-slate-100">
+              <header className="rounded-md border border-slate-200 bg-white p-4" data-testid="wp-cockpit-header">
+                <h3 className="text-base font-semibold text-slate-900">
                   {contract.header.stableId} {contract.header.title}
                 </h3>
-                <dl className="mt-2 grid gap-1 text-xs text-slate-400 sm:grid-cols-2">
-                  <div>Project: {contract.context.projectId}</div>
-                  <div>Asset/System: {contract.context.assetSystem}</div>
-                  <div>Maturity: {contract.context.currentMaturity}</div>
+                <dl
+                  className="mt-3 grid gap-x-4 gap-y-1 text-xs text-slate-600 sm:grid-cols-2"
+                  data-testid="wp-context-header"
+                >
                   <div>
-                    Disciplines: {contract.context.responsibleDisciplines.join(", ") || "—"}
+                    <dt className="inline text-slate-500">Project: </dt>
+                    <dd className="inline font-medium text-slate-900">{contract.context.projectId}</dd>
                   </div>
-                  <div>Responsibility: {contract.context.userResponsibility ?? "—"}</div>
                   <div>
-                    Readiness: {contract.context.readinessPercent}% · {contract.context.status} /{" "}
-                    {contract.context.riskState}
+                    <dt className="inline text-slate-500">Facility / Area: </dt>
+                    <dd className="inline font-medium text-slate-900">
+                      {contract.context.facilityArea ?? snapshot?.setup?.site ?? "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="inline text-slate-500">System: </dt>
+                    <dd className="inline font-medium text-slate-900">
+                      {contract.context.systemName ?? contract.context.assetSystem}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="inline text-slate-500">Primary Asset: </dt>
+                    <dd className="inline font-medium text-slate-900">
+                      {contract.context.primaryAsset ??
+                        selectedWp.affectedAssets[0]?.displayName ??
+                        "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="inline text-slate-500">Related Assets: </dt>
+                    <dd className="inline font-medium text-slate-900">
+                      {(contract.context.relatedAssets ?? selectedWp.affectedAssets.slice(1).map((a) => a.displayName))
+                        .join(", ") || "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="inline text-slate-500">Maturity: </dt>
+                    <dd className="inline font-medium text-slate-900">{contract.context.currentMaturity}</dd>
+                  </div>
+                  <div>
+                    <dt className="inline text-slate-500">Status: </dt>
+                    <dd className="inline font-medium text-slate-900">{contract.context.status}</dd>
+                  </div>
+                  <div>
+                    <dt className="inline text-slate-500">Lead discipline: </dt>
+                    <dd className="inline font-medium text-slate-900">
+                      {contract.context.leadDiscipline ?? selectedWp.disciplines.lead ?? "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="inline text-slate-500">Participating: </dt>
+                    <dd className="inline font-medium text-slate-900">
+                      {(
+                        contract.context.participatingDisciplines ??
+                        selectedWp.disciplines.participating
+                      ).join(", ") || "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="inline text-slate-500">Owner: </dt>
+                    <dd className="inline font-medium text-slate-900">
+                      {contract.context.ownerName ?? selectedWp.ownerName ?? "—"}
+                      <span className="ml-1 text-slate-400">(not engineering approver)</span>
+                    </dd>
                   </div>
                 </dl>
+              </header>
+
+              <div
+                role="tablist"
+                aria-label="Work package sections"
+                className="flex flex-wrap gap-1 border-b border-slate-200 pb-2"
+                data-testid="wp-contextual-tabs"
+              >
+                {COCKPIT_TABS.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === t}
+                    className={`min-h-9 rounded-md px-3 text-xs font-medium ${
+                      tab === t
+                        ? "bg-[color:var(--eos-navy,#0b1f3a)] text-white"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                    onClick={() => setTab(t)}
+                    data-testid={`wp-tab-${t.toLowerCase().replace(/\s+/g, "-")}`}
+                  >
+                    {t}
+                  </button>
+                ))}
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Card title="Needs Attention" testId="wp-card-attention">
-                  {contract.cards.needsAttention.length === 0 ? (
-                    <p className="text-xs text-slate-500">No open blockers</p>
-                  ) : (
-                    <ul className="space-y-1 text-xs text-amber-200">
-                      {contract.cards.needsAttention.map((b) => (
-                        <li key={b.id}>{b.label}</li>
-                      ))}
-                    </ul>
-                  )}
-                </Card>
-                <Card title="Next Recommended Action" testId="wp-card-next">
-                  <p className="text-sm text-slate-100">
-                    {contract.cards.nextRecommendedAction ?? "—"}
-                  </p>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Recommendation does not grant authority.
-                  </p>
-                </Card>
-                <Card title="Key Information" testId="wp-card-key">
-                  <ul className="space-y-1 text-xs text-slate-300">
-                    {contract.cards.keyInformation.map((k) => (
-                      <li key={k}>{k}</li>
-                    ))}
-                  </ul>
-                </Card>
-                <Card title="Progress / Readiness" testId="wp-card-readiness">
-                  <p className="text-2xl font-semibold text-slate-100">
-                    {contract.cards.progressReadiness.percent}%
-                  </p>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Derived — not a manual progress percent. {contract.cards.progressReadiness.rule}
-                  </p>
-                </Card>
-              </div>
+              <div role="tabpanel" data-testid={`wp-tab-panel-${tab.toLowerCase().replace(/\s+/g, "-")}`}>
+                {tab === "Overview" ? (
+                  <div className="grid gap-3 sm:grid-cols-2" data-testid="wp-engineering-overview">
+                    <Card title="Needs attention" testId="wp-card-attention">
+                      {contract.cards.needsAttention.length === 0 ? (
+                        <p className="text-xs text-slate-500">No open blockers</p>
+                      ) : (
+                        <ul className="space-y-1 text-xs text-amber-900">
+                          {contract.cards.needsAttention.map((b) => (
+                            <li key={b.id}>{b.label}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </Card>
+                    <Card title="Next recommended action" testId="wp-card-next">
+                      <p className="text-sm text-slate-900">
+                        {contract.cards.nextRecommendedAction ?? "—"}
+                      </p>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        Recommendation does not grant authority.
+                      </p>
+                    </Card>
+                    <Card title="Key information" testId="wp-card-key">
+                      <ul className="space-y-1 text-xs text-slate-700">
+                        {contract.cards.keyInformation.map((k) => (
+                          <li key={k}>{k}</li>
+                        ))}
+                      </ul>
+                    </Card>
+                    <Card title="Readiness / maturity" testId="wp-card-readiness">
+                      <p className="text-2xl font-semibold text-slate-900">
+                        {contract.cards.progressReadiness.percent}%
+                      </p>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        {contract.context.currentMaturity} · derived readiness
+                      </p>
+                    </Card>
+                    <Card title="Dependencies" testId="wp-card-dependencies">
+                      <Link
+                        href={workspaceHref(projectId, "dependencies")}
+                        className="text-xs text-slate-700 underline-offset-2 hover:underline"
+                      >
+                        View dependencies
+                      </Link>
+                    </Card>
+                    <Card title="Decisions requiring attention" testId="wp-card-decisions">
+                      <ul className="space-y-1 text-xs text-slate-700">
+                        {objects
+                          .filter((o) => o.objectType === "Decision")
+                          .slice(0, 5)
+                          .map((d) => (
+                            <li key={d.id}>
+                              {d.stableObjectId} {d.displayName}
+                            </li>
+                          ))}
+                        {objects.filter((o) => o.objectType === "Decision").length === 0 ? (
+                          <li className="text-slate-500">None requiring attention</li>
+                        ) : null}
+                      </ul>
+                    </Card>
+                  </div>
+                ) : null}
 
-              <div className="rounded-md border border-slate-700 p-3 text-xs text-slate-400">
-                Primary sections prepared for later cockpit: Overview · Design · Inputs ·
-                Dependencies · Decisions · Deliverables · Reviews · Changes
+                {tab === "Engineering Design" ? (
+                  <ObjectSlice
+                    title="Engineering design items"
+                    items={objects.filter((o) => o.objectType === "Calculation")}
+                    empty="No design calculations linked yet."
+                  />
+                ) : null}
+                {tab === "Inputs" ? (
+                  <ObjectSlice
+                    title="Inputs & assumptions"
+                    items={objects.filter(
+                      (o) => o.objectType === "Assumption" || o.objectType === "Requirement",
+                    )}
+                    empty="No inputs recorded."
+                  />
+                ) : null}
+                {tab === "Dependencies" ? (
+                  <p className="text-sm text-slate-700">
+                    Upstream / downstream relationships for this work package.{" "}
+                    <Link
+                      href={workspaceHref(projectId, "dependencies")}
+                      className="underline-offset-2 hover:underline"
+                    >
+                      View dependencies
+                    </Link>
+                  </p>
+                ) : null}
+                {tab === "Decisions" ? (
+                  <ObjectSlice
+                    title="Decisions"
+                    items={objects.filter((o) => o.objectType === "Decision")}
+                    empty="No decisions linked."
+                  />
+                ) : null}
+                {tab === "Deliverables" ? (
+                  <ObjectSlice
+                    title="Deliverables"
+                    items={objects.filter((o) => o.objectType === "Deliverable")}
+                    empty="No deliverables linked."
+                  />
+                ) : null}
+                {tab === "Reviews" ? (
+                  <ObjectSlice
+                    title="Reviews"
+                    items={objects.filter((o) => o.objectType === "Review")}
+                    empty="No reviews linked."
+                  />
+                ) : null}
+                {tab === "Changes" ? (
+                  <ObjectSlice
+                    title="Changes"
+                    items={objects.filter((o) => o.objectType === "Change")}
+                    empty="No changes linked."
+                  />
+                ) : null}
               </div>
             </div>
           ) : (
@@ -283,6 +485,31 @@ export function WorkPackagesPanel({ projectId }: { projectId: string }) {
         </div>
       )}
     </div>
+  );
+}
+
+function ObjectSlice({
+  title,
+  items,
+  empty,
+}: {
+  title: string;
+  items: Array<{ id: string; stableObjectId: string; displayName: string; governedState: string }>;
+  empty: string;
+}) {
+  if (items.length === 0) {
+    return <EmptyOperationalState title={title} description={empty} />;
+  }
+  return (
+    <ul className="divide-y divide-slate-200 rounded-md border border-slate-200 bg-white">
+      {items.map((o) => (
+        <li key={o.id} className="flex flex-wrap gap-2 px-3 py-2 text-sm text-slate-800">
+          <span className="font-mono text-xs text-slate-500">{o.stableObjectId}</span>
+          <span>{o.displayName}</span>
+          <span className="text-xs text-slate-500">{o.governedState}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -296,8 +523,8 @@ function Card({
   testId: string;
 }) {
   return (
-    <div className="rounded-lg border border-slate-700 bg-slate-950/80 p-3" data-testid={testId}>
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</p>
+    <div className="rounded-md border border-slate-200 bg-white p-3" data-testid={testId}>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</p>
       {children}
     </div>
   );

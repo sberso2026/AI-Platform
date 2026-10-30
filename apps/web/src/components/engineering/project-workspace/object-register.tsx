@@ -8,7 +8,11 @@ import {
   OperationalError,
 } from "@/components/engineering/operational";
 import type { Eos3CanonicalObject, Eos3ObjectType } from "@/lib/engineering/eos3-canonical-objects";
-import { workspaceHref } from "@/lib/engineering/project-workspace-ia";
+import {
+  engineerFacingGovernedLabel,
+  proposedConfirmedEmptyCopy,
+  workspaceHref,
+} from "@/lib/engineering/project-workspace-ia";
 import { useEngineeringWriteAccess } from "@/hooks/use-engineering-write-access";
 
 export function ObjectRegisterPanel({
@@ -57,15 +61,37 @@ export function ObjectRegisterPanel({
     );
   }, [objects, query]);
 
+  const proposedCount = objects.filter((o) =>
+    String(o.governedState).toUpperCase().includes("PROPOS"),
+  ).length;
+  const confirmedCount = objects.length - proposedCount;
+  const reconciledEmpty = proposedConfirmedEmptyCopy(
+    `${objectType.toLowerCase()}s`,
+    confirmedCount,
+    proposedCount,
+  );
+  const showEmpty = filtered.length === 0;
+  const emptyTitleResolved =
+    objects.length > 0 && filtered.length === 0
+      ? emptyTitle
+      : objects.length === 0
+        ? reconciledEmpty.title
+        : emptyTitle;
+  const emptyDescriptionResolved =
+    objects.length === 0 ? reconciledEmpty.description : emptyDescription;
+
   return (
     <section data-testid={`register-${objectType}`} aria-labelledby={`heading-${objectType}`}>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 id={`heading-${objectType}`} className="text-lg font-semibold text-slate-100">
+          <h2 id={`heading-${objectType}`} className="text-lg font-semibold text-slate-900">
             {title}
           </h2>
-          <p className="text-xs text-slate-400">
-            Canonical EOS object · project-scoped · human authority for governed writes
+          <p className="text-xs text-slate-500">
+            Project-scoped · human authority for governed writes
+            {proposedCount > 0
+              ? ` · ${proposedCount} proposed awaiting review · ${confirmedCount} confirmed`
+              : null}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -154,12 +180,15 @@ export function ObjectRegisterPanel({
         </form>
       ) : null}
 
-      {filtered.length === 0 ? (
-        <EmptyOperationalState title={emptyTitle} description={emptyDescription} />
+      {showEmpty ? (
+        <EmptyOperationalState
+          title={emptyTitleResolved}
+          description={emptyDescriptionResolved}
+        />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-700">
+        <div className="overflow-x-auto rounded-md border border-slate-200 bg-white">
           <table className="min-w-full text-left text-sm" role="table">
-            <thead className="bg-slate-900 text-xs uppercase text-slate-400">
+            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
                 <th scope="col" className="px-3 py-2">
                   ID
@@ -171,7 +200,7 @@ export function ObjectRegisterPanel({
                   Status
                 </th>
                 <th scope="col" className="px-3 py-2">
-                  Governed
+                  State
                 </th>
                 {extraColumns?.map((c) => (
                   <th key={c.key} scope="col" className="px-3 py-2">
@@ -179,36 +208,65 @@ export function ObjectRegisterPanel({
                   </th>
                 ))}
                 <th scope="col" className="px-3 py-2">
-                  Thread
+                  Related
                 </th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((obj) => (
-                <tr key={obj.id} className="border-t border-slate-800 text-slate-200">
-                  <td className="px-3 py-2 font-mono text-xs">{obj.stableObjectId}</td>
-                  <td className="px-3 py-2">{obj.displayName}</td>
-                  <td className="px-3 py-2">{obj.lifecycleState}</td>
-                  <td className="px-3 py-2">
-                    <span className="rounded border border-slate-600 px-1.5 py-0.5 text-[11px]">
-                      {obj.governedState}
-                    </span>
-                  </td>
-                  {extraColumns?.map((c) => (
-                    <td key={c.key} className="px-3 py-2 text-xs text-slate-300">
-                      {String(obj.payload?.[c.key] ?? "—")}
+              {filtered.map((obj) => {
+                const gov = engineerFacingGovernedLabel(String(obj.governedState));
+                const showWhy =
+                  String(obj.governedState).toUpperCase().includes("PROPOS") ||
+                  Boolean(obj.payload?.lowConfidence) ||
+                  Boolean(obj.payload?.material);
+                return (
+                  <tr key={obj.id} className="border-t border-slate-100 text-slate-800">
+                    <td className="px-3 py-2 font-mono text-xs">{obj.stableObjectId}</td>
+                    <td className="px-3 py-2">
+                      {obj.displayName}
+                      {showWhy ? (
+                        <details className="mt-0.5 text-[11px] text-slate-500" data-testid="explainability-why">
+                          <summary className="cursor-pointer select-none">Why?</summary>
+                          <p className="mt-1 max-w-md">
+                            {String(
+                              obj.payload?.rationale ??
+                                obj.payload?.whySuggested ??
+                                "EOS proposed this from project context for human review.",
+                            )}
+                          </p>
+                        </details>
+                      ) : null}
                     </td>
-                  ))}
-                  <td className="px-3 py-2">
-                    <Link
-                      href={`${workspaceHref(projectId, "digital-thread")}?objectId=${obj.id}`}
-                      className="text-xs underline-offset-2 hover:underline"
-                    >
-                      Open thread
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+                    <td className="px-3 py-2">{obj.lifecycleState}</td>
+                    <td className="px-3 py-2">
+                      <span
+                        className="rounded border border-slate-300 px-1.5 py-0.5 text-[11px]"
+                        data-testid="governed-label-friendly"
+                        title="Engineer-facing state (e.g. Needs confirmation); Details shows policy"
+                      >
+                        {gov.label}
+                      </span>
+                      <details className="mt-0.5 text-[11px] text-slate-500" data-testid="governed-details">
+                        <summary className="cursor-pointer select-none">Details</summary>
+                        <p className="mt-1 font-mono">{gov.detail}</p>
+                      </details>
+                    </td>
+                    {extraColumns?.map((c) => (
+                      <td key={c.key} className="px-3 py-2 text-xs text-slate-600">
+                        {String(obj.payload?.[c.key] ?? "—")}
+                      </td>
+                    ))}
+                    <td className="px-3 py-2">
+                      <Link
+                        href={`${workspaceHref(projectId, "dependencies")}?objectId=${obj.id}`}
+                        className="text-xs underline-offset-2 hover:underline"
+                      >
+                        View dependencies
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -27,19 +27,13 @@ describe("EOS-3-PILOT-UI-1 project workspace", () => {
     __resetProjectWorkspacesForTests();
   });
 
-  it("exposes grouped navigation covering all required groups", () => {
+  it("exposes engineering-language grouped navigation", () => {
     const ids = PROJECT_WORKSPACE_NAV_GROUPS.map((g) => g.id);
-    expect(ids).toEqual([
-      "project",
-      "definition",
-      "execution",
-      "delivery",
-      "intelligence",
-      "project-to-asset",
-      "governance",
-    ]);
-    expect(allCoreWorkspaceItems().length).toBeGreaterThan(20);
-    expect(findWorkspaceNavItem("requirements")?.label).toBe("Requirements");
+    expect(ids).toEqual(["work", "engineering", "information", "execution", "advanced"]);
+    expect(allCoreWorkspaceItems().length).toBeGreaterThan(10);
+    expect(findWorkspaceNavItem("requirements")?.label).toBe("Scope & Design Basis");
+    expect(findWorkspaceNavItem("work-packages")?.label).toBe("Work Packages");
+    expect(findWorkspaceNavItem("assets")?.label).toBe("Assets & Systems");
     expect(workspaceHref("abc", "lifecycle")).toBe("/engineering/projects/abc/lifecycle");
     expect(workspaceHref("abc", "")).toBe("/engineering/projects/abc");
   });

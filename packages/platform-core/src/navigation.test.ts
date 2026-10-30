@@ -24,9 +24,9 @@ describe("Batch 2.07 — Navigation grouping", () => {
     expect(NAV_GROUP_ORDER[3]).toBe("engineering_analysis");
   });
 
-  it("labels Command Centre as primary engineering entry", () => {
+  it("labels Home as primary engineering entry", () => {
     const home = ENGINEERING_NAVIGATION.find((i) => i.id === "eng-home");
-    expect(home?.label).toBe("Command Centre");
+    expect(home?.label).toBe("Home");
     expect(home?.href).toBe("/engineering");
     expect(home?.group).toBe("engineering");
   });
@@ -209,31 +209,25 @@ describe("Platform Commerce UI — Engineering OS access", () => {
     );
   });
 
-  it("exposes work-first primary experience surfaces without dead tabs", () => {
+  it("exposes approved engineering-language primary surfaces without dead tabs", () => {
     const primary = ENGINEERING_NAVIGATION.filter((i) => !i.sidebarHidden);
     expect(primary.map((i) => i.id)).toEqual(
       expect.arrayContaining([
         "eng-home",
-        "eng-modules",
         "eng-projects",
-        "eng-assets",
-        "eng-inspections",
+        "eng-my",
+        "eng-review",
+        "eng-changes",
         "eng-documents",
-        "eng-risks",
-        "eng-tqs",
-        "eng-decisions",
-        "eng-actions",
-        "eng-models",
-        "eng-digital-twin",
-        "eng-reports",
         "eng-ask",
       ]),
     );
     expect(primary.every((i) => Boolean(i.href))).toBe(true);
   });
 
-  it("keeps assistant-first E1 routes reachable but not as the primary work nav", () => {
-    for (const id of ["eng-my", "eng-explore", "eng-intelligence", "eng-ai"]) {
+  it("keeps explore / intelligence / AI workspace reachable but not as primary work nav", () => {
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-my")?.sidebarHidden).not.toBe(true);
+    for (const id of ["eng-explore", "eng-intelligence", "eng-ai"]) {
       const item = ENGINEERING_NAVIGATION.find((i) => i.id === id);
       expect(item?.sidebarHidden).toBe(true);
       expect(item?.href).toBeTruthy();

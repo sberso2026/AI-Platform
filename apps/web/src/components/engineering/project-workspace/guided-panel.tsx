@@ -56,6 +56,13 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
     void loadView();
   }, [loadView]);
 
+  useEffect(() => {
+    const existing = view?.setup?.description?.trim();
+    if (existing) {
+      setObjective(existing);
+    }
+  }, [view?.setup?.description]);
+
   async function generate() {
     setBusy(true);
     setError(null);
@@ -170,6 +177,9 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
           <h2 className="text-lg font-semibold text-slate-100">What are you trying to accomplish?</h2>
           <p className="text-sm text-slate-400">
             EOS prepares the project. You confirm material exceptions. Generated content is never auto-approved.
+            {view?.setup?.description?.trim()
+              ? " Existing project objective is shown below — edit if needed; do not re-enter from scratch."
+              : null}
           </p>
         </div>
         <label className="text-xs text-slate-400">
@@ -229,6 +239,11 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
 
       {step === 1 ? (
         <section className="space-y-3 rounded-lg border border-slate-700 bg-slate-950/60 p-4" data-testid="guided-step-1">
+          {view?.setup?.description?.trim() ? (
+            <p className="text-xs text-emerald-200" data-testid="guided-objective-reuse">
+              Project objective already on record — shown for edit (not re-entry).
+            </p>
+          ) : null}
           <label className="block text-xs text-slate-400">
             What are you trying to do? <span className="text-rose-300">(required)</span>
             <textarea
@@ -236,6 +251,8 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
               value={objective}
               onChange={(e) => setObjective(e.target.value)}
               required
+              data-testid="guided-objective-input"
+              aria-label="Project objective"
             />
           </label>
           <label className="block text-xs text-slate-400">
@@ -291,9 +308,16 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-slate-100">What EOS prepared (PROPOSED — not approved)</h3>
+            <h3 className="text-sm font-semibold text-slate-100">
+              What EOS prepared — needs confirmation (not approved)
+            </h3>
             <ul className="mt-2 max-h-64 space-y-2 overflow-y-auto" data-testid="guided-proposals">
-              {proposals.slice(0, 24).map((p) => (
+              {proposals.slice(0, 24).map((p) => {
+                const material =
+                  String(p.provenance.materiality).toUpperCase().includes("HIGH") ||
+                  String(p.provenance.confidence).toUpperCase().includes("LOW") ||
+                  Boolean(p.uncertainty);
+                return (
                 <li
                   key={p.id}
                   className="rounded border border-slate-800 px-3 py-2 text-sm text-slate-200"
@@ -303,18 +327,32 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
                       <span className="font-mono text-[11px] text-amber-200">{p.stableObjectId}</span>{" "}
                       {p.title}
                     </span>
-                    <span className="text-[11px] text-slate-500">
-                      {p.lifecycleState} · {p.provenance.confidence}/{p.provenance.materiality} ·{" "}
-                      {p.provenance.disposition}
+                    <span className="text-[11px] text-amber-100/90" data-testid="guided-friendly-state">
+                      Needs confirmation
+                      <details className="inline ml-2 text-slate-500">
+                        <summary className="inline cursor-pointer">Details</summary>
+                        <span className="ml-1 font-mono">
+                          {p.lifecycleState} · {p.provenance.confidence}/{p.provenance.materiality} ·{" "}
+                          {p.provenance.disposition}
+                        </span>
+                      </details>
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-slate-400">{p.summary}</p>
-                  <details className="mt-1 text-xs text-slate-500">
-                    <summary>Why EOS suggested this</summary>
-                    <p className="mt-1">{p.whySuggested}</p>
-                    <p>Source: {p.provenance.source}</p>
-                    {p.uncertainty ? <p>Uncertainty: {p.uncertainty}</p> : null}
-                  </details>
+                  {material ? (
+                    <details className="mt-1 text-xs text-slate-500" open data-testid="explainability-prominent">
+                      <summary>Why?</summary>
+                      <p className="mt-1">{p.whySuggested}</p>
+                      <p>Source: {p.provenance.source}</p>
+                      {p.uncertainty ? <p>Uncertainty: {p.uncertainty}</p> : null}
+                    </details>
+                  ) : (
+                    <details className="mt-1 text-xs text-slate-500" data-testid="explainability-compact">
+                      <summary>Why?</summary>
+                      <p className="mt-1">{p.whySuggested}</p>
+                      <p>Source: {p.provenance.source}</p>
+                    </details>
+                  )}
                   {step === 3 && p.accepted == null ? (
                     <div className="mt-2 flex gap-2">
                       <Button type="button" size="sm" onClick={() => void decide(p.stableObjectId, "CONFIRMED")}>
@@ -335,7 +373,8 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
                     </p>
                   ) : null}
                 </li>
-              ))}
+                );
+              })}
             </ul>
             {step === 3 ? (
               <Button type="button" size="sm" className="mt-3" variant="outline" onClick={() => void bulkSafe()}>

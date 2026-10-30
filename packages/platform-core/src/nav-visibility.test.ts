@@ -14,6 +14,7 @@ import {
 } from "./nav-visibility";
 import {
   ADVANCED_PLATFORM_NAVIGATION,
+  ENGINEERING_NAVIGATION,
   FULL_NAVIGATION,
   PLATFORM_NAVIGATION,
   SIDEBAR_SECTIONS,
@@ -245,7 +246,8 @@ describe("Phase E1 — Experience primary nav", () => {
     const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("engineer"));
     expect(visible.find((i) => i.id === "eng-home")?.href).toBe("/engineering");
     expect(visible.some((i) => i.id === "eng-projects")).toBe(true);
-    expect(visible.some((i) => i.id === "eng-modules")).toBe(true);
+    expect(visible.some((i) => i.id === "eng-my")).toBe(true);
+    expect(visible.some((i) => i.id === "eng-modules")).toBe(false);
     expect(visible.some((i) => i.id === "eng-ask")).toBe(false);
     expect(visible.some((i) => i.id === "eng-explore")).toBe(false);
     expect(visible.some((i) => i.id === "eng-intelligence")).toBe(false);
@@ -259,17 +261,18 @@ describe("Phase E1 — Experience primary nav", () => {
     expect(visible.find((i) => i.id === "eng-ask")?.href).toBe("/engineering/ask");
   });
 
-  it("shows work and engineering registers in primary sidebar", () => {
+  it("shows work and engineering-language primary surfaces in sidebar", () => {
     const visible = filterSidebarNavigation(
       FULL_NAVIGATION,
       ctx("engineer", { entitledFeatureKeys: ["ai_assistant"] }),
     );
-    expect(visible.some((i) => i.id === "eng-risks")).toBe(true);
+    expect(visible.some((i) => i.id === "eng-changes")).toBe(true);
     expect(visible.some((i) => i.id === "eng-projects")).toBe(true);
+    expect(visible.some((i) => i.id === "eng-my")).toBe(true);
     expect(visible.some((i) => i.id === "eng-ask")).toBe(true);
   });
 
-  it("hides Documents and Actions unless those applications are entitled", () => {
+  it("hides Documents unless that application is entitled; Actions remain advanced/hidden", () => {
     const hidden = filterSidebarNavigation(FULL_NAVIGATION, ctx("engineer"));
     expect(hidden.some((i) => i.id === "eng-documents")).toBe(false);
     expect(hidden.some((i) => i.id === "eng-actions")).toBe(false);
@@ -278,7 +281,8 @@ describe("Phase E1 — Experience primary nav", () => {
       ctx("engineer", { entitledApplicationKeys: ["documents", "project_controls"] }),
     );
     expect(shown.some((i) => i.id === "eng-documents")).toBe(true);
-    expect(shown.some((i) => i.id === "eng-actions")).toBe(true);
+    expect(shown.some((i) => i.id === "eng-actions")).toBe(false);
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-actions")?.sidebarHidden).toBe(true);
   });
 
   it("hides platform internals from ordinary engineers", () => {
@@ -295,32 +299,30 @@ describe("Phase E1 — Experience primary nav", () => {
   });
 });
 
-describe("EOS-SHELL-NAV-1 — Engineering Systems primary nav", () => {
-  it("shows Engineering Systems to viewers with Engineering OS active, without application entitlements", () => {
+describe("EOS-SHELL-NAV-1 — Approved engineering-language primary nav", () => {
+  it("keeps Engineering Systems reachable but not in primary engineer nav", () => {
     const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("viewer"));
-    const item = visible.find((i) => i.id === "eng-modules");
+    expect(visible.find((i) => i.id === "eng-modules")).toBeUndefined();
+    const item = ENGINEERING_NAVIGATION.find((i) => i.id === "eng-modules");
     expect(item?.label).toBe("Engineering Systems");
     expect(item?.href).toBe("/engineering/modules");
+    expect(item?.sidebarHidden).toBe(true);
     expect(item?.applicationKey).toBeUndefined();
   });
 
-  it("shows ordinary engineering navigation to a pilot engineer and hides administration and review", () => {
+  it("shows ordinary engineering navigation to a pilot engineer and hides administration", () => {
     const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("pilot-engineer"));
     const ids = visible.map((item) => item.id);
     expect(ids).toEqual(
       expect.arrayContaining([
         "eng-home",
-        "eng-modules",
-        "eng-workbench",
         "eng-projects",
-        "eng-assets",
-        "eng-risks",
-        "eng-tqs",
-        "eng-decisions",
-        "eng-pilot-feedback",
+        "eng-my",
+        "eng-changes",
       ]),
     );
-    expect(ids).not.toContain("eng-review");
+    expect(ids).not.toContain("eng-modules");
+    expect(ids).not.toContain("eng-pilot-feedback");
     expect(ids).not.toContain("platform-home");
     expect(ids).not.toContain("users-permissions");
     expect(resolveNavTier("pilot-engineer")).toBe("engineer");
@@ -329,15 +331,19 @@ describe("EOS-SHELL-NAV-1 — Engineering Systems primary nav", () => {
   it("keeps owner navigation when the same person is an owner in another workspace context", () => {
     const owner = filterSidebarNavigation(FULL_NAVIGATION, ctx("owner")).map((item) => item.id);
     expect(owner).toContain("platform-home");
-    expect(owner).toContain("eng-modules");
+    expect(owner).toContain("eng-home");
     expect(owner).toContain("eng-review");
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-modules")?.href).toBe(
+      "/engineering/modules",
+    );
   });
 
-  it("hides Engineering Systems when Engineering OS is not the active operating system", () => {
+  it("hides Engineering OS items when Engineering OS is not the active operating system", () => {
     const visible = filterSidebarNavigation(
       FULL_NAVIGATION,
       ctx("viewer", { activeOperatingSystemIds: [] }),
     );
+    expect(visible.some((i) => i.id === "eng-home")).toBe(false);
     expect(visible.some((i) => i.id === "eng-modules")).toBe(false);
   });
 });

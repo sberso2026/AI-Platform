@@ -14,7 +14,7 @@ function readApp(rel: string) {
 }
 
 describe("EOS-UX-1 work-first navigation", () => {
-  it("puts Command Centre, Work, Engineering, Analysis, AI, and Administration in the sidebar", () => {
+  it("puts Home, Work, Engineering, Analysis, AI, and Administration in the sidebar", () => {
     expect(SIDEBAR_SECTIONS.map((s) => s.label)).toEqual(
       expect.arrayContaining([
         "Engineering OS",
@@ -27,18 +27,20 @@ describe("EOS-UX-1 work-first navigation", () => {
     );
     expect(NAV_GROUP_LABELS.engineering_work).toBe("Work");
     expect(NAV_GROUP_LABELS.engineering_analysis).toBe("Analysis");
-    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-home")?.label).toBe("Command Centre");
-    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-modules")?.label).toBe("Engineering Systems");
-    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-ask")?.label).toBe("Engineering AI");
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-home")?.label).toBe("Home");
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-my")?.label).toBe("My Work");
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-ask")?.label).toBe("AI");
   });
 
   it("gates Documents and Actions on existing application entitlements", () => {
     expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-documents")?.applicationKey).toBe("documents");
     expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-actions")?.applicationKey).toBe("project_controls");
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-changes")?.href).toBe("/engineering/changes");
   });
 
-  it("does not keep Explore / Intelligence / My Engineering in primary nav", () => {
-    for (const id of ["eng-my", "eng-explore", "eng-intelligence"]) {
+  it("keeps Explore / Intelligence out of primary nav; My Work is primary", () => {
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-my")?.sidebarHidden).not.toBe(true);
+    for (const id of ["eng-explore", "eng-intelligence"]) {
       expect(ENGINEERING_NAVIGATION.find((i) => i.id === id)?.sidebarHidden).toBe(true);
     }
   });
@@ -66,11 +68,11 @@ describe("EOS-UX-1 operational screens", () => {
     expect(route).not.toMatch(/documents\.list\(\s*commerce/);
   });
 
-  it("project workspace exposes operational tabs without duplicating registers", () => {
+  it("project workspace exposes operational overview without duplicating registers", () => {
     const page = readApp("src/app/(platform)/engineering/projects/[projectId]/page.tsx");
     expect(page).toContain("project-workspace");
-    expect(page).toContain("Technical Queries");
-    expect(page).toContain("/api/engineering/dashboard?projectId=");
+    expect(page).toContain("ProjectOverviewPanel");
+    expect(page).toContain("/api/engineering/projects/");
   });
 
   it("moves raw EMI flags to Governance & Assurance, not the operational landing", () => {

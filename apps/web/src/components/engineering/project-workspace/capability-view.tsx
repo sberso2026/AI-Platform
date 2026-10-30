@@ -14,6 +14,8 @@ import type { Eos3ObjectType } from "@/lib/engineering/eos3-canonical-objects";
 import {
   DEFAULT_PILOT_LIFECYCLE,
   findWorkspaceNavItem,
+  proposedConfirmedEmptyCopy,
+  resolveWorkspaceSlug,
   workspaceHref,
   type ProjectWorkspaceNavItem,
 } from "@/lib/engineering/project-workspace-ia";
@@ -26,11 +28,12 @@ import { useProjectWorkspace } from "./use-workspace";
 
 export function ProjectCapabilityView({
   projectId,
-  slug,
+  slug: rawSlug,
 }: {
   projectId: string;
   slug: string;
 }) {
+  const slug = resolveWorkspaceSlug(rawSlug);
   const item = findWorkspaceNavItem(slug);
   const { snapshot, error, loading, post, reload } = useProjectWorkspace(projectId);
 
@@ -70,6 +73,9 @@ export function ProjectCapabilityView({
   if (slug === "lifecycle") {
     return <LifecyclePanel projectId={projectId} snapshot={snapshot} post={post} />;
   }
+  if (slug === "dependencies") {
+    return <DependenciesPanel projectId={projectId} snapshot={snapshot} post={post} />;
+  }
   if (slug === "digital-thread") {
     return <DigitalThreadPanel projectId={projectId} snapshot={snapshot} post={post} />;
   }
@@ -97,16 +103,26 @@ export function ProjectCapabilityView({
   if (slug === "engineering-ai") {
     return <EngineeringAiPanel projectId={projectId} />;
   }
-  if (slug === "knowledge") {
+  if (slug === "engineering-reference" || slug === "knowledge") {
     return (
       <BridgePanel
         item={item}
         projectId={projectId}
-        note="EOS 3.3 knowledge retrieval — provenance and abstention preserved. Vector search is not graph authority."
+        note="Engineering reference with provenance. Search is not the source of record."
       />
     );
   }
-  if (slug === "systems") {
+  if (slug === "scope-design-basis") {
+    return (
+      <ScopeDesignBasisPanel projectId={projectId} snapshot={snapshot} post={post} item={item} />
+    );
+  }
+  if (slug === "engineering-design") {
+    return (
+      <EngineeringDesignPanel projectId={projectId} snapshot={snapshot} post={post} item={item} />
+    );
+  }
+  if (slug === "interfaces" || slug === "systems") {
     return (
       <SystemsInterfacesPanel
         projectId={projectId}
@@ -116,21 +132,30 @@ export function ProjectCapabilityView({
       />
     );
   }
-  if (slug === "changes") {
+  if (slug === "changes-decisions" || slug === "changes" || slug === "decisions") {
     return (
-      <ChangesImpactPanel projectId={projectId} snapshot={snapshot} post={post} item={item} />
+      <ChangesDecisionsPanel projectId={projectId} snapshot={snapshot} post={post} item={item} />
     );
   }
   if (item.objectType) {
     const type = item.objectType as Eos3ObjectType;
     const objects = snapshot.objects.filter((o) => o.objectType === type);
+    const proposed = objects.filter((o) =>
+      String(o.governedState).toUpperCase().includes("PROPOS"),
+    ).length;
+    const confirmed = objects.length - proposed;
+    const empty = proposedConfirmedEmptyCopy(
+      `${type.toLowerCase()}s`,
+      confirmed,
+      proposed,
+    );
     return (
       <ObjectRegisterPanel
         projectId={projectId}
         objectType={type}
         title={item.label}
-        emptyTitle={item.emptyTitle}
-        emptyDescription={item.emptyDescription}
+        emptyTitle={objects.length === 0 ? empty.title : item.emptyTitle}
+        emptyDescription={objects.length === 0 ? empty.description : item.emptyDescription}
         objects={objects}
         bridgeHref={item.bridgeHref?.(projectId)}
         extraColumns={extraCols(type)}
@@ -198,6 +223,299 @@ function BridgePanel({
   );
 }
 
+function ScopeDesignBasisPanel({
+  projectId,
+  snapshot,
+  post,
+  item,
+}: {
+  projectId: string;
+  snapshot: NonNullable<ReturnType<typeof useProjectWorkspace>["snapshot"]>;
+  post: ReturnType<typeof useProjectWorkspace>["post"];
+  item: ProjectWorkspaceNavItem;
+}) {
+  const requirements = snapshot.objects.filter((o) => o.objectType === "Requirement");
+  const basis = snapshot.objects.filter((o) => o.objectType === "EngineeringBasis");
+  const assumptions = snapshot.objects.filter((o) => o.objectType === "Assumption");
+  const proposedReq = requirements.filter((o) =>
+    String(o.governedState).toUpperCase().includes("PROPOS"),
+  ).length;
+  const emptyReq = proposedConfirmedEmptyCopy(
+    "requirements",
+    requirements.length - proposedReq,
+    proposedReq,
+  );
+
+  return (
+    <div className="space-y-8" data-testid="scope-design-basis-panel">
+      <div>
+        <h2 className="text-lg font-semibold text-slate-900">{item.label}</h2>
+        <p className="text-sm text-slate-600">
+          Requirements, engineering basis, and assumptions — confirm proposed items before treating them as
+          fact.
+        </p>
+      </div>
+      <ObjectRegisterPanel
+        projectId={projectId}
+        objectType="Requirement"
+        title="Requirements"
+        emptyTitle={emptyReq.title}
+        emptyDescription={emptyReq.description}
+        objects={requirements}
+        bridgeHref={item.bridgeHref?.(projectId)}
+        onCreate={async (input) => {
+          await post({ action: "create_object", objectType: "Requirement", ...input });
+        }}
+      />
+      <ObjectRegisterPanel
+        projectId={projectId}
+        objectType="EngineeringBasis"
+        title="Engineering Basis"
+        emptyTitle="No engineering basis recorded"
+        emptyDescription="Create the project engineering basis and link jurisdiction/standards."
+        objects={basis}
+        onCreate={async (input) => {
+          await post({ action: "create_object", objectType: "EngineeringBasis", ...input });
+        }}
+      />
+      <section data-testid="contextual-assumptions" className="space-y-2">
+        <h3 className="text-base font-semibold text-slate-900">Assumptions</h3>
+        <p className="text-xs text-slate-500">
+          Shown in context — not a dominant primary module. Detailed register remains available here.
+        </p>
+        {assumptions.length === 0 ? (
+          <EmptyOperationalState
+            title="No assumptions recorded"
+            description="Assumptions appear here and on calculations, decisions, and work packages."
+          />
+        ) : (
+          <ul className="divide-y divide-slate-200 rounded-md border border-slate-200 bg-white">
+            {assumptions.map((a) => (
+              <li key={a.id} className="flex flex-wrap items-baseline gap-2 px-3 py-2 text-sm text-slate-800">
+                <span className="font-mono text-xs text-slate-500">{a.stableObjectId}</span>
+                <span className="font-medium">{a.displayName}</span>
+                <span className="text-xs text-slate-500">
+                  {String(a.payload?.equipmentMass ?? a.payload?.value ?? "—")}
+                </span>
+                <span className="text-xs text-amber-800">
+                  {String(a.payload?.status ?? a.governedState)}
+                </span>
+                <span className="text-xs text-slate-500">
+                  Used by {String(a.payload?.usedBy ?? "related calculations")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function EngineeringDesignPanel({
+  projectId,
+  snapshot,
+  post,
+  item,
+}: {
+  projectId: string;
+  snapshot: NonNullable<ReturnType<typeof useProjectWorkspace>["snapshot"]>;
+  post: ReturnType<typeof useProjectWorkspace>["post"];
+  item: ProjectWorkspaceNavItem;
+}) {
+  const calcs = snapshot.objects.filter((o) => o.objectType === "Calculation");
+  const assumptions = snapshot.objects.filter((o) => o.objectType === "Assumption");
+  return (
+    <div className="space-y-6" data-testid="engineering-design-panel">
+      <div>
+        <h2 className="text-lg font-semibold text-slate-900">Engineering Design</h2>
+        <p className="text-sm text-slate-600">
+          Active design home — calculations, models, drawings, specifications, and design notes. Deliverables
+          remain under Deliverables & Records.
+        </p>
+      </div>
+      <ObjectRegisterPanel
+        projectId={projectId}
+        objectType="Calculation"
+        title="Calculations & design outputs"
+        emptyTitle={item.emptyTitle}
+        emptyDescription={item.emptyDescription}
+        objects={calcs}
+        bridgeHref={item.bridgeHref?.(projectId)}
+        extraColumns={extraCols("Calculation")}
+        onCreate={async (input) => {
+          await post({ action: "create_object", objectType: "Calculation", ...input });
+        }}
+      />
+      {assumptions.length > 0 ? (
+        <section data-testid="design-contextual-assumptions" className="rounded-md border border-slate-200 bg-white p-3">
+          <h3 className="text-sm font-semibold text-slate-900">Assumptions used in design</h3>
+          <ul className="mt-2 space-y-1 text-xs text-slate-700">
+            {assumptions.map((a) => (
+              <li key={a.id}>
+                <span className="font-mono">{a.stableObjectId}</span> {a.displayName} ·{" "}
+                {String(a.payload?.equipmentMass ?? "—")} · {String(a.payload?.status ?? a.governedState)}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      <p className="text-xs text-slate-500">
+        Models and drawings open from linked records — not duplicated here as separate engineering truth.
+      </p>
+    </div>
+  );
+}
+
+function ChangesDecisionsPanel({
+  projectId,
+  snapshot,
+  post,
+  item,
+}: {
+  projectId: string;
+  snapshot: NonNullable<ReturnType<typeof useProjectWorkspace>["snapshot"]>;
+  post: ReturnType<typeof useProjectWorkspace>["post"];
+  item: ProjectWorkspaceNavItem;
+}) {
+  const decisions = snapshot.objects.filter((o) => o.objectType === "Decision");
+  const changes = snapshot.objects.filter((o) => o.objectType === "Change");
+  const assumptions = snapshot.objects.filter((o) => o.objectType === "Assumption");
+  return (
+    <div className="space-y-6" data-testid="changes-decisions-panel">
+      <div>
+        <h2 className="text-lg font-semibold text-slate-900">{item.label}</h2>
+        <p className="text-sm text-slate-600">
+          Decisions require human authority. Recommendations are not decisions.
+        </p>
+      </div>
+      <div className="space-y-3" data-testid="decision-engineering-ui">
+        {decisions.length === 0 ? (
+          <EmptyOperationalState
+            title="No confirmed decisions"
+            description="Decision records for this project will appear here."
+          />
+        ) : (
+          decisions.map((d) => (
+            <article
+              key={d.id}
+              className="rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-800"
+              data-testid={`decision-card-${d.stableObjectId}`}
+            >
+              <header className="flex flex-wrap items-baseline gap-2">
+                <span className="font-mono text-xs text-slate-500">{d.stableObjectId}</span>
+                <h3 className="font-semibold">{d.displayName}</h3>
+                <span className="rounded border border-slate-300 px-1.5 text-[11px]">
+                  {String(d.payload?.status ?? d.lifecycleState)}
+                </span>
+              </header>
+              <p className="mt-2 text-sm">
+                <span className="text-slate-500">Question: </span>
+                {String(d.payload?.question ?? d.displayName)}
+              </p>
+              {d.payload?.attentionReason ? (
+                <p className="mt-1 text-xs text-amber-800">
+                  Why attention: {String(d.payload.attentionReason)}
+                </p>
+              ) : null}
+              <dl className="mt-2 grid gap-1 text-xs text-slate-600 sm:grid-cols-2">
+                <div>Work Package: {String(d.payload?.workPackageId ?? "—")}</div>
+                <div>Asset/System: {String(d.payload?.assetSystem ?? "—")}</div>
+                <div>Options: {String(d.payload?.options ?? "—")}</div>
+                <div>Evidence: {String(d.payload?.evidence ?? "—")}</div>
+                <div>
+                  Assumptions:{" "}
+                  {assumptions
+                    .slice(0, 3)
+                    .map((a) => a.stableObjectId)
+                    .join(", ") || "—"}
+                </div>
+                <div>Calculations: {String(d.payload?.calculations ?? "—")}</div>
+                <div>Authority: {String(d.payload?.authority ?? "Human engineering authority")}</div>
+                <div>
+                  Recommendation: {String(d.payload?.recommendation ?? "—")}{" "}
+                  <span className="text-slate-400">(not a decision)</span>
+                </div>
+                <div>Rationale: {String(d.payload?.rationale ?? "—")}</div>
+                <div>Affected: {String(d.payload?.affectedItems ?? "—")}</div>
+              </dl>
+            </article>
+          ))
+        )}
+      </div>
+      <ChangesImpactPanel projectId={projectId} snapshot={snapshot} post={post} item={item} />
+      {changes.length === 0 ? null : (
+        <p className="text-xs text-slate-500">{changes.length} change record(s) in project context.</p>
+      )}
+    </div>
+  );
+}
+
+function DependenciesPanel({
+  projectId,
+  snapshot,
+  post,
+}: {
+  projectId: string;
+  snapshot: NonNullable<ReturnType<typeof useProjectWorkspace>["snapshot"]>;
+  post: ReturnType<typeof useProjectWorkspace>["post"];
+}) {
+  return (
+    <section className="space-y-4" data-testid="dependencies-engineering-ui">
+      <div>
+        <h2 className="text-lg font-semibold text-slate-900">Dependencies</h2>
+        <p className="text-sm text-slate-600">
+          Upstream and downstream engineering relationships. Full graph visualization is under Advanced.
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-800">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Upstream</p>
+          <p className="mt-2 font-mono text-xs leading-6">
+            Vendor Data
+            <br />→ Equipment Load
+            <br />→ Structural Calculation
+          </p>
+        </div>
+        <div className="rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-800">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Downstream</p>
+          <p className="mt-2 font-mono text-xs leading-6">
+            Structural Calculation
+            <br />→ Decision
+            <br />→ Drawing
+          </p>
+        </div>
+      </div>
+      <p className="text-xs text-slate-500">
+        {snapshot.objects.length} governed objects available for dependency traversal.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href={workspaceHref(projectId, "digital-thread")}
+          className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800"
+          data-testid="view-dependencies-full"
+        >
+          View dependencies — Full view
+        </Link>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={async () => {
+            const start =
+              snapshot.objects.find((o) => o.stableObjectId === "CALC-001")?.id ??
+              snapshot.objects[0]?.id;
+            if (!start) return;
+            await post({ action: "thread", objectId: start });
+          }}
+        >
+          View dependencies
+        </Button>
+      </div>
+      <DigitalThreadPanel projectId={projectId} snapshot={snapshot} post={post} compact />
+    </section>
+  );
+}
+
 function LifecyclePanel({
   projectId,
   snapshot,
@@ -210,16 +528,45 @@ function LifecyclePanel({
   const [authority, setAuthority] = useState("project_lead");
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const currentIdx = DEFAULT_PILOT_LIFECYCLE.findIndex(
     (s) => s.key === snapshot.lifecycle.currentKey,
   );
   const next = DEFAULT_PILOT_LIFECYCLE[currentIdx + 1];
   const gateEval = snapshot.lifecycle.gateEvaluations.G0;
+  const stageLabel =
+    DEFAULT_PILOT_LIFECYCLE.find((s) => s.key === snapshot.lifecycle.currentKey)?.label ??
+    snapshot.lifecycle.currentKey;
+  const blockers = gateEval?.blocking?.length ?? 0;
 
   return (
     <section data-testid="lifecycle-panel" className="space-y-4">
-      <h2 className="text-lg font-semibold text-slate-100">Lifecycle & Stage Gates</h2>
-      <p className="text-sm text-slate-400">
+      <div
+        className="rounded-md border border-slate-200 bg-white p-4"
+        data-testid="lifecycle-compact-summary"
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Maturity</p>
+        <p className="mt-1 text-lg font-semibold text-slate-900">{stageLabel}</p>
+        <p className="mt-1 text-sm text-slate-600">
+          {gateEval ? `${Math.max(0, 100 - blockers * 12)}% ready` : "Readiness pending evaluation"} ·{" "}
+          {blockers} blocker{blockers === 1 ? "" : "s"} ·{" "}
+          {(snapshot.counts?.Review ?? 0) > 0
+            ? `${snapshot.counts.Review} review outstanding`
+            : "No outstanding reviews"}
+        </p>
+        <button
+          type="button"
+          className="mt-2 text-sm text-slate-700 underline-offset-2 hover:underline"
+          data-testid="view-maturity-details"
+          onClick={() => setDetailsOpen((v) => !v)}
+        >
+          {detailsOpen ? "Hide maturity details" : "View maturity details"}
+        </button>
+      </div>
+      {!detailsOpen ? null : (
+        <>
+      <h2 className="text-lg font-semibold text-slate-900">Lifecycle & Stage Gates</h2>
+      <p className="text-sm text-slate-600">
         Current stage is governed — not a free-text field. Advancement requires valid transitions and human
         authority at gates.
       </p>
@@ -324,8 +671,10 @@ function LifecyclePanel({
           <p>Authority: {gateEval.authority ?? "—"}</p>
         </div>
       ) : null}
-      {msg ? <p className="text-sm text-emerald-300">{msg}</p> : null}
+      {msg ? <p className="text-sm text-emerald-700">{msg}</p> : null}
       {err ? <OperationalError message={err} /> : null}
+        </>
+      )}
     </section>
   );
 }
@@ -334,10 +683,12 @@ function DigitalThreadPanel({
   projectId,
   snapshot,
   post,
+  compact = false,
 }: {
   projectId: string;
   snapshot: NonNullable<ReturnType<typeof useProjectWorkspace>["snapshot"]>;
   post: ReturnType<typeof useProjectWorkspace>["post"];
+  compact?: boolean;
 }) {
   const params = useSearchParams();
   const initial = params.get("objectId") ?? snapshot.objects.find((o) => o.stableObjectId === "REQ-001")?.id ?? "";
@@ -349,10 +700,14 @@ function DigitalThreadPanel({
 
   return (
     <section data-testid="digital-thread-panel" className="space-y-4">
-      <h2 className="text-lg font-semibold text-slate-100">Digital Thread</h2>
-      <p className="text-sm text-slate-400">
-        Canonical structured relationships are the authority. Embeddings are not the source of record.
-      </p>
+      {compact ? null : (
+        <>
+          <h2 className="text-lg font-semibold text-slate-900">Dependencies — Full view</h2>
+          <p className="text-sm text-slate-600">
+            Full relationship view for advanced inspection. Prefer Dependencies for routine work.
+          </p>
+        </>
+      )}
       <div className="flex flex-wrap gap-2">
         <label className="text-xs text-slate-400">
           Start object
@@ -419,20 +774,21 @@ function DigitalThreadPanel({
 
 function slugForType(objectType: string): string {
   const map: Record<string, string> = {
-    Requirement: "requirements",
-    EngineeringBasis: "engineering-basis",
-    Assumption: "assumptions",
-    System: "systems",
-    Interface: "systems",
-    Calculation: "calculations",
-    Decision: "decisions",
+    Requirement: "scope-design-basis",
+    EngineeringBasis: "scope-design-basis",
+    Assumption: "scope-design-basis",
+    System: "interfaces",
+    Interface: "interfaces",
+    Calculation: "engineering-design",
+    Decision: "changes-decisions",
     Review: "reviews",
-    Change: "changes",
+    Change: "changes-decisions",
     Deliverable: "deliverables",
     Asset: "assets",
     Inspection: "inspections",
+    WorkPackage: "work-packages",
   };
-  return map[objectType] ?? "digital-thread";
+  return map[objectType] ?? "dependencies";
 }
 
 function ImpactPanel({

@@ -30,7 +30,7 @@ function viewerCtx(activeOperatingSystemIds: string[] = ["engineering"]) {
 }
 
 describe("EOS-SHELL-NAV-1 restore Engineering Systems navigation", () => {
-  it("places Engineering Systems second in Engineering OS, then Work items", () => {
+  it("places Home first in Engineering OS; Work items use engineering language", () => {
     const visible = filterSidebarNavigation(ENGINEERING_NAVIGATION, viewerCtx());
     const grouped = groupNavigation(visible);
     const engineeringOs = SIDEBAR_SECTIONS.find((s) => s.id === "engineering")!;
@@ -38,45 +38,40 @@ describe("EOS-SHELL-NAV-1 restore Engineering Systems navigation", () => {
     const osItems = itemsForSidebarSection(engineeringOs, grouped);
     const workOrder = itemsForSidebarSection(work, groupNavigation(ENGINEERING_NAVIGATION));
 
-    expect(osItems.map((i) => i.id)).toEqual(["eng-home", "eng-modules"]);
-    expect(osItems.map((i) => i.label)).toEqual(["Command Centre", "Engineering Systems"]);
-    expect(workOrder.filter((i) => !i.sidebarHidden).map((i) => i.id).slice(0, 5)).toEqual([
-      "eng-workbench",
+    expect(osItems.map((i) => i.id)).toEqual(["eng-home"]);
+    expect(osItems.map((i) => i.label)).toEqual(["Home"]);
+    expect(workOrder.filter((i) => !i.sidebarHidden).map((i) => i.id).slice(0, 3)).toEqual([
       "eng-projects",
-      "eng-assets",
-      "eng-inspections",
+      "eng-my",
       "eng-documents",
     ]);
-    expect(workOrder.filter((i) => !i.sidebarHidden).map((i) => i.label).slice(0, 5)).toEqual([
-      "Engineering Workbench",
+    expect(workOrder.filter((i) => !i.sidebarHidden).map((i) => i.label).slice(0, 3)).toEqual([
       "Projects",
-      "Assets",
-      "Inspections",
+      "My Work",
       "Documents",
     ]);
   });
 
-  it("uses the existing modules route, grid icon, and does not hide or app-gate the item", () => {
+  it("keeps modules route reachable under Advanced (not primary engineer nav)", () => {
     const item = ENGINEERING_NAVIGATION.find((i) => i.id === "eng-modules");
     expect(item?.href).toBe("/engineering/modules");
     expect(item?.icon).toBe("AppWindow");
     expect(item?.group).toBe("engineering");
     expect(item?.audience).toBe("viewer");
-    expect(item?.sidebarHidden).toBeFalsy();
+    expect(item?.sidebarHidden).toBe(true);
     expect(item?.applicationKey).toBeUndefined();
     expect(item?.permissions).toBeUndefined();
   });
 
-  it("does not highlight Command Centre and Engineering Systems at the same time", () => {
+  it("does not highlight Home when on Modules route", () => {
     const hrefs = ENGINEERING_NAVIGATION.filter((i) => !i.sidebarHidden).map((i) => i.href);
-    const commandCentre = "/engineering";
+    const home = "/engineering";
     const systems = "/engineering/modules";
 
-    expect(isNavItemActive("/engineering", commandCentre, hrefs)).toBe(true);
+    expect(isNavItemActive("/engineering", home, hrefs)).toBe(true);
     expect(isNavItemActive("/engineering", systems, hrefs)).toBe(false);
 
-    expect(isNavItemActive("/engineering/modules", commandCentre, hrefs)).toBe(false);
-    expect(isNavItemActive("/engineering/modules", systems, hrefs)).toBe(true);
+    expect(isNavItemActive("/engineering/modules", home, hrefs)).toBe(false);
   });
 
   it("keeps Sign out outside the sidebar scroll container", () => {

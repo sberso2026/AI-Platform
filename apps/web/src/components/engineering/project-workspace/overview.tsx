@@ -1,16 +1,28 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import {
   EmptyOperationalState,
   OperationalError,
-  OperationalMetricCard,
   OperationalSkeleton,
 } from "@/components/engineering/operational";
-import { workspaceHref } from "@/lib/engineering/project-workspace-ia";
-import { DEFAULT_PILOT_LIFECYCLE } from "@/lib/engineering/project-workspace-ia";
+import {
+  ENGINEERING_HUB_BRANCHES,
+  workspaceHref,
+  DEFAULT_PILOT_LIFECYCLE,
+} from "@/lib/engineering/project-workspace-ia";
 import { useProjectWorkspace } from "./use-workspace";
 import { Button } from "@rtb/ui";
+
+type WpListItem = {
+  stableId: string;
+  title: string;
+  maturity: string;
+  status: string;
+  disciplines: { lead: string | null; participating: string[] };
+  affectedAssets: Array<{ displayName: string }>;
+};
 
 export function ProjectOverviewPanel({
   projectId,
@@ -20,8 +32,27 @@ export function ProjectOverviewPanel({
   project: Record<string, unknown>;
 }) {
   const { snapshot, error, loading, post } = useProjectWorkspace(projectId);
+  const [packages, setPackages] = useState<WpListItem[]>([]);
 
-  if (loading && !snapshot) return <OperationalSkeleton label="Loading engineering control centre…" />;
+  const loadWp = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `/api/engineering/projects/${encodeURIComponent(projectId)}/work-packages?view=list&seedPilot=1`,
+        { credentials: "include" },
+      );
+      if (!res.ok) return;
+      const json = (await res.json()) as { data: WpListItem[] };
+      setPackages(json.data ?? []);
+    } catch {
+      /* non-blocking */
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    void loadWp();
+  }, [loadWp]);
+
+  if (loading && !snapshot) return <OperationalSkeleton label="Loading engineering workspace…" />;
   if (error && !snapshot) {
     return <OperationalError message={error} retryHref={workspaceHref(projectId, "")} />;
   }
@@ -31,75 +62,133 @@ export function ProjectOverviewPanel({
     DEFAULT_PILOT_LIFECYCLE.find((s) => s.key === snapshot.lifecycle.currentKey)?.label ??
     snapshot.lifecycle.currentKey;
   const gate = snapshot.lifecycle.gateEvaluations.G0;
-  const c = snapshot.counts;
-
-  const cards: Array<{ label: string; value: number; href: string; tone?: "attention" | "neutral" }> = [
-    { label: "Requirements", value: c.Requirement ?? 0, href: workspaceHref(projectId, "requirements") },
-    { label: "Assumptions", value: c.Assumption ?? 0, href: workspaceHref(projectId, "assumptions") },
-    { label: "Interfaces", value: c.Interface ?? 0, href: workspaceHref(projectId, "systems") },
-    { label: "Changes", value: c.Change ?? 0, href: workspaceHref(projectId, "changes") },
-    { label: "Calculations", value: c.Calculation ?? 0, href: workspaceHref(projectId, "calculations") },
-    { label: "Deliverables", value: c.Deliverable ?? 0, href: workspaceHref(projectId, "deliverables") },
-    { label: "Reviews", value: c.Review ?? 0, href: workspaceHref(projectId, "reviews") },
-    {
-      label: "Open decisions",
-      value: c.Decision ?? 0,
-      href: workspaceHref(projectId, "decisions"),
-    },
-  ];
+  const blockers = gate?.blocking?.length ?? 0;
 
   return (
     <div className="space-y-6" data-testid="project-overview-engineering">
       <section
-        className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4"
+        className="rounded-md border border-[color:var(--eos-gold,#c4a35a)]/40 bg-white p-4"
         data-testid="guided-default-banner"
       >
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-200">
-          Default · Guided Engineering
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--eos-navy,#0b1f3a)]">
+          Guided Engineering
         </p>
-        <h2 className="mt-1 text-lg font-semibold text-slate-100">
+        <h2 className="mt-1 text-lg font-semibold text-slate-900">
           Start with the engineering problem — not empty registers
         </h2>
-        <p className="mt-1 text-sm text-slate-300">
-          Describe what you are trying to do. EOS generates the initial definition for review. You confirm
-          material exceptions. Advanced registers remain available.
+        <p className="mt-1 text-sm text-slate-600">
+          Describe what you are trying to do. EOS prepares the initial definition for review. You confirm
+          material exceptions.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Link
             href={workspaceHref(projectId, "guided")}
-            className="inline-flex min-h-11 items-center rounded-md bg-slate-100 px-4 text-sm font-medium text-slate-900"
+            className="inline-flex min-h-11 items-center rounded-md bg-[color:var(--eos-navy,#0b1f3a)] px-4 text-sm font-medium text-white"
             data-testid="open-guided-engineering"
           >
             Open Guided Engineering
           </Link>
           <Link
             href={workspaceHref(projectId, "setup")}
-            className="inline-flex min-h-11 items-center text-sm underline-offset-2 hover:underline"
+            className="inline-flex min-h-11 items-center text-sm text-slate-700 underline-offset-2 hover:underline"
           >
             Advanced project setup
           </Link>
         </div>
       </section>
 
+      <section
+        className="rounded-md border border-slate-200 bg-white p-4"
+        data-testid="work-package-primary-execution"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Active Work Packages</h2>
+            <p className="text-sm text-slate-600">
+              Primary execution view — open a work package before deep registers.
+            </p>
+          </div>
+          <Link
+            href={workspaceHref(projectId, "work-packages")}
+            className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm text-slate-800"
+            data-testid="open-all-work-packages"
+          >
+            All Work Packages
+          </Link>
+        </div>
+        {packages.length === 0 ? (
+          <div className="mt-3">
+            <EmptyOperationalState
+              title="No work packages yet"
+              description="Create a work package to bound engineering execution."
+            />
+          </div>
+        ) : (
+          <ul className="mt-3 divide-y divide-slate-100" data-testid="overview-wp-list">
+            {packages.slice(0, 6).map((wp) => (
+              <li key={wp.stableId} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                <div>
+                  <Link
+                    href={workspaceHref(projectId, "work-packages")}
+                    className="font-medium text-slate-900 underline-offset-2 hover:underline"
+                    data-testid={`overview-wp-${wp.stableId}`}
+                  >
+                    {wp.stableId} {wp.title}
+                  </Link>
+                  <p className="text-xs text-slate-500">
+                    {wp.affectedAssets[0]?.displayName ?? "—"} · {wp.maturity} ·{" "}
+                    {wp.disciplines.lead ?? "—"} · {wp.status}
+                  </p>
+                </div>
+                <span className="rounded border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600">
+                  {wp.disciplines.participating.join(", ") || "—"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section
+        className="rounded-md border border-slate-200 bg-white p-4"
+        data-testid="engineering-hub"
+      >
+        <h2 className="text-lg font-semibold text-slate-900">Engineering hub</h2>
+        <p className="text-sm text-slate-600">
+          Navigation summary — opens existing project capabilities. Does not duplicate engineering state.
+        </p>
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="engineering-hub-branches">
+          {ENGINEERING_HUB_BRANCHES.map((b) => (
+            <li key={b.id}>
+              <Link
+                href={workspaceHref(projectId, b.slug)}
+                className="flex min-h-11 items-center rounded-md border border-slate-200 px-3 text-sm text-slate-800 hover:border-[color:var(--eos-gold,#c4a35a)]"
+                data-testid={`hub-${b.id}`}
+              >
+                {b.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-100">Engineering control centre</h2>
-          <p className="text-sm text-slate-400">
-            Project identity, lifecycle, qualification, and next required actions — not only risks/TQs.
-          </p>
+          <h2 className="text-lg font-semibold text-slate-900">Project status</h2>
+          <p className="text-sm text-slate-600">Compact maturity and readiness — details on demand.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {snapshot.setupStatus === "PROJECT_SETUP_INCOMPLETE" ? (
             <Link
               href={workspaceHref(projectId, "guided")}
-              className="inline-flex min-h-11 items-center rounded-md border border-rose-400/40 bg-rose-500/10 px-3 text-sm text-rose-100"
+              className="inline-flex min-h-11 items-center rounded-md border border-rose-400/40 bg-rose-50 px-3 text-sm text-rose-900"
               data-testid="setup-incomplete-cta"
             >
-              Guided start — {snapshot.setupStatus}
+              Guided start — setup incomplete
             </Link>
           ) : (
-            <span className="inline-flex min-h-11 items-center rounded-md border border-emerald-500/30 px-3 text-sm text-emerald-200">
-              {snapshot.setupStatus}
+            <span className="inline-flex min-h-11 items-center rounded-md border border-emerald-500/30 px-3 text-sm text-emerald-800">
+              Setup complete
             </span>
           )}
           <Button
@@ -113,138 +202,84 @@ export function ProjectOverviewPanel({
         </div>
       </div>
 
+      <div
+        className="rounded-md border border-slate-200 bg-white p-4"
+        data-testid="lifecycle-compact-summary"
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Maturity</p>
+        <p className="mt-1 text-base font-semibold text-slate-900">{stage}</p>
+        <p className="mt-1 text-sm text-slate-600">
+          {Math.max(0, 100 - blockers * 12)}% ready · {blockers} blockers · Gate{" "}
+          {gate?.result ?? "not evaluated"}
+        </p>
+        <Link
+          href={workspaceHref(projectId, "lifecycle")}
+          className="mt-2 inline-block text-sm text-slate-700 underline-offset-2 hover:underline"
+          data-testid="view-maturity-details"
+        >
+          View maturity details
+        </Link>
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatusTile label="Project" value={`${project.project_code ?? ""} — ${project.project_name ?? ""}`} />
+        <StatusTile
+          label="Project"
+          value={`${project.project_code ?? ""} — ${project.project_name ?? ""}`}
+        />
         <StatusTile label="Lifecycle stage" value={stage} testId="overview-lifecycle-stage" />
         <StatusTile
-          label="Gate G0"
-          value={gate?.result ?? "NOT_EVALUATED"}
-          testId="overview-gate-status"
+          label="Site"
+          value={snapshot.setup.site || "Not configured"}
         />
-        <StatusTile label="Project status" value={String(project.status ?? "—")} />
         <StatusTile
-          label="Jurisdiction"
+          label="Engineering Design"
           value={
-            snapshot.setup.jurisdiction.country
-              ? `${snapshot.setup.jurisdiction.country}${
-                  snapshot.setup.jurisdiction.stateRegion
-                    ? ` / ${snapshot.setup.jurisdiction.stateRegion}`
-                    : ""
-                }`
-              : "Not configured"
+            snapshot.counts.Calculation
+              ? `${snapshot.counts.Calculation} calculation(s)`
+              : "Open Engineering Design"
           }
         />
-        <StatusTile
-          label="Standards profile"
-          value={
-            snapshot.setup.standards.engineeringStandards[0] ??
-            snapshot.setup.standards.codeProfiles[0] ??
-            "Not configured"
-          }
-        />
-        <StatusTile
-          label="Engineering Basis"
-          value={c.EngineeringBasis ? `${c.EngineeringBasis} recorded` : "Missing"}
-        />
-        <StatusTile
-          label="Qualification"
-          value={`D1 ${snapshot.qualification.d1} · Non-D1 ${snapshot.qualification.nonD1}`}
-        />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
-          <OperationalMetricCard
-            key={card.label}
-            label={card.label}
-            value={card.value}
-            href={card.href}
-            tone={card.value === 0 ? "attention" : "neutral"}
-          />
-        ))}
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-lg border border-slate-700 bg-slate-950/60 p-4">
-          <h3 className="text-sm font-semibold text-slate-100">Gate readiness</h3>
-          <p className="mt-2 text-sm text-slate-300">
-            Blocking: {gate?.blocking?.length ? gate.blocking.join("; ") : "none evaluated / none"}
-          </p>
-          <Link
-            href={workspaceHref(projectId, "lifecycle")}
-            className="mt-3 inline-block text-sm underline-offset-2 hover:underline"
-          >
-            Open Lifecycle & Gates
-          </Link>
-        </section>
-        <section className="rounded-lg border border-slate-700 bg-slate-950/60 p-4">
-          <h3 className="text-sm font-semibold text-slate-100">Project-to-asset readiness</h3>
-          <p className="mt-2 text-sm text-slate-300">{snapshot.handover.readiness}</p>
-          <Link
-            href={workspaceHref(projectId, "handover")}
-            className="mt-3 inline-block text-sm underline-offset-2 hover:underline"
-          >
-            Open Handover & Readiness
-          </Link>
-        </section>
-      </div>
-
-      <section className="rounded-lg border border-slate-700 bg-slate-950/60 p-4">
-        <h3 className="mb-2 text-sm font-semibold text-slate-100">Next required actions</h3>
-        <ul className="space-y-1 text-sm text-slate-300">
-          {snapshot.setupStatus === "PROJECT_SETUP_INCOMPLETE" ? (
-            <li>
-              <Link href={workspaceHref(projectId, "setup")} className="underline-offset-2 hover:underline">
-                Complete Project Setup checklist
-              </Link>
-            </li>
-          ) : null}
-          {!c.Requirement ? (
+      <section className="rounded-md border border-slate-200 bg-white p-4">
+        <h3 className="mb-2 text-sm font-semibold text-slate-900">Next required actions</h3>
+        <ul className="space-y-1 text-sm text-slate-700">
+          {packages.length === 0 ? (
             <li>
               <Link
-                href={workspaceHref(projectId, "requirements")}
+                href={workspaceHref(projectId, "work-packages")}
                 className="underline-offset-2 hover:underline"
               >
-                Create first requirement
+                Create first Work Package
               </Link>
             </li>
           ) : null}
-          {(gate?.result === "HOLD" || gate?.result === "NOT_EVALUATED") && (
-            <li>
-              <Link href={workspaceHref(projectId, "lifecycle")} className="underline-offset-2 hover:underline">
-                Evaluate G0 gate readiness
-              </Link>
-            </li>
-          )}
           <li>
             <Link
-              href={workspaceHref(projectId, "digital-thread")}
+              href={workspaceHref(projectId, "engineering-design")}
+              className="underline-offset-2 hover:underline"
+              data-testid="overview-open-engineering-design"
+            >
+              Open Engineering Design
+            </Link>
+          </li>
+          <li>
+            <Link
+              href={workspaceHref(projectId, "assets")}
               className="underline-offset-2 hover:underline"
             >
-              Inspect digital thread from REQ-001
+              Review Assets & Systems
+            </Link>
+          </li>
+          <li>
+            <Link
+              href={workspaceHref(projectId, "dependencies")}
+              className="underline-offset-2 hover:underline"
+            >
+              View dependencies
             </Link>
           </li>
         </ul>
-        {snapshot.audit.length === 0 ? (
-          <div className="mt-3">
-            <EmptyOperationalState
-              title="No recent activity yet"
-              description="Create objects or seed PILOT-001 to populate recent audit activity."
-            />
-          </div>
-        ) : (
-          <ul className="mt-3 max-h-40 space-y-1 overflow-y-auto text-xs text-slate-400" aria-label="Recent activity">
-            {snapshot.audit
-              .slice()
-              .reverse()
-              .slice(0, 8)
-              .map((e, i) => (
-                <li key={`${e.at}-${i}`}>
-                  {e.at} — {e.action}
-                </li>
-              ))}
-          </ul>
-        )}
       </section>
     </div>
   );
@@ -260,9 +295,9 @@ function StatusTile({
   testId?: string;
 }) {
   return (
-    <div className="rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-3" data-testid={testId}>
+    <div className="rounded-md border border-slate-200 bg-white px-3 py-3" data-testid={testId}>
       <p className="text-[11px] uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-sm font-medium text-slate-100">{value || "—"}</p>
+      <p className="mt-1 text-sm font-medium text-slate-900">{value || "—"}</p>
     </div>
   );
 }
