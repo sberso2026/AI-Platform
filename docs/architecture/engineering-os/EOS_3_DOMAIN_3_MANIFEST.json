@@ -1,0 +1,29 @@
+{
+  "phase": "EOS-3-DOMAIN-3-RELATIONSHIP-GRAPH-CORE",
+  "architectureStatus": "FROZEN_FOR_IMPLEMENTATION_VALIDATION",
+  "requiredStartHead": "ecb148ca5429910ba563603ceb9c6afd8dbc68a4",
+  "artifacts": {
+    "graphCore": "docs/architecture/engineering-os/EOS_3_RELATIONSHIP_GRAPH_CORE.md",
+    "typeRegistry": "docs/architecture/engineering-os/EOS_3_RELATIONSHIP_TYPE_REGISTRY.md",
+    "revisionProvenance": "docs/architecture/engineering-os/EOS_3_RELATIONSHIP_REVISION_AND_PROVENANCE.md",
+    "queryModel": "docs/architecture/engineering-os/EOS_3_RELATIONSHIP_QUERY_MODEL.md",
+    "uiDataContract": "docs/architecture/engineering-os/EOS_3_RELATIONSHIP_UI_DATA_CONTRACT.md",
+    "pilotValidation": "docs/architecture/engineering-os/EOS_3_DOMAIN3_PILOT_VALIDATION.md"
+  },
+  "keyCode": [
+    "apps/web/src/lib/engineering/eos3-relationship-type-registry.ts",
+    "apps/web/src/lib/engineering/eos3-relationship-graph-core.ts",
+    "apps/web/src/app/api/engineering/projects/[projectId]/relationship-graph/route.ts",
+    "supabase/migrations/20261030180000_eos_3_domain_3_relationship_graph.sql",
+    "apps/web/src/__tests__/eos3-domain-3-relationship-graph.test.ts"
+  ],
+  "performanceBaseline": {
+    "directP50Ms": 0.021,
+    "directP95Ms": 0.041,
+    "hop3P50Ms": 0.1,
+    "hop3P95Ms": 0.248,
+    "performanceBlockerCount": 0,
+    "note": "Measured via measureGraphPerformanceBaseline in automated tests; re-run may vary slightly."
+  },
+  "nextPhase": "EOS-3-DOMAIN-4-DECISION-ASSUMPTION-LINEAGE"
+}
