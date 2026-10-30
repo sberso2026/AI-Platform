@@ -1,0 +1,32 @@
+{
+  "phase": "EOS-3-EXTERNAL-CUSTOMER-HUMAN-RELEASE-AUTHORIZATION",
+  "recordedAtUtc": "2026-10-30T00:10:00Z",
+  "startHead": "e21955f4fa6d5c68e9bd1dc5a0f4fc0a8fe9ffd2",
+  "humanGo": "NOT_ISSUED",
+  "verdict": "BLOCKED",
+  "blocker": "RG-008_EXPLICIT_AUTHORIZATION_STATEMENT_NOT_SUPPLIED",
+  "releaseAuthorized": false,
+  "publicReleaseAuthorized": false,
+  "hold": "ACTIVE",
+  "activationPerformed": false,
+  "externalCustomerCount": 0,
+  "newEntitlementCount": 0,
+  "newEnrollmentCount": 0,
+  "releaseAuthority": {
+    "designated": true,
+    "name": "Silvestre Berso",
+    "role": "Founder, RTB Engineering & Analytics",
+    "scope": "EOS_3_CONTROLLED_EXTERNAL_CUSTOMER_SOFTWARE_RELEASE_ONLY"
+  },
+  "authorizationChecks": {
+    "identityMatch": "NOT_EVALUATED",
+    "roleMatch": "NOT_EVALUATED",
+    "scopeMatch": "NOT_EVALUATED",
+    "conditionsAcknowledged": "NOT_EVALUATED",
+    "claimMatrixAcknowledged": "NOT_EVALUATED",
+    "limitationsAcknowledged": "NOT_EVALUATED",
+    "scopeDrift": "NO"
+  },
+  "authorizationFingerprint": null,
+  "note": "Explicit GO statement from designated release authority was not supplied. Phase prompt is not authorization."
+}

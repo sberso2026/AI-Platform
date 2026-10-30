@@ -1,0 +1,16 @@
+{
+  "phase": "EOS-3-EXTERNAL-CUSTOMER-HUMAN-RELEASE-AUTHORIZATION",
+  "verdict": "BLOCKED",
+  "startHead": "e21955f4fa6d5c68e9bd1dc5a0f4fc0a8fe9ffd2",
+  "humanGo": "NOT_ISSUED",
+  "releaseAuthorized": false,
+  "releaseBlockingGovernanceItemCount": 1,
+  "blocker": "RG-008_EXPLICIT_AUTHORIZATION_STATEMENT_NOT_SUPPLIED",
+  "remediation": "Designated release authority must supply the exact required authorization statement",
+  "platformRemediationRequired": false,
+  "technicalReopenRequired": false,
+  "activationPerformed": false,
+  "recommendedNextPhase": "EOS-3-EXTERNAL-CUSTOMER-HUMAN-RELEASE-AUTHORIZATION",
+  "readyForNextPhase": false,
+  "note": "Re-execute this phase after explicit GO text is supplied by Silvestre Berso."
+}
