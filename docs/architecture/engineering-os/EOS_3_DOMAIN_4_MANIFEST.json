@@ -2,6 +2,11 @@
   "phase": "EOS-3-DOMAIN-4-DECISION-AND-ASSUMPTION-LINEAGE",
   "architectureStatus": "FROZEN_FOR_IMPLEMENTATION_VALIDATION",
   "requiredStartHead": "95579882366beeed73e00ec993ff6214f678ab73",
+  "endHead": "1198e9949740db4466d3c945da4f0805a9a7092f",
+  "commitSha": "1198e9949740db4466d3c945da4f0805a9a7092f",
+  "controlledPilotDeploymentId": "dpl_C1vp15dnZBqLHMn7CScPitjjgwD4",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "verdict": "PASS",
   "artifacts": {
     "decisionModel": "docs/architecture/engineering-os/EOS_3_DECISION_CANONICAL_MODEL.md",
     "assumptionModel": "docs/architecture/engineering-os/EOS_3_ASSUMPTION_CANONICAL_MODEL.md",
