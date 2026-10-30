@@ -2,6 +2,11 @@
   "phase": "EOS-3-DOMAIN-2-ASSET-SYSTEM-ONTOLOGY-AND-CONTEXT",
   "architectureStatus": "FROZEN_FOR_IMPLEMENTATION_VALIDATION",
   "requiredStartHead": "d782192115bf4194c71051adcee1c8aae4e80c71",
+  "endHead": "49b7280a8be19addfccb0c3f1d05fee213ff2062",
+  "commitSha": "49b7280a8be19addfccb0c3f1d05fee213ff2062",
+  "controlledPilotDeploymentId": "dpl_933aBZDzGCiye6iyaZB7jAwdyHxF",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "verdict": "PASS",
   "artifacts": {
     "ontology": "docs/architecture/engineering-os/EOS_3_ASSET_SYSTEM_ONTOLOGY.md",
     "contextModel": "docs/architecture/engineering-os/EOS_3_ASSET_SYSTEM_CONTEXT_MODEL.md",
