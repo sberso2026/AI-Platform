@@ -1001,7 +1001,7 @@ export function runPilot001MassImpactScenario(input: {
     materiality: "HIGH",
   });
 
-  let assumption = priorAssumption
+  const assumption = priorAssumption
     ? reviseAssumption({
         workspaceId: input.workspaceId,
         assumptionIdOrStable: priorAssumption.id,
