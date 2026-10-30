@@ -1,60 +1,53 @@
 # EOS 3 External Customer Human Release Authorization
 
 `PHASE=EOS-3-EXTERNAL-CUSTOMER-HUMAN-RELEASE-AUTHORIZATION`  
-`START_HEAD=e21955f4fa6d5c68e9bd1dc5a0f4fc0a8fe9ffd2`  
-`TIMESTAMP_UTC=2026-10-30T00:10:00Z`
+`VERDICT=PASS`  
+`AUTHORIZED_AT_UTC=2026-10-30T00:30:00Z`  
+`START_HEAD_AT_AUTHORIZATION=891ff28b3b6bfc96832d05df9e9f3f333e6f6a9f`
 
-## Baseline verified
-
-| Field | Value |
-|-------|-------|
-| Technical / security / architecture / operational / privacy | PASS (not reopened) |
-| Commercial readiness | READY |
-| Governance readiness | READY_PENDING_HUMAN_GO |
-| Authorization readiness | READY_FOR_HUMAN_GO |
-| Release-blocking count at start | 1 (RG-008 only) |
-| Release authority designated | YES — Silvestre Berso / Founder / `EOS_3_CONTROLLED_EXTERNAL_CUSTOMER_SOFTWARE_RELEASE_ONLY` |
+## Baseline
 
 `EOS_3_GOVERNANCE_AUTHORIZATION_BASELINE_VERIFIED=YES`  
-`EOS_3_GOVERNANCE_REVIEW_TECHNICAL_REOPEN_REQUIRED=NO`
+Platform readiness dimensions remain PASS. Implementation gaps/blockers = 0. Engineering not reopened.
 
-## Explicit GO evaluation
+## Explicit human GO
 
-Required authorization statement from designated release authority: **not supplied** in this phase execution.
-
-Not inferred from:
-
-- this phase prompt;
-- repository ownership;
-- prior EOS GA authorization;
-- technical / governance readiness;
-- release-authority designation alone.
+Supplied by designated release authority. Statement verified against required authorization text.
 
 | Check | Result |
 |-------|--------|
-| Identity match | NOT_EVALUATED (no GO statement) |
-| Role match | NOT_EVALUATED |
-| Scope match | NOT_EVALUATED |
-| Conditions acknowledged | NOT_EVALUATED |
-| Claim matrix acknowledged | NOT_EVALUATED |
-| Limitations acknowledged | NOT_EVALUATED |
-| Scope drift | NO (no GO issued) |
+| Identity match | PASS (Silvestre Berso) |
+| Role match | PASS (Founder, RTB Engineering & Analytics) |
+| Scope match | PASS (`EOS_3_CONTROLLED_EXTERNAL_CUSTOMER_SOFTWARE_RELEASE_ONLY`) |
+| Conditions acknowledged | PASS |
+| Claim matrix acknowledged | PASS |
+| Limitations acknowledged | PASS |
+| Scope drift | NO |
 
-## Result
+`EOS_3_EXTERNAL_CUSTOMER_HUMAN_GO=ISSUED`  
+`EOS_3_RG_008_DECISION_STATUS=APPROVED`  
+`EOS_3_RG_008_RELEASE_BLOCKING=NO`  
+`EOS_3_RELEASE_BLOCKING_GOVERNANCE_ITEM_COUNT=0`
 
-`EOS_3_EXTERNAL_CUSTOMER_HUMAN_GO=NOT_ISSUED`  
-`EOS_3_RG_008_DECISION_STATUS=DECISION_REQUIRED`  
-`EOS_3_RG_008_RELEASE_BLOCKING=YES`  
-`EOS_3_RELEASE_BLOCKING_GOVERNANCE_ITEM_COUNT=1`  
-`EOS_3_EXTERNAL_CUSTOMER_RELEASE_AUTHORIZED=NO`  
-`EOS_3_EXTERNAL_CUSTOMER_HOLD=ACTIVE`  
-`EOS_3_EXTERNAL_RELEASE_AUTHORIZATION_RECORD_CREATED=NO`  
-`EOS_3_EXTERNAL_CUSTOMER_ACTIVATION_PERFORMED=NO`
+## Authorization state
 
-## Verdict
+| Field | Value |
+|-------|-------|
+| Release authorized | YES |
+| Scope | `CONTROLLED_DESIGN_PARTNER_RELEASE_MAXIMUM_ONE_CUSTOMER` |
+| Mode | `CONTROLLED_DESIGN_PARTNER_RELEASE` |
+| Public release | NO |
+| Hold | `RELEASED_FOR_CONTROLLED_DESIGN_PARTNER_ONLY` |
+| Onboarding authorization readiness | READY |
+| Activation performed | NO |
+| Customer count / new entitlement / enrollment | 0 / 0 / 0 |
 
-`BLOCKED` — sole remediation: designated authority must supply the explicit authorization statement. No platform remediation required.
+## Fingerprint
 
-## Next step when GO is supplied
+`EOS_3_EXTERNAL_RELEASE_AUTHORIZATION_FINGERPRINT=sha256:45d088c7386ad3c9c22cbfc144b6261aba2ca7dd9535ea9483621a9360f357ab`
 
-Re-run this phase (or continue) with the exact authorization text from Silvestre Berso. Until then, do not proceed to controlled onboarding.
+Record: `EOS_3_EXTERNAL_CUSTOMER_RELEASE_AUTHORIZATION_RECORD.json`
+
+## Next phase
+
+`EOS-3-EXTERNAL-CUSTOMER-CONTROLLED-ONBOARDING` — requires an identified design-partner customer. Do not auto-start onboarding.

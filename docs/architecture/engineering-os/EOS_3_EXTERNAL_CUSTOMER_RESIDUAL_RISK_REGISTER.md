@@ -15,6 +15,6 @@
 | RR-006a | RG-006 | PITR unavailable | Medium; disclosed | Silvestre Berso | ACCEPTED_WITH_CONDITIONS |
 | RR-006b | RG-006 | GHSA-w5hq-g745-h8pq | Low–Moderate bounded | Silvestre Berso | ACCEPTED_WITH_CONDITIONS |
 | RR-007 | RG-007 | Authority misuse outside scope | Low if scope respected | Silvestre Berso | DESIGNATED_BOUNDED_SCOPE |
-| RR-008 | RG-008 | Release without human GO | Critical if bypassed | Silvestre Berso (designated authority) | **OPEN — release-blocking** |
+| RR-008 | RG-008 | Release without human GO | Mitigated — GO ISSUED for controlled design-partner scope only | Silvestre Berso | CLOSED_GO_ISSUED |
 
-Release-blocking residual item count for authorization: **1** (RR-008 / RG-008 only).
+Release-blocking residual item count for authorization: **0**. Hold = `RELEASED_FOR_CONTROLLED_DESIGN_PARTNER_ONLY` (not unrestricted).

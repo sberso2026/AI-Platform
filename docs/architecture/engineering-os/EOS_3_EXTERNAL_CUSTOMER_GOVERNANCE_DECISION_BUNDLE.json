@@ -89,12 +89,15 @@
     },
     {
       "itemId": "RG-008",
-      "decision": "DECISION_REQUIRED",
-      "humanGo": "NOT_ISSUED",
-      "releaseBlocking": true,
-      "basis": "Final human external-customer GO intentionally deferred to dedicated authorization phase"
+      "decision": "APPROVED",
+      "humanGo": "ISSUED",
+      "releaseBlocking": false,
+      "authorizedAtUtc": "2026-10-30T00:30:00Z",
+      "authorizationFingerprint": "sha256:45d088c7386ad3c9c22cbfc144b6261aba2ca7dd9535ea9483621a9360f357ab",
+      "basis": "Explicit human GO issued by Silvestre Berso for CONTROLLED_DESIGN_PARTNER_RELEASE (max 1)"
     }
   ],
-  "releaseBlockingGovernanceItemCount": 1,
-  "onlyHumanGoRemainsAsReleaseBlocker": true
+  "releaseBlockingGovernanceItemCount": 0,
+  "onlyHumanGoRemainsAsReleaseBlocker": false,
+  "humanGoIssued": true
 }

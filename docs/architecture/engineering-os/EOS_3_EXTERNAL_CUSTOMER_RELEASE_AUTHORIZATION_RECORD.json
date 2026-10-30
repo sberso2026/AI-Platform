@@ -1,32 +1,54 @@
 {
   "phase": "EOS-3-EXTERNAL-CUSTOMER-HUMAN-RELEASE-AUTHORIZATION",
-  "recordedAtUtc": "2026-10-30T00:10:00Z",
-  "startHead": "e21955f4fa6d5c68e9bd1dc5a0f4fc0a8fe9ffd2",
-  "humanGo": "NOT_ISSUED",
-  "verdict": "BLOCKED",
-  "blocker": "RG-008_EXPLICIT_AUTHORIZATION_STATEMENT_NOT_SUPPLIED",
-  "releaseAuthorized": false,
+  "verdict": "PASS",
+  "humanGo": "ISSUED",
+  "releaseAuthorized": true,
   "publicReleaseAuthorized": false,
-  "hold": "ACTIVE",
+  "hold": "RELEASED_FOR_CONTROLLED_DESIGN_PARTNER_ONLY",
+  "releaseMode": "CONTROLLED_DESIGN_PARTNER_RELEASE",
+  "releaseScope": "CONTROLLED_DESIGN_PARTNER_RELEASE_MAXIMUM_ONE_CUSTOMER",
+  "initialCohortMaximum": 1,
   "activationPerformed": false,
   "externalCustomerCount": 0,
   "newEntitlementCount": 0,
   "newEnrollmentCount": 0,
+  "onboardingAuthorizationReadiness": "READY",
+  "rg008DecisionStatus": "APPROVED",
+  "rg008ReleaseBlocking": false,
+  "releaseBlockingGovernanceItemCount": 0,
+  "authorizationChecks": {
+    "identityMatch": "PASS",
+    "roleMatch": "PASS",
+    "scopeMatch": "PASS",
+    "conditionsAcknowledged": "PASS",
+    "claimMatrixAcknowledged": "PASS",
+    "limitationsAcknowledged": "PASS",
+    "scopeDrift": "NO"
+  },
   "releaseAuthority": {
-    "designated": true,
     "name": "Silvestre Berso",
     "role": "Founder, RTB Engineering & Analytics",
     "scope": "EOS_3_CONTROLLED_EXTERNAL_CUSTOMER_SOFTWARE_RELEASE_ONLY"
   },
-  "authorizationChecks": {
-    "identityMatch": "NOT_EVALUATED",
-    "roleMatch": "NOT_EVALUATED",
-    "scopeMatch": "NOT_EVALUATED",
-    "conditionsAcknowledged": "NOT_EVALUATED",
-    "claimMatrixAcknowledged": "NOT_EVALUATED",
-    "limitationsAcknowledged": "NOT_EVALUATED",
-    "scopeDrift": "NO"
+  "authorizationStatement": "I, Silvestre Berso, Founder of RTB Engineering & Analytics, authorize EOS 3.0 for controlled external-customer release under the CONTROLLED_DESIGN_PARTNER_RELEASE model, limited initially to a maximum of one external design partner and subject to the frozen EOS 3 external-customer claim matrix, documented limitations, approved governance conditions, explicit entitlement and enrollment controls, and established onboarding controls.\\nI acknowledge and accept for this controlled release the documented conditions relating to PITR unavailability, GHSA-w5hq-g745-h8pq bounded risk, insurance limitations, conditional risk-based legal review, customer-specific commercial quotation, unsupported live LLM and real connectors, bounded D1 qualification, non-D1 non-qualification, and unsupported initial legacy Production migration.\\nThis authorization is software release authorization only and does not constitute engineering approval, IFC approval, professional certification, statutory approval, solver qualification, or customer engineering authority.",
+  "bindings": {
+    "eos3GaBaselineFingerprint": "sha256:3970ed9b7c5748e37beaa2f30ce055d8dc347d43291da00e779af7e724589291",
+    "governanceDecisionBundleId": "EOS_3_EXTERNAL_CUSTOMER_GOVERNANCE_DECISION_BUNDLE_v1",
+    "claimMatrixPath": "docs/architecture/engineering-os/EOS_3_EXTERNAL_CUSTOMER_CLAIM_MATRIX.md",
+    "startHeadAtAuthorization": "891ff28b3b6bfc96832d05df9e9f3f333e6f6a9f"
   },
-  "authorizationFingerprint": null,
-  "note": "Explicit GO statement from designated release authority was not supplied. Phase prompt is not authorization."
-}
+  "limitations": {
+    "pitrEnabled": false,
+    "ghsa": "ACCEPTED_BOUNDED_RISK_CONTROLLED_INVITE_ONLY",
+    "insurance": "ACCEPTED_WITH_LIMITATIONS",
+    "legalReview": "CONDITIONAL",
+    "pricingModel": "CUSTOM_QUOTE_CONTROLLED_DESIGN_PARTNER",
+    "liveLlm": "NOT_SUPPORTED",
+    "realConnectors": "NOT_SUPPORTED",
+    "d1": "QUALIFIED_BOUNDED",
+    "nonD1": "NOT_QUALIFIED",
+    "legacyMigration": "NOT_SUPPORTED_INITIAL_RELEASE"
+  },
+  "authorizedAtUtc": "2026-10-30T00:30:00Z",
+  "authorizationFingerprint": "sha256:45d088c7386ad3c9c22cbfc144b6261aba2ca7dd9535ea9483621a9360f357ab"
+}\n

@@ -106,11 +106,12 @@ Accountable decision authority for this bundle: **Silvestre Berso**, Founder, RT
 
 | Field | Value |
 |-------|-------|
-| Decision | `DECISION_REQUIRED` |
-| Human GO | `NOT_ISSUED` |
-| Release-blocking | **YES — sole remaining blocker** |
+| Decision | `APPROVED` |
+| Human GO | `ISSUED` (2026-10-30T00:30:00Z) |
+| Release-blocking | NO |
 | Technical-reopen impact | NO |
-| Next phase | `EOS-3-EXTERNAL-CUSTOMER-HUMAN-RELEASE-AUTHORIZATION` |
+| Evidence | Explicit authorization statement from Silvestre Berso; fingerprint `sha256:45d088c7386ad3c9c22cbfc144b6261aba2ca7dd9535ea9483621a9360f357ab` |
+| Next phase | `EOS-3-EXTERNAL-CUSTOMER-CONTROLLED-ONBOARDING` |
 
 ---
 
@@ -118,7 +119,8 @@ Accountable decision authority for this bundle: **Silvestre Berso**, Founder, RT
 
 | Metric | Value |
 |--------|-------|
-| Release-blocking items | 1 (RG-008 only) |
+| Release-blocking items | 0 |
 | Implementation blockers | 0 |
 | Fabrication count | 0 |
 | Owner coverage | 100% |
+| Human GO | ISSUED |
