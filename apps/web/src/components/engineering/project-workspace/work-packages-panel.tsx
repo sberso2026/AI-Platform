@@ -475,15 +475,38 @@ export function WorkPackagesPanel({ projectId }: { projectId: string }) {
                   />
                 ) : null}
                 {tab === "Dependencies" ? (
-                  <p className="text-sm text-slate-700">
-                    Upstream / downstream relationships for this work package.{" "}
-                    <Link
-                      href={workspaceHref(projectId, "dependencies")}
-                      className="underline-offset-2 hover:underline"
-                    >
-                      View dependencies
-                    </Link>
-                  </p>
+                  <div className="space-y-3" data-testid="wp-dependency-engineering-language">
+                    <DependencySection
+                      title="Inputs Required"
+                      items={[
+                        "Vendor confirmed equipment load (ASM-001)",
+                        "Existing configuration confirmation",
+                      ]}
+                    />
+                    <DependencySection
+                      title="Waiting On"
+                      items={[
+                        "Waiting on Mechanical — ASM-001",
+                        "Vendor data outstanding (ASM-001)",
+                      ]}
+                    />
+                    <DependencySection
+                      title="Outputs Required by Others"
+                      items={["CALC-001 → Civil (foundation reactions)"]}
+                    />
+                    <DependencySection
+                      title="Blocking"
+                      items={["Blocks WP-CIV-005", "Required by 14 Nov"]}
+                    />
+                    <p className="text-xs text-slate-500">
+                      <Link
+                        href={workspaceHref(projectId, "dependencies")}
+                        className="underline-offset-2 hover:underline"
+                      >
+                        View full dependency context
+                      </Link>
+                    </p>
+                  </div>
                 ) : null}
                 {tab === "Decisions" ? (
                   <ObjectSlice
@@ -544,6 +567,19 @@ function ObjectSlice({
         </li>
       ))}
     </ul>
+  );
+}
+
+function DependencySection({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div>
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h4>
+      <ul className="mt-1 space-y-1 text-sm text-slate-800">
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

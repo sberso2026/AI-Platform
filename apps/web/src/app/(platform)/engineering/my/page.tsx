@@ -207,6 +207,7 @@ function MyWorkInner() {
         data-testid="my-work-foundation"
         data-eos-decorative-images="0"
         data-eos-my-work-dense="yes"
+        data-eos-dependency-contextual="yes"
       >
         {error ? <p className="mb-3 text-sm text-destructive">{error}</p> : null}
         {loading ? (

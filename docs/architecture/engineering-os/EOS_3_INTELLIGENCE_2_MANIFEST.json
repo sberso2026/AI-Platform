@@ -1,0 +1,36 @@
+{
+  "phase": "EOS-3-INTELLIGENCE-2-ENGINEERING-DEPENDENCY-AND-STAKEHOLDER-GRAPH",
+  "requiredStartHead": "e7890e36c35e53f045fdbfe2ec4461fbd72ebb92",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "broadUxRedesignInThisPhase": false,
+  "currentSidebarPreserved": true,
+  "existingRelationshipGraphReused": true,
+  "duplicateDependencyGraphCreated": false,
+  "dynamicAffectedDisciplineDiscoveryImplemented": false,
+  "riskPrioritizedMyWorkImplemented": false,
+  "dependencyMaturityStageCoupling": false,
+  "dependencyAutoMaturityChange": false,
+  "databaseSchemaChanged": true,
+  "migrationCountAdded": 1,
+  "migration": "supabase/migrations/20261030240000_eos_3_intelligence_2_dependency_stakeholder.sql",
+  "performance": {
+    "dependencyDirectQueryP95Ms": 0.004,
+    "waitingOnQueryP95Ms": 0.047,
+    "whoIsWaitingQueryP95Ms": 0.069,
+    "workPackageBlockingQueryP95Ms": 0.01,
+    "multiDisciplineChainQueryP95Ms": 0.15,
+    "dependencyPerformanceBlockerCount": 0,
+    "priorHomeWarmP95Ms": 270,
+    "dependencyQueryOnUnrelatedRouteCount": 0
+  },
+  "artifacts": {
+    "dependency": "docs/architecture/engineering-os/EOS_3_ENGINEERING_DEPENDENCY_MODEL.md",
+    "stakeholder": "docs/architecture/engineering-os/EOS_3_STAKEHOLDER_DEPENDENCY_MODEL.md",
+    "handoff": "docs/architecture/engineering-os/EOS_3_INFORMATION_HANDOFF_MODEL.md",
+    "producerConsumer": "docs/architecture/engineering-os/EOS_3_PRODUCER_CONSUMER_RESPONSIBILITY_MODEL.md",
+    "authority": "docs/architecture/engineering-os/EOS_3_DEPENDENCY_AUTHORITY_AND_SECURITY.md",
+    "pilotValidation": "docs/architecture/engineering-os/EOS_3_INTELLIGENCE2_PILOT_VALIDATION.md",
+    "manifest": "docs/architecture/engineering-os/EOS_3_INTELLIGENCE_2_MANIFEST.json"
+  },
+  "nextPhase": "EOS-3-INTELLIGENCE-3-DYNAMIC-AFFECTED-DISCIPLINE-DISCOVERY"
+}

@@ -1,3 +1,7 @@
+/** Intelligence-2: dependency signals may fill Waiting categories; no risk ranking / layout redesign. */
+export const MY_WORK_DEPENDENCY_UI_CONTEXTUAL_ONLY = true as const;
+export const EOS_RISK_PRIORITIZED_MY_WORK_IMPLEMENTED = false as const;
+
 /** Approved My Work category contract (populate only when deterministic data exists). */
 export const MY_WORK_CATEGORIES = [
   { id: "needs-action", label: "Needs Action" },
