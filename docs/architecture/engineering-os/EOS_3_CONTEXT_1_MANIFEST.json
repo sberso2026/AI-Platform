@@ -1,7 +1,10 @@
 {
   "phase": "EOS-3-CONTEXT-1-CONTEXT-RESOLUTION-ENGINE",
   "requiredStartHead": "fa019d5c27283dbf17b60f83e72d3d92c3a00b00",
+  "endHead": "c191957c86b92ac7f98d736adab493030e5b004d",
+  "verdict": "PASS_WITH_LIMITATIONS",
   "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "deploymentId": "dpl_3s48ZfSSVs3bc8oUQB9Arxgr4FGg",
   "broadUxRedesignInThisPhase": false,
   "currentSidebarPreserved": true,
   "contextResolutionRequiresLiveLlm": false,
@@ -10,7 +13,20 @@
   "migrationCountAdded": 1,
   "migration": "supabase/migrations/20261030260000_eos_3_context_1_context_resolution.sql",
   "performance": {
-    "contextPerformanceBaselineMeasured": true
+    "contextRouteResolutionP95Ms": 0.611,
+    "contextObjectResolutionP95Ms": 0.872,
+    "contextSnapshotP95Ms": 0.643,
+    "contextAuthorityResolutionP95Ms": 0.001,
+    "contextMultiDimensionResolutionP95Ms": 0.35,
+    "contextPerformanceBlockerCount": 0,
+    "homeWarmP95Ms": 429,
+    "homeWarmP50Ms": 179,
+    "homeMeasurementMethod": "unauth_GET_/engineering_post_settle_n15_gap200ms",
+    "homeMeasurementSampleCount": 15,
+    "homePerformanceMeasurementComparable": true,
+    "priorIntelligence3HomeWarmP95Ms": 394,
+    "homeContextResolutionRegression": false,
+    "deepContextResolutionOnUnrelatedRouteCount": 0
   },
   "artifacts": {
     "engine": "docs/architecture/engineering-os/EOS_3_CONTEXT_RESOLUTION_ENGINE.md",
