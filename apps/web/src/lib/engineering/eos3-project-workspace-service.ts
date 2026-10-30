@@ -78,7 +78,13 @@ export type PilotFeedback = {
   projectId: string;
   page: string;
   objectRef: string;
-  category: "Report Bug" | "Report UX Issue" | "Report Product Gap";
+  category:
+    | "Report Bug"
+    | "Report UX Issue"
+    | "Report Product Gap"
+    | "Too much input"
+    | "Repeated information"
+    | "EOS should know this already";
   description: string;
   severity: string;
   reference: string;

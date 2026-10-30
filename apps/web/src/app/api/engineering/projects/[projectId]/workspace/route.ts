@@ -26,6 +26,19 @@ import {
   transitionLifecycle,
   updateProjectSetup,
 } from "@/lib/engineering/eos3-project-workspace-service";
+import {
+  acceptGuidedProposal,
+  bulkAcceptSafeProposals,
+  captureNaturalEngineeringChange,
+  generateGuidedProjectState,
+  getGuidedWorkspaceView,
+  measureTimeToFirstValue,
+  type GuidedProposal,
+} from "@/lib/engineering/eos3-guided-engineering";
+import {
+  EOS_FIELD_NECESSITY_AUDIT,
+  unjustifiedRequiredFieldCount,
+} from "@/lib/engineering/eos3-field-necessity-audit";
 
 /**
  * PILOT-BUG-001 root cause:
@@ -119,6 +132,17 @@ export const GET = withEngineeringApiParams(
     }
     if (view === "gate" && gateKey) {
       return NextResponse.json({ data: evaluateGate(projectId, gateKey) });
+    }
+    if (view === "guided") {
+      return NextResponse.json({ data: getGuidedWorkspaceView(projectId) });
+    }
+    if (view === "field-audit") {
+      return NextResponse.json({
+        data: {
+          rows: EOS_FIELD_NECESSITY_AUDIT,
+          unjustifiedRequiredFieldCount: unjustifiedRequiredFieldCount(),
+        },
+      });
     }
 
     return NextResponse.json({ data: snapshotProjectWorkspace(projectId) });
@@ -257,6 +281,125 @@ export const POST = withEngineeringApiParams(
         return NextResponse.json({
           data: impactForChange(projectId, String(body.changeId)),
         });
+      }
+      if (action === "guided_generate") {
+        const objective = String(body.objective ?? "").trim();
+        if (!objective) {
+          return NextResponse.json(
+            { error: "objective_required", message: "Tell EOS what you are trying to do." },
+            { status: 422 },
+          );
+        }
+        const result = generateGuidedProjectState(projectId, {
+          objective,
+          whyNeeded: body.whyNeeded ? String(body.whyNeeded) : undefined,
+          ownerId: ctx.userId,
+          ownerName: body.ownerName ? String(body.ownerName) : null,
+          documentNames: Array.isArray(body.documentNames)
+            ? (body.documentNames as string[]).map(String)
+            : [],
+        });
+        // Persist setup metadata using write commerce (established project.create).
+        const priorMeta =
+          scoped.project.metadata && typeof scoped.project.metadata === "object"
+            ? (scoped.project.metadata as Record<string, unknown>)
+            : {};
+        await ctx.engineering.projects.update(commerce, ctx.tenantId, projectId, {
+          projectName: result.setup.projectName || undefined,
+          clientName: result.setup.client || undefined,
+          siteName: result.setup.site || undefined,
+          location: result.setup.location || undefined,
+          industry: result.setup.industry || undefined,
+          projectType: result.setup.projectType || undefined,
+          metadata: {
+            ...priorMeta,
+            eos_project_setup: result.setup,
+            eos_guided_generation: {
+              generatedAt: result.finishedAt,
+              durationMs: result.durationMs,
+              timeToFirstValue: measureTimeToFirstValue(result),
+              initialRequiredInputCount: result.initialRequiredInputCount,
+              manualInputReductionPercent: result.manualInputReductionPercent,
+            },
+          },
+        });
+        return NextResponse.json({
+          data: {
+            ...result,
+            timeToFirstValue: measureTimeToFirstValue(result),
+            guidedView: getGuidedWorkspaceView(projectId),
+          },
+        });
+      }
+      if (action === "guided_accept_proposal") {
+        const data = acceptGuidedProposal(
+          projectId,
+          String(body.stableObjectId),
+          body.decision === "REJECTED" ? "REJECTED" : "CONFIRMED",
+          ctx.userId,
+        );
+        return NextResponse.json({ data, guidedView: getGuidedWorkspaceView(projectId) });
+      }
+      if (action === "guided_bulk_accept_safe") {
+        const proposals = (body.proposals as GuidedProposal[] | undefined) ?? [];
+        const data = bulkAcceptSafeProposals(projectId, proposals, ctx.userId);
+        return NextResponse.json({ data, guidedView: getGuidedWorkspaceView(projectId) });
+      }
+      if (action === "guided_natural_change") {
+        const data = captureNaturalEngineeringChange(
+          projectId,
+          String(body.utterance ?? ""),
+          ctx.userId,
+        );
+        return NextResponse.json({ data, guidedView: getGuidedWorkspaceView(projectId) });
+      }
+      if (action === "contextual_assumption") {
+        const statement = String(body.statement ?? "");
+        const data = createWorkspaceObject(projectId, {
+          objectType: "Assumption",
+          stableObjectId: String(body.stableObjectId ?? `ASM-${Date.now()}`),
+          displayName: String(body.title ?? "Contextual assumption"),
+          payload: {
+            statement,
+            status: "PROPOSED",
+            approvalState: "NOT_APPROVED",
+            verificationRequirement: body.verificationRequirement ?? "pending confirmation",
+            generated: true,
+            contextual: true,
+          },
+          actorId: ctx.userId,
+          authority: "project_engineer",
+        });
+        return NextResponse.json({ data }, { status: 201 });
+      }
+      if (action === "contextual_review") {
+        const data = createWorkspaceObject(projectId, {
+          objectType: "Review",
+          stableObjectId: String(body.stableObjectId ?? `REV-${Date.now()}`),
+          displayName: String(body.title ?? "Contextual engineering review"),
+          payload: {
+            objectUnderReview: body.objectUnderReview ?? null,
+            reviewType: body.reviewType ?? "engineering",
+            status: "PROPOSED",
+            aiMayApprove: false,
+            approvalState: "NOT_APPROVED",
+          },
+          actorId: ctx.userId,
+          authority: "project_engineer",
+        });
+        if (body.relatedObjectId) {
+          try {
+            relateWorkspaceObjects(projectId, {
+              relationshipType: "REVIEW_OF_OBJECT",
+              fromObjectId: data.id,
+              toObjectId: String(body.relatedObjectId),
+              metadata: { contextual: true },
+            });
+          } catch {
+            /* ignore */
+          }
+        }
+        return NextResponse.json({ data }, { status: 201 });
       }
       return NextResponse.json({ error: "unknown_action" }, { status: 422 });
     } catch (e: unknown) {

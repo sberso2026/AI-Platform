@@ -50,6 +50,37 @@ export function ProjectOverviewPanel({
 
   return (
     <div className="space-y-6" data-testid="project-overview-engineering">
+      <section
+        className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4"
+        data-testid="guided-default-banner"
+      >
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-200">
+          Default · Guided Engineering
+        </p>
+        <h2 className="mt-1 text-lg font-semibold text-slate-100">
+          Start with the engineering problem — not empty registers
+        </h2>
+        <p className="mt-1 text-sm text-slate-300">
+          Describe what you are trying to do. EOS generates the initial definition for review. You confirm
+          material exceptions. Advanced registers remain available.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link
+            href={workspaceHref(projectId, "guided")}
+            className="inline-flex min-h-11 items-center rounded-md bg-slate-100 px-4 text-sm font-medium text-slate-900"
+            data-testid="open-guided-engineering"
+          >
+            Open Guided Engineering
+          </Link>
+          <Link
+            href={workspaceHref(projectId, "setup")}
+            className="inline-flex min-h-11 items-center text-sm underline-offset-2 hover:underline"
+          >
+            Advanced project setup
+          </Link>
+        </div>
+      </section>
+
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-slate-100">Engineering control centre</h2>
@@ -60,11 +91,11 @@ export function ProjectOverviewPanel({
         <div className="flex flex-wrap gap-2">
           {snapshot.setupStatus === "PROJECT_SETUP_INCOMPLETE" ? (
             <Link
-              href={workspaceHref(projectId, "setup")}
+              href={workspaceHref(projectId, "guided")}
               className="inline-flex min-h-11 items-center rounded-md border border-rose-400/40 bg-rose-500/10 px-3 text-sm text-rose-100"
               data-testid="setup-incomplete-cta"
             >
-              Configure Project — {snapshot.setupStatus}
+              Guided start — {snapshot.setupStatus}
             </Link>
           ) : (
             <span className="inline-flex min-h-11 items-center rounded-md border border-emerald-500/30 px-3 text-sm text-emerald-200">

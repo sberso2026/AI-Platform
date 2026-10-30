@@ -42,6 +42,15 @@ export const PROJECT_WORKSPACE_NAV_GROUPS: ProjectWorkspaceNavGroup[] = [
         core: true,
       },
       {
+        id: "guided",
+        slug: "guided",
+        label: "Guided Engineering",
+        emptyTitle: "Guided Engineering",
+        emptyDescription:
+          "Describe the project; EOS prepares the initial engineering state for review.",
+        core: true,
+      },
+      {
         id: "setup",
         slug: "setup",
         label: "Project Setup",

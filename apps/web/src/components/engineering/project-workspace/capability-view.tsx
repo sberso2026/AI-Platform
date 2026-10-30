@@ -18,6 +18,7 @@ import {
   type ProjectWorkspaceNavItem,
 } from "@/lib/engineering/project-workspace-ia";
 import { ObjectRegisterPanel } from "./object-register";
+import { GuidedEngineeringPanel } from "./guided-panel";
 import { ProjectSetupPanel } from "./setup-panel";
 import { useProjectWorkspace } from "./use-workspace";
 
@@ -46,6 +47,9 @@ export function ProjectCapabilityView({
     );
   }
 
+  if (slug === "guided") {
+    return <GuidedEngineeringPanel projectId={projectId} />;
+  }
   if (slug === "setup") {
     return (
       <ProjectSetupPanel

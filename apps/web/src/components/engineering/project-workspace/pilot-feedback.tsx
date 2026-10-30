@@ -4,7 +4,14 @@ import { useState } from "react";
 import { Button } from "@rtb/ui";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 
-const CATEGORIES = ["Report Bug", "Report UX Issue", "Report Product Gap"] as const;
+const CATEGORIES = [
+  "Report Bug",
+  "Report UX Issue",
+  "Report Product Gap",
+  "Too much input",
+  "Repeated information",
+  "EOS should know this already",
+] as const;
 
 export function PilotFeedbackPanel({
   projectId,
