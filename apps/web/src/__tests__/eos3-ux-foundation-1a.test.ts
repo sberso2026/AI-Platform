@@ -63,11 +63,18 @@ describe("EOS-3-UX-FOUNDATION-1A default workspace cutover", () => {
     expect(work).toContain("Legacy Workbench");
   });
 
-  it("exposes approved global nav including Reviews", () => {
+  it("exposes approved global nav including Reviews and Administration", () => {
     const visible = filterSidebarNavigation(ENGINEERING_NAVIGATION, viewerCtx());
     const labels = visible.map((i) => i.label);
     expect(labels).toEqual(
-      expect.arrayContaining(["Home", "Projects", "My Work", "Reviews", "Changes"]),
+      expect.arrayContaining([
+        "Home",
+        "Projects",
+        "My Work",
+        "Reviews",
+        "Changes",
+        "Administration",
+      ]),
     );
     const withDocs = filterSidebarNavigation(ENGINEERING_NAVIGATION, {
       ...viewerCtx(),
@@ -75,7 +82,12 @@ describe("EOS-3-UX-FOUNDATION-1A default workspace cutover", () => {
     } as ReturnType<typeof viewerCtx> & { entitledApplicationKeys: string[] });
     expect(withDocs.map((i) => i.label)).toEqual(expect.arrayContaining(["Documents"]));
     expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-review")?.audience).toBe("viewer");
+    expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-administration")?.href).toBe(
+      "/engineering/administration",
+    );
     expect(ENGINEERING_NAVIGATION.find((i) => i.id === "eng-ask")?.label).toBe("AI");
+    const adminPage = read("src/app/(platform)/engineering/administration/page.tsx");
+    expect(adminPage).toContain('data-testid="engineering-administration"');
   });
 
   it("keeps approved project navigation without software terminology", () => {

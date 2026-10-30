@@ -1,0 +1,24 @@
+{
+  "phase": "EOS-3-UX-FOUNDATION-1A-DEFAULT-WORKSPACE-CUTOVER-AND-VISUAL-ACCEPTANCE",
+  "phaseType": "CORRECTIVE_UI_ACCEPTANCE_PHASE",
+  "requiredStartHead": "2f9b8697468df69ae3e39e672fa56cd46bf67c3d",
+  "cutoverCommit": "9966f70330147f33f07797e4dc37b0f1b482dc9c",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "rootCause": {
+    "identified": true,
+    "artifact": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1A_ROOT_CAUSE.md",
+    "summary": "Default /engineering page still rendered legacy Command Centre; approved workspace was secondary."
+  },
+  "visualAcceptance": {
+    "executed": true,
+    "screenshotCount": 16,
+    "directory": "docs/architecture/engineering-os/visual-acceptance/ux-foundation-1a/",
+    "record": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1A_VISUAL_ACCEPTANCE.md",
+    "matrix": "docs/architecture/engineering-os/visual-acceptance/ux-foundation-1a/VISUAL_ACCEPTANCE_MATRIX.md",
+    "blockingDeviationCount": 0
+  },
+  "databaseSchemaChanged": false,
+  "uiShadowEngineeringStateCreated": false,
+  "scopeDiscipline": "UI_CUTOVER_AND_VISUAL_ACCEPTANCE_CORRECTION",
+  "nextPhase": "EOS-3-CONTEXT-2-RISK-PRIORITIZED-MY-WORK-ENGINE"
+}

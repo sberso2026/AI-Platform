@@ -188,10 +188,13 @@ const PILOT_ENGINEER_DENIED_GROUPS = new Set([
   "platform",
   "platform_advanced",
   "administration",
-  "engineering_admin",
+  // engineering_admin: allowed for approved Administration hub; manager-gated items still hide via audience/permissions
 ]);
 
-const PILOT_ENGINEER_DENIED_IDS = new Set(["eng-review"]);
+/** Pilot engineers use the approved global shell (including Reviews); deny only true platform internals by id. */
+const PILOT_ENGINEER_DENIED_IDS = new Set<string>([
+  "eng-pilot-feedback",
+]);
 
 export function canSeeNavItem(item: NavItem, context: SidebarNavContext): boolean {
   if (item.sidebarHidden) return false;

@@ -693,6 +693,14 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     sidebarHidden: true,
   },
   {
+    id: "eng-administration",
+    label: "Administration",
+    icon: "Settings",
+    href: "/engineering/administration",
+    group: "engineering_admin",
+    audience: "viewer",
+  },
+  {
     id: "eng-governance",
     label: "Governance & Assurance",
     icon: "ShieldCheck",

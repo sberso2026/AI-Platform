@@ -310,7 +310,7 @@ describe("EOS-SHELL-NAV-1 — Approved engineering-language primary nav", () => 
     expect(item?.applicationKey).toBeUndefined();
   });
 
-  it("shows ordinary engineering navigation to a pilot engineer and hides administration", () => {
+  it("shows ordinary engineering navigation to a pilot engineer including Reviews and Administration hub", () => {
     const visible = filterSidebarNavigation(FULL_NAVIGATION, ctx("pilot-engineer"));
     const ids = visible.map((item) => item.id);
     expect(ids).toEqual(
@@ -318,13 +318,16 @@ describe("EOS-SHELL-NAV-1 — Approved engineering-language primary nav", () => 
         "eng-home",
         "eng-projects",
         "eng-my",
+        "eng-review",
         "eng-changes",
+        "eng-administration",
       ]),
     );
     expect(ids).not.toContain("eng-modules");
     expect(ids).not.toContain("eng-pilot-feedback");
     expect(ids).not.toContain("platform-home");
     expect(ids).not.toContain("users-permissions");
+    expect(ids).not.toContain("eng-governance");
     expect(resolveNavTier("pilot-engineer")).toBe("engineer");
   });
 
