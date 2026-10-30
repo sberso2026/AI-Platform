@@ -1,0 +1,32 @@
+{
+  "phase": "EOS-3-INTELLIGENCE-3-DYNAMIC-AFFECTED-DISCIPLINE-DISCOVERY",
+  "requiredStartHead": "c634e69add855f0adbef0fc7b4f3cae3b01dbeab",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "broadUxRedesignInThisPhase": false,
+  "currentSidebarPreserved": true,
+  "discoveryRequiresLiveLlm": false,
+  "patternDisciplineAutoConfirmation": false,
+  "approvingDisciplineInference": false,
+  "databaseSchemaChanged": true,
+  "migrationCountAdded": 1,
+  "migration": "supabase/migrations/20261030250000_eos_3_intelligence_3_discipline_discovery.sql",
+  "performance": {
+    "affectedDisciplineQueryP95Ms": 0.046,
+    "disciplineExplanationQueryP95Ms": 0.054,
+    "projectDisciplineProfileP95Ms": 0.131,
+    "workPackageDisciplineContextP95Ms": 0.037,
+    "disciplinePerformanceBlockerCount": 0,
+    "priorHomeWarmP95Ms": 415,
+    "disciplineDiscoveryOnUnrelatedRouteCount": 0
+  },
+  "artifacts": {
+    "discovery": "docs/architecture/engineering-os/EOS_3_DYNAMIC_AFFECTED_DISCIPLINE_DISCOVERY.md",
+    "roles": "docs/architecture/engineering-os/EOS_3_DISCIPLINE_ROLE_MODEL.md",
+    "evidence": "docs/architecture/engineering-os/EOS_3_DISCIPLINE_DISCOVERY_EVIDENCE_AND_CONFIDENCE.md",
+    "stakeholderSeparation": "docs/architecture/engineering-os/EOS_3_DISCIPLINE_STAKEHOLDER_SEPARATION.md",
+    "authority": "docs/architecture/engineering-os/EOS_3_DISCIPLINE_DISCOVERY_AUTHORITY.md",
+    "pilotValidation": "docs/architecture/engineering-os/EOS_3_INTELLIGENCE3_PILOT_VALIDATION.md",
+    "manifest": "docs/architecture/engineering-os/EOS_3_INTELLIGENCE_3_MANIFEST.json"
+  },
+  "nextPhase": "EOS-3-CONTEXT-1-CONTEXT-RESOLUTION-ENGINE"
+}

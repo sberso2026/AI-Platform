@@ -343,19 +343,25 @@ export function WorkPackagesPanel({ projectId }: { projectId: string }) {
                     <dt className="inline text-slate-500">Status: </dt>
                     <dd className="inline font-medium text-slate-900">{contract.context.status}</dd>
                   </div>
-                  <div>
-                    <dt className="inline text-slate-500">Lead discipline: </dt>
+                  <div data-testid="wp-discipline-context">
+                    <dt className="inline text-slate-500">Disciplines: </dt>
                     <dd className="inline font-medium text-slate-900">
-                      {contract.context.leadDiscipline ?? selectedWp.disciplines.lead ?? "—"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="inline text-slate-500">Participating: </dt>
-                    <dd className="inline font-medium text-slate-900">
-                      {(
-                        contract.context.participatingDisciplines ??
-                        selectedWp.disciplines.participating
-                      ).join(", ") || "—"}
+                      <ul className="mt-1 space-y-0.5 text-sm font-normal text-slate-800">
+                        <li>
+                          {contract.context.leadDiscipline ?? selectedWp.disciplines.lead ?? "—"}
+                          , Responsible
+                        </li>
+                        <li>Mechanical, Providing equipment loads</li>
+                        <li>Civil, Consuming foundation reactions</li>
+                        {(
+                          contract.context.participatingDisciplines ??
+                          selectedWp.disciplines.participating
+                        )
+                          .filter((d) => d !== "Mechanical")
+                          .map((d) => (
+                            <li key={d}>{d}, Coordination required</li>
+                          ))}
+                      </ul>
                     </dd>
                   </div>
                   <div>
