@@ -47,8 +47,9 @@ type DashboardPayload = {
 };
 
 /**
- * Approved three-zone Engineering Home (UX-1B golden functional reference).
+ * Locked three-zone Engineering Home (UX-1C Home functional reference lock).
  * Attention | Central Hub | Projects/Activity — canonical dashboard only.
+ * Major geometry / hub branches are architecture-locked.
  */
 export default function EngineeringHomePage() {
   useExperiencePerf("home");
@@ -180,8 +181,9 @@ export default function EngineeringHomePage() {
       <main
         className="page-main eos-engineering-work-surface flex-1 overflow-y-auto px-4 pb-8 pt-3 sm:px-6 lg:px-8"
         data-testid="engineering-os-v1-ready"
-        data-eos-home="approved-engineering-1b"
+        data-eos-home="approved-engineering-1c-locked"
         data-eos-light-work-surface="yes"
+        data-eos-home-architecture-locked="yes"
       >
         <div data-testid="engineering-approved-home" className="space-y-4">
           {error ? <OperationalError message={error} retryHref="/engineering" /> : null}
@@ -290,27 +292,33 @@ export default function EngineeringHomePage() {
                   <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                     Recent Activity
                   </h2>
-                  {projects.length === 0 ? (
-                    <p className="text-xs text-slate-500">
+                  {(dashboard?.recentDocuments?.length ?? 0) === 0 ? (
+                    <p className="text-xs text-slate-500" data-testid="home-activity-empty">
                       No recent engineering activity in current scope.
                     </p>
                   ) : (
                     <ul className="divide-y divide-slate-100" role="list">
-                      {projects.slice(0, 6).map((row) => {
+                      {(dashboard?.recentDocuments ?? []).slice(0, 6).map((row) => {
                         const id = String(row.id ?? "");
+                        const projectRef = String(row.project_id ?? projectId ?? "");
+                        const href = projectRef
+                          ? `/engineering/projects/${encodeURIComponent(projectRef)}/deliverables`
+                          : "/engineering/documents";
                         return (
                           <li key={`act-${id}`}>
                             <Link
-                              href={`/engineering/projects/${id}`}
+                              href={href}
                               className="flex min-h-10 flex-col justify-center py-2 text-xs hover:bg-slate-50"
                               data-testid={`home-activity-${id}`}
-                              onClick={() => persistEngineeringProjectFilter(id)}
+                              onClick={() => {
+                                if (projectRef) persistEngineeringProjectFilter(projectRef);
+                              }}
                             >
                               <span className="font-medium text-slate-900">
-                                Project workspace active — {String(row.project_code ?? id)}
+                                {String(row.title ?? row.document_number ?? row.name ?? "Engineering record")}
                               </span>
                               <span className="text-slate-500">
-                                {String(row.updated_at ?? row.status ?? "Open project")}
+                                {String(row.updated_at ?? row.status ?? "Open record")}
                               </span>
                             </Link>
                           </li>

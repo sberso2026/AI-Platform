@@ -1,0 +1,25 @@
+{
+  "phase": "EOS-3-UX-FOUNDATION-1C-HOME-FUNCTIONAL-REFERENCE-LOCK",
+  "phaseType": "HOME_FUNCTIONAL_REFERENCE_LOCK",
+  "requiredStartHead": "b93c253fcbaf7246087357360f0076fedd98c177",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "ux1bImplementationComplete": true,
+  "ux1bVisualAcceptanceAssumed": false,
+  "homeReferenceIsFunctionalUiSpecification": true,
+  "homeUiArchitectureLocked": true,
+  "productOwnerVisualAcceptance": "AWAITING_OWNER_REVIEW",
+  "nextPhaseBlockedPendingOwnerVisualAcceptance": true,
+  "readyForNextPhase": false,
+  "databaseSchemaChanged": false,
+  "migrationCountAdded": 0,
+  "centralImageAsset": "apps/web/public/eos/engineering-hub-plant.webp",
+  "centralImageSrc": "/eos/engineering-hub-plant.webp",
+  "artifacts": {
+    "referenceLock": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1C_HOME_REFERENCE_LOCK.md",
+    "functionalContract": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1C_HOME_FUNCTIONAL_CONTRACT.md",
+    "visualComparison": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1C_HOME_VISUAL_COMPARISON.md",
+    "screenshot": "docs/architecture/engineering-os/visual-acceptance/ux-foundation-1c/01-home.webp",
+    "manifest": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1C_MANIFEST.json"
+  },
+  "nextPhase": "EOS-3-CONTEXT-2-RISK-PRIORITIZED-MY-WORK-ENGINE"
+}

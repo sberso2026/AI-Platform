@@ -388,18 +388,86 @@ export const WORKSPACE_SLUG_ALIASES: Record<string, string> = {
 };
 
 /** Hub branch labels for the central engineering hub (navigation/summary only). */
+/**
+ * Locked Home Engineering Hub branches (UX-1C).
+ * Labels, count, and overall arrangement are architecture-locked.
+ * Later phases may add counts/badges only — not rename/reorder without a UI phase.
+ */
 export const ENGINEERING_HUB_BRANCHES = [
-  { id: "scope-design-basis", label: "Scope & Design Basis", slug: "scope-design-basis" },
-  { id: "engineering-design", label: "Engineering Design", slug: "engineering-design" },
-  { id: "work-packages", label: "Work Packages", slug: "work-packages" },
-  { id: "interfaces", label: "Interfaces & Coordination", slug: "interfaces" },
-  { id: "changes-decisions", label: "Changes & Decisions", slug: "changes-decisions" },
-  { id: "reviews", label: "Reviews & Approvals", slug: "reviews" },
-  { id: "deliverables", label: "Deliverables & Records", slug: "deliverables" },
-  { id: "assets", label: "Assets & Systems", slug: "assets" },
-  { id: "handover", label: "Site & Handover", slug: "handover" },
-  { id: "engineering-reference", label: "Engineering Reference", slug: "engineering-reference" },
+  {
+    id: "scope-design-basis",
+    label: "Scope & Design Basis",
+    slug: "scope-design-basis",
+    description: "Requirements, criteria, assumptions, standards",
+    icon: "ClipboardList",
+  },
+  {
+    id: "engineering-design",
+    label: "Engineering Design",
+    slug: "engineering-design",
+    description: "Calculations, models, drawings, specifications",
+    icon: "DraftingCompass",
+  },
+  {
+    id: "work-packages",
+    label: "Work Packages",
+    slug: "work-packages",
+    description: "Engineering packages, maturity, delivery",
+    icon: "Package",
+  },
+  {
+    id: "interfaces",
+    label: "Interfaces & Coordination",
+    slug: "interfaces",
+    description: "Discipline interfaces, dependencies, TQs",
+    icon: "GitBranch",
+  },
+  {
+    id: "changes-decisions",
+    label: "Changes & Decisions",
+    slug: "changes-decisions",
+    description: "Design changes, impact, options",
+    icon: "GitPullRequest",
+  },
+  {
+    id: "reviews",
+    label: "Reviews & Approvals",
+    slug: "reviews",
+    description: "Discipline checks, IDC, approvals, comments",
+    icon: "CheckSquare",
+  },
+  {
+    id: "deliverables",
+    label: "Deliverables & Records",
+    slug: "deliverables",
+    description: "Drawings, reports, calculations, revisions",
+    icon: "FileStack",
+  },
+  {
+    id: "assets",
+    label: "Assets & Systems",
+    slug: "assets",
+    description: "Plant, equipment, structures, configuration",
+    icon: "Factory",
+  },
+  {
+    id: "handover",
+    label: "Site & Handover",
+    slug: "handover",
+    description: "RFIs, NCRs, site changes, commissioning, as-built",
+    icon: "HardHat",
+  },
+  {
+    id: "engineering-reference",
+    label: "Engineering Reference",
+    slug: "engineering-reference",
+    description: "Standards, lessons learned, previous designs",
+    icon: "BookOpen",
+  },
 ] as const;
+
+export const ENGINEERING_HUB_CENTRAL_IMAGE_SRC = "/eos/engineering-hub-plant.webp";
+export const ENGINEERING_HUB_BRANCH_COUNT = ENGINEERING_HUB_BRANCHES.length;
 
 /** IT/architecture terms that must not appear in primary engineer-facing labels. */
 export const FORBIDDEN_ENGINEER_FACING_TERMS = [

@@ -36,6 +36,7 @@ describe("EOS-3-UX-FOUNDATION-1B approved functional reference Home", () => {
     expect(hub).toContain("Engineering OS");
     expect(hub).toContain("home-hub-${b.id}");
     expect(hub).toContain("{b.label}");
+    expect(hub).toContain("{b.description}");
     expect(hub).toContain("ENGINEERING_HUB_BRANCHES");
     expect(ENGINEERING_HUB_BRANCHES.map((b) => b.label)).toEqual([
       "Scope & Design Basis",
@@ -49,7 +50,9 @@ describe("EOS-3-UX-FOUNDATION-1B approved functional reference Home", () => {
       "Site & Handover",
       "Engineering Reference",
     ]);
-    expect(hub).not.toContain("<img");
+    // UX-1C: decorative central plant image allowed; branch labels remain DOM text.
+    expect(hub).toContain("home-hub-industrial-image");
+    expect(hub).toContain("data-eos-hub-central-image-decorative");
     expect(hub).not.toContain("usemap");
     expect(hub).not.toContain("backgroundImage");
     expect(countForbiddenTermsInPrimaryNav()).toBe(0);

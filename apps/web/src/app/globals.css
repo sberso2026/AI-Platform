@@ -176,6 +176,18 @@ body {
   color: #064e3b !important;
 }
 
+/* UX-1C: Engineering Hub dominance on light work surface */
+.eos-engineering-hub {
+  isolation: isolate;
+}
+.eos-engineering-work-surface [data-testid="home-hub-zone"] {
+  min-height: 34rem;
+}
+.eos-hub-branch:focus-visible {
+  outline: 2px solid var(--eos-navy);
+  outline-offset: 2px;
+}
+
 .eos-command-canvas {
   position: relative;
 }
