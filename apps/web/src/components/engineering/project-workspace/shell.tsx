@@ -201,8 +201,9 @@ export function ProjectWorkspaceShell({
       </aside>
 
       <div
-        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[color:var(--eos-surface,#f4f6f9)]"
+        className="eos-engineering-work-surface flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[color:var(--eos-surface,#f4f6f9)]"
         data-testid="project-workspace-content"
+        data-eos-light-work-surface="yes"
       >
         {contextHeader ? (
           <div

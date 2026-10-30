@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import {
   asRecordArray,
@@ -12,7 +13,11 @@ import {
   withProjectQuery,
 } from "@/hooks/use-engineering-project-filter";
 import { useExperiencePerf } from "@/hooks/use-experience-perf";
-import { MY_WORK_CATEGORIES } from "@/lib/engineering/eos3-my-work-ui";
+import {
+  isMyWorkCategoryId,
+  MY_WORK_CATEGORIES,
+  type MyWorkCategoryId,
+} from "@/lib/engineering/eos3-my-work-ui";
 
 type Row = Record<string, unknown>;
 
@@ -28,14 +33,32 @@ function idOf(row: Row): string {
   return String(row.id ?? row.stable_id ?? row.stableId ?? Math.random());
 }
 
-export default function MyWorkPage() {
+type Section = {
+  id: MyWorkCategoryId;
+  label: string;
+  href: string;
+  rows: Row[];
+  keys: string[];
+  priority: string;
+  typeLabel: string;
+};
+
+function MyWorkInner() {
   useExperiencePerf("my-work");
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const projectId = useEngineeringProjectFilter();
+  const catParam = searchParams.get("cat");
+  const activeCat: MyWorkCategoryId | "all" = isMyWorkCategoryId(catParam)
+    ? catParam
+    : "all";
+  const [query, setQuery] = useState("");
   const [actions, setActions] = useState<Row[]>([]);
   const [tqs, setTqs] = useState<Row[]>([]);
   const [decisions, setDecisions] = useState<Row[]>([]);
   const [reviews, setReviews] = useState<Row[]>([]);
   const [changes, setChanges] = useState<Row[]>([]);
+  const [risks, setRisks] = useState<Row[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -57,15 +80,21 @@ export default function MyWorkPage() {
       fetch(withProjectQuery("/api/engineering/changes", projectId)).then((r) =>
         parseApiJsonResponse(r),
       ),
+      fetch(withProjectQuery("/api/engineering/risks", projectId)).then((r) =>
+        parseApiJsonResponse(r),
+      ),
     ])
-      .then(([a, t, d, r, c]) => {
-        setActions(asRecordArray(a.data).slice(0, 12));
-        setTqs(asRecordArray(t.data).slice(0, 12));
-        setDecisions(asRecordArray(d.data).slice(0, 12));
-        setReviews(asRecordArray(r.data).slice(0, 12));
-        setChanges(asRecordArray(c.data).slice(0, 12));
-        if (![a, t, d, r, c].some((x) => x.ok)) {
+      .then(([a, t, d, r, c, risk]) => {
+        setActions(asRecordArray(a.data).slice(0, 40));
+        setTqs(asRecordArray(t.data).slice(0, 40));
+        setDecisions(asRecordArray(d.data).slice(0, 40));
+        setReviews(asRecordArray(r.data).slice(0, 40));
+        setChanges(asRecordArray(c.data).slice(0, 40));
+        setRisks(asRecordArray(risk.data).slice(0, 40));
+        if (![a, t, d, r, c, risk].some((x) => x.ok)) {
           setError("Some work queues could not be loaded.");
+        } else {
+          setError(null);
         }
       })
       .catch((e: unknown) =>
@@ -74,54 +103,97 @@ export default function MyWorkPage() {
       .finally(() => setLoading(false));
   }, [projectId]);
 
-  const populated: Array<{
-    id: string;
-    label: string;
-    href: string;
-    rows: Row[];
-    keys: string[];
-    priority?: string;
-  }> = [];
+  const sections: Section[] = useMemo(() => {
+    return [
+      {
+        id: "needs-action",
+        label: "Needs Action",
+        href: "/engineering/actions",
+        rows: [...actions, ...tqs],
+        keys: ["title", "action_title", "query_number", "subject", "summary"],
+        priority: "High",
+        typeLabel: "Action / TQ",
+      },
+      {
+        id: "changed",
+        label: "Changed",
+        href: "/engineering/changes",
+        rows: changes,
+        keys: ["title", "change_title", "summary"],
+        priority: "Medium",
+        typeLabel: "Change",
+      },
+      {
+        id: "reviews",
+        label: "Reviews",
+        href: "/review",
+        rows: reviews,
+        keys: ["title", "review_title", "summary"],
+        priority: "Medium",
+        typeLabel: "Review",
+      },
+      {
+        id: "decisions",
+        label: "Decisions",
+        href: "/engineering/decisions",
+        rows: decisions,
+        keys: ["title", "decision_title", "summary", "question"],
+        priority: "High",
+        typeLabel: "Decision",
+      },
+      {
+        id: "waiting-for-others",
+        label: "Waiting on Others",
+        href: "/engineering/technical-queries",
+        rows: tqs.filter((row) => {
+          const st = String(row.status ?? row.state ?? "").toLowerCase();
+          return st.includes("wait") || st.includes("open") || st === "";
+        }),
+        keys: ["title", "query_number", "subject", "summary"],
+        priority: "Medium",
+        typeLabel: "Dependency",
+      },
+      {
+        id: "at-risk",
+        label: "At Risk",
+        href: "/engineering/risks",
+        rows: risks,
+        keys: ["title", "risk_title", "summary"],
+        priority: "High",
+        typeLabel: "Risk",
+      },
+      {
+        id: "recently-completed",
+        label: "Completed",
+        href: "/engineering/actions",
+        rows: [...actions, ...changes].filter((row) => {
+          const st = String(row.status ?? row.state ?? "").toLowerCase();
+          return st.includes("complete") || st.includes("closed") || st.includes("done");
+        }),
+        keys: ["title", "action_title", "change_title", "summary"],
+        priority: "Low",
+        typeLabel: "Completed",
+      },
+    ];
+  }, [actions, tqs, changes, reviews, decisions, risks]);
 
-  if (actions.length > 0 || tqs.length > 0) {
-    populated.push({
-      id: "needs-action",
-      label: "Needs Action",
-      href: "/engineering/actions",
-      rows: [...actions, ...tqs].slice(0, 12),
-      keys: ["title", "action_title", "query_number", "subject", "summary"],
-      priority: "High",
-    });
-  }
-  if (changes.length > 0) {
-    populated.push({
-      id: "changed",
-      label: "Changed",
-      href: "/engineering/changes",
-      rows: changes,
-      keys: ["title", "change_title", "summary"],
-      priority: "Medium",
-    });
-  }
-  if (reviews.length > 0) {
-    populated.push({
-      id: "reviews",
-      label: "Reviews",
-      href: "/engineering/reviews",
-      rows: reviews,
-      keys: ["title", "review_title", "summary"],
-      priority: "Medium",
-    });
-  }
-  if (decisions.length > 0) {
-    populated.push({
-      id: "decisions",
-      label: "Decisions",
-      href: "/engineering/decisions",
-      rows: decisions,
-      keys: ["title", "decision_title", "summary", "question"],
-      priority: "High",
-    });
+  const visible = useMemo(() => {
+    const filtered =
+      activeCat === "all" ? sections : sections.filter((s) => s.id === activeCat);
+    const q = query.trim().toLowerCase();
+    if (!q) return filtered;
+    return filtered.map((s) => ({
+      ...s,
+      rows: s.rows.filter((row) => JSON.stringify(row).toLowerCase().includes(q)),
+    }));
+  }, [sections, activeCat, query]);
+
+  function setCategory(id: MyWorkCategoryId | "all") {
+    const params = new URLSearchParams(searchParams.toString());
+    if (id === "all") params.delete("cat");
+    else params.set("cat", id);
+    const qs = params.toString();
+    router.push(qs ? `/engineering/my?${qs}` : "/engineering/my");
   }
 
   return (
@@ -131,9 +203,10 @@ export default function MyWorkPage() {
         description="Assigned actions, reviews, decisions, and blockers — dense engineering operating surface"
       />
       <main
-        className="page-main flex-1 overflow-y-auto px-4 pb-8 pt-4 sm:px-6 lg:px-8"
+        className="page-main eos-engineering-work-surface flex-1 overflow-y-auto px-4 pb-8 pt-4 sm:px-6 lg:px-8"
         data-testid="my-work-foundation"
         data-eos-decorative-images="0"
+        data-eos-my-work-dense="yes"
       >
         {error ? <p className="mb-3 text-sm text-destructive">{error}</p> : null}
         {loading ? (
@@ -142,107 +215,165 @@ export default function MyWorkPage() {
           </p>
         ) : null}
 
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <label className="sr-only" htmlFor="my-work-search">
+            Search My Work
+          </label>
+          <input
+            id="my-work-search"
+            data-testid="my-work-search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search work items…"
+            className="min-h-10 min-w-[220px] flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900"
+          />
+        </div>
+
         <nav
           className="mb-4 flex flex-wrap gap-2 text-xs"
           aria-label="My Work categories"
           data-testid="my-work-category-contract"
         >
-          {MY_WORK_CATEGORIES.map((c) => {
-            const active = populated.some((p) => p.id === c.id);
+          <button
+            type="button"
+            className={`min-h-9 rounded border px-2 py-1 ${
+              activeCat === "all"
+                ? "border-[color:var(--eos-navy,#0b1f3a)] bg-[color:var(--eos-navy,#0b1f3a)] text-white"
+                : "border-slate-300 bg-white text-slate-700"
+            }`}
+            data-testid="my-work-cat-all"
+            onClick={() => setCategory("all")}
+          >
+            All
+          </button>
+          {MY_WORK_CATEGORIES.filter((c) => c.id !== "waiting-for-me").map((c) => {
+            const section = sections.find((s) => s.id === c.id);
+            const count = section?.rows.length ?? 0;
+            const active = activeCat === c.id;
             return (
-              <span
+              <button
                 key={c.id}
-                className={`rounded border px-2 py-1 ${
+                type="button"
+                className={`min-h-9 rounded border px-2 py-1 ${
                   active
                     ? "border-[color:var(--eos-navy,#0b1f3a)] bg-[color:var(--eos-navy,#0b1f3a)] text-white"
-                    : "border-slate-200 text-slate-400"
+                    : "border-slate-300 bg-white text-slate-700"
                 }`}
                 data-testid={`my-work-cat-${c.id}`}
-                data-populated={active ? "yes" : "no"}
+                data-populated={count > 0 ? "yes" : "no"}
+                aria-pressed={active}
+                onClick={() => setCategory(c.id)}
               >
                 {c.label}
-              </span>
+                <span className="ml-1 tabular-nums opacity-80">({count})</span>
+              </button>
             );
           })}
         </nav>
 
-        {populated.length === 0 && !loading ? (
-          <p className="text-sm text-slate-600" data-testid="my-work-empty">
-            No assigned work in the current deterministic queues. Categories remain ready for future
-            population — nothing fabricated.
+        {visible.every((s) => s.rows.length === 0) && !loading ? (
+          <p
+            className="rounded-md border border-slate-200 bg-white p-4 text-sm text-slate-600"
+            data-testid="my-work-empty"
+          >
+            {activeCat === "reviews"
+              ? "No reviews awaiting you"
+              : activeCat === "decisions"
+                ? "No decisions currently require your action"
+                : "No assigned work in the current deterministic queues. Nothing fabricated."}
           </p>
         ) : null}
 
         <div className="space-y-6">
-          {populated.map((section) => (
-            <section key={section.id} data-testid={`my-work-section-${section.id}`}>
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold text-slate-900">{section.label}</h2>
-                <Link
-                  href={section.href}
-                  className="text-xs text-slate-600 underline-offset-2 hover:underline"
-                >
-                  Open register
-                </Link>
-              </div>
-              <div className="overflow-x-auto rounded-md border border-slate-200 bg-white">
-                <table className="min-w-full text-left text-sm">
-                  <thead className="bg-slate-50 text-[11px] uppercase text-slate-500">
-                    <tr>
-                      <th className="px-3 py-2">Priority</th>
-                      <th className="px-3 py-2">Item</th>
-                      <th className="px-3 py-2">Status</th>
-                      <th className="px-3 py-2">Due</th>
-                      <th className="px-3 py-2">Context</th>
-                      <th className="px-3 py-2">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {section.rows.map((row) => (
-                      <tr key={idOf(row)} className="border-t border-slate-100 text-slate-800">
-                        <td className="px-3 py-2">
-                          <span className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[11px] text-amber-900">
-                            {section.priority ?? "—"}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 font-medium">
-                          <span className="mr-2 font-mono text-[11px] text-slate-500">
-                            {String(row.stable_id ?? row.code ?? row.id ?? "—")}
-                          </span>
-                          {labelOf(row, section.keys)}
-                        </td>
-                        <td className="px-3 py-2 text-xs">
-                          {String(row.status ?? row.state ?? "Open")}
-                        </td>
-                        <td className="px-3 py-2 text-xs">
-                          {String(row.due_date ?? row.required_by ?? "—")}
-                        </td>
-                        <td className="px-3 py-2 text-xs text-slate-600">
-                          {String(
-                            row.work_package_id ??
-                              row.asset_name ??
-                              row.project_code ??
-                              projectId ??
-                              "—",
-                          )}
-                        </td>
-                        <td className="px-3 py-2">
-                          <Link
-                            href={section.href}
-                            className="inline-flex min-h-8 items-center rounded border border-slate-300 px-2 text-xs"
-                          >
-                            Open
-                          </Link>
-                        </td>
+          {visible.map((section) =>
+            section.rows.length === 0 ? null : (
+              <section key={section.id} data-testid={`my-work-section-${section.id}`}>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <h2 className="text-sm font-semibold text-slate-900">{section.label}</h2>
+                  <Link
+                    href={section.href}
+                    className="text-xs text-slate-600 underline-offset-2 hover:underline"
+                  >
+                    Open register
+                  </Link>
+                </div>
+                <div className="overflow-x-auto rounded-md border border-slate-200 bg-white shadow-sm">
+                  <table className="min-w-full text-left text-sm">
+                    <thead className="bg-slate-50 text-[11px] uppercase text-slate-500">
+                      <tr>
+                        <th className="px-3 py-2">Priority</th>
+                        <th className="px-3 py-2">Work Item</th>
+                        <th className="px-3 py-2">Project / Work Package</th>
+                        <th className="px-3 py-2">Asset / System</th>
+                        <th className="px-3 py-2">Type</th>
+                        <th className="px-3 py-2">Due</th>
+                        <th className="px-3 py-2">Next Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          ))}
+                    </thead>
+                    <tbody>
+                      {section.rows.map((row) => {
+                        const openHref = String(
+                          row.href ??
+                            row.url ??
+                            `${section.href}${row.id ? `?id=${encodeURIComponent(String(row.id))}` : ""}`,
+                        );
+                        return (
+                          <tr key={idOf(row)} className="border-t border-slate-100 text-slate-800">
+                            <td className="px-3 py-2">
+                              <span className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[11px] text-amber-900">
+                                {section.priority}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 font-medium">
+                              <span className="mr-2 font-mono text-[11px] text-slate-500">
+                                {String(row.stable_id ?? row.code ?? row.id ?? "—")}
+                              </span>
+                              {labelOf(row, section.keys)}
+                            </td>
+                            <td className="px-3 py-2 text-xs text-slate-600">
+                              {String(
+                                row.work_package_id ??
+                                  row.workPackageId ??
+                                  row.project_code ??
+                                  projectId ??
+                                  "—",
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-xs text-slate-600">
+                              {String(row.asset_name ?? row.system_name ?? row.asset ?? "—")}
+                            </td>
+                            <td className="px-3 py-2 text-xs">{section.typeLabel}</td>
+                            <td className="px-3 py-2 text-xs">
+                              {String(row.due_date ?? row.required_by ?? "—")}
+                            </td>
+                            <td className="px-3 py-2">
+                              <Link
+                                href={openHref}
+                                className="inline-flex min-h-8 items-center rounded border border-slate-300 bg-white px-2 text-xs font-medium text-slate-800 hover:border-[color:var(--eos-gold,#c4a35a)]"
+                                data-testid="my-work-next-action"
+                              >
+                                Open
+                              </Link>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            ),
+          )}
         </div>
       </main>
     </>
+  );
+}
+
+export default function MyWorkPage() {
+  return (
+    <Suspense fallback={<p className="p-6 text-sm text-slate-600">Loading My Work…</p>}>
+      <MyWorkInner />
+    </Suspense>
   );
 }

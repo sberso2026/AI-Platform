@@ -1,0 +1,20 @@
+{
+  "phase": "EOS-3-UX-FOUNDATION-1B-APPROVED-FUNCTIONAL-REFERENCE-DESIGN-IMPLEMENTATION",
+  "phaseType": "CORRECTIVE_FUNCTIONAL_VISUAL_IMPLEMENTATION_PHASE",
+  "requiredStartHead": "296ccbcad91da74b10a0e8c7a51894beda3c6639",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "previousVisualAcceptanceOwnerOverride": "FAIL",
+  "approvedReferenceIsGoldenTarget": true,
+  "approvedReferenceIsFunctionalUiSpecification": true,
+  "productOwnerVisualAcceptance": "AWAITING_OWNER_REVIEW",
+  "databaseSchemaChanged": false,
+  "uiShadowEngineeringStateCreated": false,
+  "artifacts": {
+    "visualSpec": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1B_VISUAL_SPEC.md",
+    "functionalContract": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1B_FUNCTIONAL_CONTRACT.md",
+    "visualComparison": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1B_VISUAL_COMPARISON.md",
+    "performance": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1B_PERFORMANCE.md",
+    "screenshotDirectory": "docs/architecture/engineering-os/visual-acceptance/ux-foundation-1b/"
+  },
+  "nextPhase": "EOS-3-CONTEXT-2-RISK-PRIORITIZED-MY-WORK-ENGINE"
+}

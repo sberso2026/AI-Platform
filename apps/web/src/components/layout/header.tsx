@@ -140,14 +140,16 @@ export function Header({ title, description, showEngineeringChrome, wrapDescript
             <div
               className={cn(
                 CONTROL_H,
-                "flex shrink-0 items-center gap-2 rounded-lg border border-[color:var(--eos-border)] bg-[color:var(--eos-panel)] px-3"
+                "flex shrink-0 items-center gap-2 rounded-lg border border-[color:var(--eos-border)] bg-[color:var(--eos-panel)] px-3 opacity-80"
               )}
               data-testid="workspace-selector"
+              data-eos-workspace-deemphasized="yes"
+              title="Technical workspace identity (secondary)"
             >
-              <span className="hidden text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-[color:var(--eos-text-secondary)] sm:inline">
-                Workspace
+              <span className="hidden text-[0.65rem] font-medium uppercase tracking-[0.08em] text-[color:var(--eos-text-secondary)] sm:inline">
+                WS
               </span>
-              <span className="text-[1rem] font-medium text-[color:var(--eos-text-primary)]">
+              <span className="max-w-[140px] truncate text-[0.8125rem] text-[color:var(--eos-text-secondary)]">
                 <ActiveWorkspaceLabel />
               </span>
             </div>

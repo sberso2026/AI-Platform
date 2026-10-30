@@ -24,6 +24,12 @@
   --eos-danger: #f87171;
   --eos-ai: #c4b5fd;
   --eos-glow: 0 0 0 1px rgba(56, 189, 248, 0.12), 0 12px 40px rgba(2, 8, 20, 0.45);
+  --eos-navy: #0b1f3a;
+  --eos-gold: #c4a35a;
+  --eos-work-surface: #eef2f7;
+  --eos-work-card: #ffffff;
+  --eos-work-text: #0f172a;
+  --eos-work-muted: #475569;
 }
 
 @theme {
@@ -114,6 +120,60 @@ body {
     linear-gradient(rgba(125, 211, 252, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(125, 211, 252, 0.035) 1px, transparent 1px);
   background-size: auto, auto, 52px 52px, 52px 52px;
+}
+
+/*
+  UX-1B: light engineering work canvas inside dark navy shell.
+  Wins over enterprise-dark remaps so cards stay white / pale.
+*/
+.eos-engineering-work-surface,
+.eos-engineering-work-surface.page-main {
+  background-color: var(--eos-work-surface) !important;
+  background-image: linear-gradient(180deg, #f4f7fb 0%, #eef2f7 100%) !important;
+  color: var(--eos-work-text);
+}
+
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .bg-white,
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .eos-pilot-banner,
+[data-eos-theme="enterprise-dark"] .eos-hub-branch {
+  background-color: #ffffff !important;
+  color: #0f172a;
+}
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .text-slate-900,
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .text-slate-800,
+[data-eos-theme="enterprise-dark"] .eos-hub-branch {
+  color: #0f172a !important;
+}
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .text-slate-700,
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .text-slate-600,
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .text-slate-500 {
+  color: #475569 !important;
+}
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .border-slate-200,
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .border-slate-300 {
+  border-color: #e2e8f0 !important;
+}
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .bg-slate-50,
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .hover\:bg-slate-50:hover {
+  background-color: #f8fafc !important;
+}
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .bg-red-50 {
+  background-color: #fef2f2 !important;
+}
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .bg-amber-50 {
+  background-color: #fffbeb !important;
+}
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .bg-emerald-50 {
+  background-color: #ecfdf5 !important;
+}
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .text-red-900 {
+  color: #7f1d1d !important;
+}
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .text-amber-950 {
+  color: #78350f !important;
+}
+[data-eos-theme="enterprise-dark"] .eos-engineering-work-surface .text-emerald-900 {
+  color: #064e3b !important;
 }
 
 .eos-command-canvas {

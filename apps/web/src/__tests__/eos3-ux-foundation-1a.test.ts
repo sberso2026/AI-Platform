@@ -43,16 +43,18 @@ describe("EOS-3-UX-FOUNDATION-1A default workspace cutover", () => {
 
   it("makes approved Home the default /engineering experience", () => {
     const page = read("src/app/(platform)/engineering/page.tsx");
+    const hub = read("src/components/engineering/home/engineering-hub-radial.tsx");
     expect(page).toContain('data-testid="engineering-approved-home"');
     expect(page).toContain("title=\"Home\"");
     expect(page).toContain("Needs Action");
-    expect(page).toContain("home-engineering-hub");
+    expect(page).toContain("EngineeringHubRadial");
+    expect(hub).toContain("home-engineering-hub");
+    expect(hub).toContain("home-hub-branches");
     expect(page).not.toContain("Command Centre");
     expect(page).not.toContain("Open Engineering Workbench");
     expect(page).not.toContain("Engineering Intelligence Core");
     expect(page).not.toContain("System Review");
     expect(page).toContain("ENGINEERING_HUB_BRANCHES");
-    expect(page).toContain("home-hub-branches");
     expect(ENGINEERING_HUB_BRANCHES.length).toBeGreaterThanOrEqual(10);
   });
 
@@ -111,6 +113,7 @@ describe("EOS-3-UX-FOUNDATION-1A default workspace cutover", () => {
     const notices = read("src/components/pilot/pilot-notices.tsx");
     expect(notices).toContain("pilot-notice-toggle");
     expect(notices).toContain("Controlled pilot");
+    expect(notices).toContain("compact-pilot-banner");
     const switcher = read("src/components/layout/workspace-switcher.tsx");
     expect(switcher).toContain("{selected ? selected.slug : \"Select workspace\"}");
   });
