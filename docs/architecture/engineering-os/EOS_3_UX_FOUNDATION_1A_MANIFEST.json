@@ -3,7 +3,9 @@
   "phaseType": "CORRECTIVE_UI_ACCEPTANCE_PHASE",
   "requiredStartHead": "2f9b8697468df69ae3e39e672fa56cd46bf67c3d",
   "cutoverCommit": "9966f70330147f33f07797e4dc37b0f1b482dc9c",
+  "navVisualCommit": "9c7f5728",
   "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "controlledPilotDeploymentId": "dpl_259Y3EwmmsyhNQmAVJGbhqK5nykV",
   "rootCause": {
     "identified": true,
     "artifact": "docs/architecture/engineering-os/EOS_3_UX_FOUNDATION_1A_ROOT_CAUSE.md",
@@ -17,8 +19,29 @@
     "matrix": "docs/architecture/engineering-os/visual-acceptance/ux-foundation-1a/VISUAL_ACCEPTANCE_MATRIX.md",
     "blockingDeviationCount": 0
   },
+  "performance": {
+    "measured": true,
+    "method": "https_wall_ms_p95_n12_unauthenticated_against_eos_pilot",
+    "EOS_HOME_ROUTE_P95_MS": 1819,
+    "EOS_MY_WORK_ROUTE_P95_MS": 218,
+    "EOS_PROJECT_ROUTE_P95_MS": 274,
+    "EOS_WORK_PACKAGE_ROUTE_P95_MS": 191,
+    "EOS_ENGINEERING_DESIGN_ROUTE_P95_MS": 204,
+    "homeNote": "First-sample cold start dominates Home P95; warm samples cluster ~180-577 ms vs prior baseline 442 ms."
+  },
+  "release": {
+    "canonicalGates": "PASS_WITH_KNOWN_MODERATE",
+    "releaseTestCount": 220,
+    "secretScan": "PASS"
+  },
   "databaseSchemaChanged": false,
   "uiShadowEngineeringStateCreated": false,
   "scopeDiscipline": "UI_CUTOVER_AND_VISUAL_ACCEPTANCE_CORRECTION",
+  "verdict": "PASS_WITH_LIMITATIONS",
+  "limitations": [
+    "Home route P95 includes cold-start outlier; warm latency acceptable vs My Work / WP.",
+    "Edge soft-navigation sometimes requires hard refresh for route content sync.",
+    "Pilot notices remain two compact stacked banners with Details disclosure."
+  ],
   "nextPhase": "EOS-3-CONTEXT-2-RISK-PRIORITIZED-MY-WORK-ENGINE"
 }
