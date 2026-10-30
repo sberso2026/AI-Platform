@@ -7,6 +7,7 @@
   "knownModerateDisposition": "ACCEPTED_BOUNDED_RISK",
   "releaseTestCount": 220,
   "includeLivePersistence": false,
+  "triggeredBy": "EOS-3-DOMAIN-1-WORK-PACKAGE-EXECUTION-MODEL",
   "results": [
     {
       "id": "release-governance",
@@ -65,5 +66,5 @@
       "timeoutMs": 120000
     }
   ],
-  "generatedAt": "2026-10-30T03:27:45.690Z"
+  "generatedAt": "2026-10-30T09:23:35.292Z"
 }

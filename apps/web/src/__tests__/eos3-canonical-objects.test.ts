@@ -33,13 +33,13 @@ describe("EOS 3.2 canonical object and digital thread", () => {
   });
 
   it("implements all canonical object families with status classification", () => {
-    expect(EOS3_OBJECT_TYPES.length).toBe(19);
+    expect(EOS3_OBJECT_TYPES.length).toBe(20);
     for (const t of EOS3_OBJECT_TYPES) {
       expect(EOS3_OBJECT_IMPLEMENTATION_STATUS[t]).toBeTruthy();
     }
     expect(EOS3_OBJECT_IMPLEMENTATION_STATUS.OptimizationRun).toBe("NEW_EOS3_OBJECT");
     expect(mappingDefined()).toBe(true);
-    expect(EOS2_TO_EOS3_OBJECT_MAPPING.length).toBe(19);
+    expect(EOS2_TO_EOS3_OBJECT_MAPPING.length).toBe(20);
   });
 
   it("runs staging digital-thread workflow with authority and immutability", () => {

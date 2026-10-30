@@ -22,6 +22,13 @@ export const EOS2_TO_EOS3_OBJECT_MAPPING: Eos2ToEos3MappingRow[] = [
     notes: "Add generation metadata; no rewrite of EOS 2 rows.",
   },
   {
+    eos3Object: "WorkPackage",
+    status: "NEW_EOS3_OBJECT",
+    eos2Source: "none (execution boundary newly first-class beneath Project)",
+    transformationNeeded: true,
+    notes: "EOS-3-DOMAIN-1: engineering execution object; not a UI label over Project.",
+  },
+  {
     eos3Object: "EngineeringBasis",
     status: "EXTENDED",
     eos2Source: "engineering basis / design basis records",

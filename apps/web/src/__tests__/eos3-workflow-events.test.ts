@@ -19,7 +19,7 @@ describe("EOS 3.5 governed workflow and event architecture", () => {
     expect(EOS3_RELEASE_STATUS).toBe("GENERAL_AVAILABILITY");
     expect(EOS2_EXTERNAL_CUSTOMER_HOLD_ACTIVE).toBe(true);
     expect(EOS3_GRAPH_AUTHORITY_MODEL).toBe("STRUCTURED_CANONICAL_STATE");
-    expect(EOS3_OBJECT_TYPES.length).toBe(19);
+    expect(EOS3_OBJECT_TYPES.length).toBe(20);
     expect(EOS3_KNOWLEDGE_TIERS.length).toBe(5);
     expect(AI_DECISION_AUTHORITY).toBe(false);
     expect(OPTIMIZATION_DOES_NOT_INHERIT_D1_QUALIFICATION).toBe(true);

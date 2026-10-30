@@ -51,6 +51,16 @@ export const PROJECT_WORKSPACE_NAV_GROUPS: ProjectWorkspaceNavGroup[] = [
         core: true,
       },
       {
+        id: "work-packages",
+        slug: "work-packages",
+        label: "Work Packages",
+        emptyTitle: "No work packages yet",
+        emptyDescription:
+          "Create a work package to bound engineering execution beneath this project.",
+        objectType: "WorkPackage",
+        core: true,
+      },
+      {
         id: "setup",
         slug: "setup",
         label: "Project Setup",

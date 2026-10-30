@@ -19,7 +19,7 @@ describe("EOS 3.4 decision and optimization intelligence", () => {
     expect(EOS3_RELEASE_STATUS).toBe("GENERAL_AVAILABILITY");
     expect(EOS2_EXTERNAL_CUSTOMER_HOLD_ACTIVE).toBe(true);
     expect(EOS3_GRAPH_AUTHORITY_MODEL).toBe("STRUCTURED_CANONICAL_STATE");
-    expect(EOS3_OBJECT_TYPES.length).toBe(19);
+    expect(EOS3_OBJECT_TYPES.length).toBe(20);
     expect(EOS3_KNOWLEDGE_TIERS[0]).toContain("CANONICAL");
     expect(AI_DECISION_AUTHORITY).toBe(false);
     expect(AI_OPTIMIZATION_SELECTION_AUTHORITY).toBe(false);

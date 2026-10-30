@@ -21,7 +21,7 @@ describe("EOS 3.3 knowledge and retrieval architecture", () => {
     expect(EOS3_RELEASE_STATUS).toBe("GENERAL_AVAILABILITY");
     expect(EOS2_EXTERNAL_CUSTOMER_HOLD_ACTIVE).toBe(true);
     expect(EOS3_GRAPH_AUTHORITY_MODEL).toBe("STRUCTURED_CANONICAL_STATE");
-    expect(EOS3_OBJECT_TYPES.length).toBe(19);
+    expect(EOS3_OBJECT_TYPES.length).toBe(20);
     expect(EOS3_KNOWLEDGE_TIERS[0]).toBe("TIER_1_CANONICAL_ENGINEERING_STATE");
     expect(EOS3_KNOWLEDGE_TIERS[4]).toBe("TIER_5_MODEL_INFERENCE");
     expect(VECTOR_INDEX_IS_NOT_SYSTEM_OF_RECORD).toBe(true);

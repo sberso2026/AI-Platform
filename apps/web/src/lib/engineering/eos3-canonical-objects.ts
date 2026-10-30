@@ -5,6 +5,7 @@
 
 export const EOS3_OBJECT_TYPES = [
   "Project",
+  "WorkPackage",
   "EngineeringBasis",
   "Requirement",
   "System",
@@ -39,6 +40,7 @@ export const EOS3_OBJECT_IMPLEMENTATION_STATUS: Record<
   Eos3ObjectImplementationStatus
 > = {
   Project: "EXTENDED",
+  WorkPackage: "NEW_EOS3_OBJECT",
   EngineeringBasis: "EXTENDED",
   Requirement: "EXTENDED",
   System: "EXTENDED",
