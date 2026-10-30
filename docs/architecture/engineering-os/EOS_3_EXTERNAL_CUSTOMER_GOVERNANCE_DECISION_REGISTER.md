@@ -1,15 +1,12 @@
 # EOS 3 External Customer Governance Decision Register
 
-`EOS_3_RESIDUAL_GOVERNANCE_REGISTER_LOADED=YES`  
-`EOS_3_RESIDUAL_GOVERNANCE_ITEM_COUNT_START=8`  
-`EOS_3_GOVERNANCE_ITEM_STATE_MODEL_VERIFIED=YES`  
-`EOS_3_GOVERNANCE_DECISION_EVIDENCE_MODEL=PASS`  
-`PHASE=EOS-3-EXTERNAL-CUSTOMER-GOVERNANCE-DECISION-CLOSEOUT`  
-`TIMESTAMP_UTC=2026-10-29T23:50:00Z`
+`PHASE=EOS-3-EXTERNAL-CUSTOMER-GOVERNANCE-DECISION-RESOLUTION`  
+`EOS_3_GOVERNANCE_DECISION_EVIDENCE_COMPLETE=YES`  
+`EOS_3_GOVERNANCE_DECISION_FABRICATION_COUNT=0`  
+`TIMESTAMP_UTC=2026-10-30T00:05:00Z`  
+Evidence source: `EOS_3_EXTERNAL_CUSTOMER_GOVERNANCE_DECISION_BUNDLE.json`
 
-State model: `OPEN` | `DECISION_REQUIRED` | `APPROVED` | `APPROVED_WITH_CONDITIONS` | `REJECTED` | `DEFERRED` | `NOT_REQUIRED` | `CLOSED`
-
-No decisions invented. Prior technical readiness is preserved; this register records governance state only.
+Accountable decision authority for this bundle: **Silvestre Berso**, Founder, RTB Engineering & Analytics (business-risk / commercial / controlled external software-release governance).
 
 ---
 
@@ -17,176 +14,111 @@ No decisions invented. Prior technical readiness is preserved; this register rec
 
 | Field | Value |
 |-------|-------|
-| Category | `CONTRACT_ACCEPTANCE` |
-| Description | Accept standard DESIGN_PARTNER contract package for controlled external release |
-| Accountable owner | Silvestre Berso |
-| Decision authority | Commercial / founder authority |
-| Current state | `DECISION_REQUIRED` |
-| Decision status | `DEFERRED` |
-| Risk | Medium |
-| Existing controls | Package elements defined; claim matrix frozen; limitations disclosure ready |
-| Residual risk | Activation without binding terms |
-| Decision required | Accept standard package or approve deviations |
-| Decision made | **None recorded in this phase** — package defined, not accepted |
-| Conditions | — |
-| Release impact | Blocking for activation |
-| Evidence reference | `EOS_3_EXTERNAL_CUSTOMER_LEGAL_COMMERCIAL_REQUIREMENTS.md` |
-| Closure condition | Written acceptance / executed instrument |
-| Implementation reopen required | NO |
-| Timestamp | 2026-10-29T23:50:00Z |
+| Decision | `APPROVED_WITH_CONDITIONS` |
+| Decision basis | Approve RTB standard controlled-design-partner contract framework as default external contracting basis |
+| Conditions | Claims within frozen matrix; LLM/connectors NOT_SUPPORTED; D1 QUALIFIED_BOUNDED; non-D1 NOT_QUALIFIED; migration NOT_SUPPORTED_INITIAL_RELEASE; PITR disclosed; human engineering authority; non-standard → risk-based path; outside guardrails → escalate |
+| Accountable authority | Silvestre Berso |
+| Residual risk | Customer-specific non-standard terms may still require escalation |
+| Release impact | NO longer release-blocking |
+| Technical-reopen impact | NO |
+| Release-blocking | NO |
 
 ## RG-002 — Pricing
 
 | Field | Value |
 |-------|-------|
-| Category | `PRICING_APPROVAL` |
-| Description | Finalize DESIGN_PARTNER pricing / deferred / nominal terms |
-| Accountable owner | Silvestre Berso |
-| Decision authority | Commercial authority |
-| Current state | `DECISION_REQUIRED` |
-| Pricing status | `DEFERRED` |
-| Risk | Low–Medium |
-| Existing controls | Commercial model defined; human-gated entitlement |
-| Residual risk | Terms mismatch |
-| Decision required | Written pricing decision |
-| Decision made | **None** — status remains NOT_FINALIZED |
-| Release impact | Blocking for paid activation; deferred-pricing needs commercial approval |
-| Evidence reference | Legal/commercial requirements |
-| Closure condition | DEFINED or DESIGN_PARTNER_DEFERRED approved in writing |
-| Implementation reopen required | NO |
-| Timestamp | 2026-10-29T23:50:00Z |
+| Decision | `APPROVED_WITH_CONDITIONS` |
+| Pricing model | `CUSTOM_QUOTE_CONTROLLED_DESIGN_PARTNER` |
+| Decision basis | No universal list price required for platform release eligibility; customer-specific quote before contract/invoice |
+| Conditions | Document and commercially approve exact price before contract execution |
+| Accountable authority | Silvestre Berso |
+| Residual risk | Quote negotiation delay (commercial, not platform) |
+| Release-blocking | NO |
+| Technical-reopen impact | NO |
+| Global list price required before release | NO |
+| Customer-specific price before contract | YES |
 
 ## RG-003 — Insurance
 
 | Field | Value |
 |-------|-------|
-| Category | `INSURANCE_CONFIRMATION` |
-| Description | Confirm insurance covers intended DESIGN_PARTNER software/customer activity |
-| Accountable owner | Silvestre Berso |
-| Decision authority | Founder / risk owner |
-| Current state | `DECISION_REQUIRED` |
-| Insurance status | `REVIEW_PENDING` |
-| Risk | Medium |
-| Existing controls | Review required flagged; no coverage claimed |
-| Residual risk | Uninsured exposure |
-| Decision required | Confirm policy adequacy or endorsement |
-| Decision made | **None** — no broker/policy confirmation on file |
-| Release-blocking | YES |
-| Evidence reference | Residual governance register RG-003 |
-| Closure condition | Documented confirmation |
-| Implementation reopen required | NO |
-| Timestamp | 2026-10-29T23:50:00Z |
+| Decision | `ACCEPTED_WITH_LIMITATIONS` |
+| Decision basis | Bounded governance without claiming unverified coverage |
+| Conditions | No misrepresentation; no unverified coverage in contracts; customer-mandatory insurance met if required; residual business-risk retained; management may obtain PI/cyber/E&O as appropriate |
+| Coverage claim verified | `NO_UNVERIFIED_CLAIM_MADE` |
+| Accountable authority | Silvestre Berso |
+| Residual risk | Unconfirmed broader insurance adequacy (business risk) |
+| Release-blocking | NO |
+| Technical-reopen impact | NO |
 
 ## RG-004 — Risk-based legal path
 
 | Field | Value |
 |-------|-------|
-| Category | `LEGAL_OR_SPECIALIST_REVIEW` |
-| Description | Adopt and apply risk-based legal/specialist escalation path |
-| Accountable owner | Silvestre Berso |
-| Decision authority | Founder; escalate to counsel on triggers |
-| Current state | `APPROVED` (path model) |
+| Decision | `CONDITIONAL_PATH_ACTIVE` |
 | Legal review required | `CONDITIONAL` |
-| Legal review status | `PATH_DEFINED_PENDING_CUSTOMER_TERMS` |
-| Risk | Conditional |
-| Existing controls | Risk-based model + AI-assisted contract review classification |
-| Residual risk | Non-standard terms accepted without escalation |
-| Decision required | Apply path when customer terms exist |
-| Decision made | **Path model APPROVED** in prior readiness phase; no customer-specific term review yet |
-| Release impact | Blocking only if escalated material risk unresolved |
-| Evidence reference | `EOS_3_AI_ASSISTED_CONTRACT_REVIEW_MODEL.md` |
-| Closure condition | Per-customer classification logged; escalate if material |
-| Implementation reopen required | NO |
-| Timestamp | 2026-10-29T23:50:00Z |
+| Legal path stable | YES |
+| Decision basis | Preserve approved risk-based model; no customer-specific non-standard terms in this phase |
+| Release-blocking | NO |
+| Technical-reopen impact | NO |
 
 ## RG-005 — Commercial approval
 
 | Field | Value |
 |-------|-------|
-| Category | `COMMERCIAL_APPROVAL` |
-| Description | Approve controlled external DESIGN_PARTNER cohort (count=1, invite-only) |
-| Accountable owner | Silvestre Berso |
-| Decision authority | Commercial / founder |
-| Current state | `DECISION_REQUIRED` |
-| Commercial approval | `DEFERRED` |
-| Risk | Medium |
-| Existing controls | Cohort/model defined; hold ACTIVE; default deny |
-| Residual risk | Premature expansion |
-| Decision required | Written commercial approval of cohort constraints |
-| Decision made | **None recorded** |
-| Release impact | Blocking |
-| Evidence reference | Claim matrix; release gate |
-| Closure condition | Written approval on file |
-| Implementation reopen required | NO |
-| Timestamp | 2026-10-29T23:50:00Z |
+| Decision | `APPROVED_WITH_CONDITIONS` |
+| Release mode | `CONTROLLED_DESIGN_PARTNER_RELEASE` |
+| Cohort maximum | 1 |
+| Decision basis | Invite-only; entitlement+enrollment; default deny; no public signup; frozen claims; custom quote; controlled onboard/offboard |
+| Accountable authority | Silvestre Berso |
+| Residual risk | Pressure to expand cohort without new approval |
+| Release-blocking | NO |
+| Technical-reopen impact | NO |
 
 ## RG-006 — PITR / GHSA risk acceptance
 
 | Field | Value |
 |-------|-------|
-| Category | `RISK_ACCEPTANCE` |
-| Description | Formal external-customer acceptance of PITR=NO limitation and GHSA bounded risk for invite-only scope |
-| Accountable owner | Silvestre Berso |
-| Decision authority | Risk owner / designated release authority |
-| Current state | `DECISION_REQUIRED` |
-| PITR risk decision | (pending) — prior *technical* disposition was ACCEPTED_WITH_CONTRACTUAL_LIMITATION; **formal governance acceptance not re-issued this phase** |
-| GHSA risk decision | (pending) — prior gate status ACCEPTED_BOUNDED_RISK_CONTROLLED_INVITE_ONLY; **formal governance acceptance not re-issued this phase** |
-| Recorded decisions for phase output | Treat as not yet closed: require explicit ACCEPTED / ACCEPTED_WITH_CONDITIONS / REJECTED |
-| Phase output values | `DEFERRED` mapping — see closeout: use explicit pending via REJECTED=no; status recorded as awaiting owner decision |
-| Risk | Medium / Low–Moderate |
-| Existing controls | WAL-G; restore procedure; dependency audit; invite-only |
-| Residual risk | Recovery granularity; known moderate advisory |
-| Release-blocking | YES until accepted or rejected with remediation |
-| Evidence reference | External release gate; residual register RG-006 |
-| Closure condition | Written risk acceptance or rejection + remediation track |
-| Implementation reopen required | NO (unless REJECTED without alternative → remediation track) |
-| Timestamp | 2026-10-29T23:50:00Z |
+| PITR decision | `ACCEPTED_WITH_CONDITIONS` |
+| PITR enabled | NO |
+| PITR customer claim accurate | PASS |
+| PITR conditions | Accurate representation; backups/restore active; no PITR promise in contracts; recovery commitments match capability; PITR remains hardening backlog; future customer may block onboarding if PITR contractually required |
+| GHSA decision | `ACCEPTED_WITH_CONDITIONS` |
+| GHSA status | `ACCEPTED_BOUNDED_RISK_CONTROLLED_INVITE_ONLY` |
+| GHSA conditions | No material exploitability change; mitigations remain; no new Critical/High; security gate PASS; monitor; reassess if exposure changes |
+| Accountable authority | Silvestre Berso |
+| Release-blocking | NO |
+| Technical-reopen impact | NO |
 
-**Phase decision fields (honest):** Without new signed acceptance, do **not** mark ACCEPTED. Output uses pending via non-approval: for required enums, record risk decisions as not completed — closeout document maps to `DEFERRED` equivalent by leaving item OPEN and counting as release-blocking. Required output enums for RG-006 expect ACCEPTED|ACCEPTED_WITH_CONDITIONS|REJECTED — since none issued, item remains open and authorization readiness stays PENDING (not READY_FOR_HUMAN_GO).
-
-## RG-007 — External release authority designation
+## RG-007 — External release authority
 
 | Field | Value |
 |-------|-------|
-| Category | `RELEASE_AUTHORITY_DESIGNATION` |
-| Description | Designate authority for controlled external customer software release |
-| Accountable owner | Silvestre Berso |
-| Decision authority | Founder / org governance |
-| Current state | `DECISION_REQUIRED` |
-| Designated | NO |
-| Name | NOT_DESIGNATED |
-| Role | NOT_DESIGNATED |
-| Scope | `EOS_3_CONTROLLED_EXTERNAL_CUSTOMER_SOFTWARE_RELEASE_ONLY` (required when designated) |
-| Decision made | **None** — GA software authority does not transfer |
-| Release impact | Blocking |
-| Implementation reopen required | NO |
-| Timestamp | 2026-10-29T23:50:00Z |
+| Decision | `RESOLVED_AUTHORITY_DESIGNATED` |
+| Name | Silvestre Berso |
+| Role | Founder, RTB Engineering & Analytics |
+| Scope | `EOS_3_CONTROLLED_EXTERNAL_CUSTOMER_SOFTWARE_RELEASE_ONLY` |
+| Does not grant | Engineering approval; IFC; PE certification; regulatory; customer engineering; solver qualification; deliverable approval |
+| Release-blocking | NO |
+| Technical-reopen impact | NO |
 
 ## RG-008 — Human external customer GO
 
 | Field | Value |
 |-------|-------|
-| Category | `HUMAN_RELEASE_GO` |
-| Description | Explicit human GO for external customer release |
-| Accountable owner | Designated external release authority (after RG-007) |
-| Decision authority | Designated external release authority |
-| Current state | `OPEN` |
+| Decision | `DECISION_REQUIRED` |
 | Human GO | `NOT_ISSUED` |
-| Decision made | **None** — this phase / prompt is not GO |
-| Release impact | Blocking |
-| Implementation reopen required | NO |
-| Timestamp | 2026-10-29T23:50:00Z |
+| Release-blocking | **YES — sole remaining blocker** |
+| Technical-reopen impact | NO |
+| Next phase | `EOS-3-EXTERNAL-CUSTOMER-HUMAN-RELEASE-AUTHORIZATION` |
 
 ---
 
-## Summary counts
+## Closeout counts
 
 | Metric | Value |
 |--------|-------|
-| Items start | 8 |
-| Closed / approved (path only) | 1 (RG-004 path model) |
-| Still decision-required / deferred | 7 |
-| Release-blocking open | 7 (RG-001,002,003,005,006,007,008) |
+| Release-blocking items | 1 (RG-008 only) |
 | Implementation blockers | 0 |
+| Fabrication count | 0 |
 | Owner coverage | 100% |
-| Technical reopen | NO |

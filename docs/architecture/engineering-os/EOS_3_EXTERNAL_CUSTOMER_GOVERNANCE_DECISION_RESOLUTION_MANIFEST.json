@@ -1,0 +1,22 @@
+{
+  "phase": "EOS-3-EXTERNAL-CUSTOMER-GOVERNANCE-DECISION-RESOLUTION",
+  "verdict": "PASS_WITH_LIMITATIONS",
+  "startHead": "3ac29157664315fd7af3bbda8b15f42a76555531",
+  "fabricationCount": 0,
+  "implementationGapsRemaining": 0,
+  "implementationBlockerCount": 0,
+  "technicalReopenRequired": false,
+  "releaseBlockingGovernanceItemCount": 1,
+  "onlyHumanGoRemainsAsReleaseBlocker": true,
+  "externalReleaseAuthorityDesignated": true,
+  "externalReleaseAuthorityName": "Silvestre Berso",
+  "humanGo": "NOT_ISSUED",
+  "commercialReadiness": "READY",
+  "governanceReadiness": "READY_PENDING_HUMAN_GO",
+  "authorizationReadiness": "READY_FOR_HUMAN_GO",
+  "releaseDecision": "READY_PENDING_HUMAN_GO",
+  "externalCustomerHold": "ACTIVE",
+  "activationPerformed": false,
+  "recommendedNextPhase": "EOS-3-EXTERNAL-CUSTOMER-HUMAN-RELEASE-AUTHORIZATION",
+  "readyForNextPhase": true
+}

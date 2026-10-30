@@ -1,0 +1,100 @@
+{
+  "phase": "EOS-3-EXTERNAL-CUSTOMER-GOVERNANCE-DECISION-RESOLUTION",
+  "bundleId": "EOS_3_EXTERNAL_CUSTOMER_GOVERNANCE_DECISION_BUNDLE_v1",
+  "decidedAtUtc": "2026-10-30T00:05:00Z",
+  "decisionAuthority": {
+    "name": "Silvestre Berso",
+    "role": "Founder, RTB Engineering & Analytics",
+    "scopeNote": "Business-risk, commercial policy, and controlled external release governance; not engineering PE/IFC/regulatory authority"
+  },
+  "fabricationCount": 0,
+  "technicalReopenRequired": false,
+  "decisions": [
+    {
+      "itemId": "RG-001",
+      "decision": "APPROVED_WITH_CONDITIONS",
+      "releaseBlocking": false,
+      "implementationReopenRequired": false,
+      "basis": "Approve RTB standard controlled-design-partner contract framework as default external contracting basis",
+      "conditions": [
+        "claims within frozen EOS 3 external claim matrix",
+        "live LLM NOT_SUPPORTED",
+        "real connectors NOT_SUPPORTED",
+        "D1 QUALIFIED_BOUNDED",
+        "non-D1 NOT_QUALIFIED",
+        "legacy Production migration NOT_SUPPORTED_INITIAL_RELEASE",
+        "PITR limitation disclosed where relevant",
+        "engineering authority remains human",
+        "non-standard clauses use risk-based review path",
+        "terms outside guardrails require escalation"
+      ]
+    },
+    {
+      "itemId": "RG-002",
+      "decision": "APPROVED_WITH_CONDITIONS",
+      "pricingModel": "CUSTOM_QUOTE_CONTROLLED_DESIGN_PARTNER",
+      "customerSpecificPriceRequiredBeforeContract": true,
+      "globalListPriceRequiredBeforeRelease": false,
+      "releaseBlocking": false,
+      "implementationReopenRequired": false,
+      "basis": "Controlled design-partner custom quotation policy; no universal list price required for platform release eligibility"
+    },
+    {
+      "itemId": "RG-003",
+      "decision": "ACCEPTED_WITH_LIMITATIONS",
+      "insuranceCoverageClaimVerified": "NO_UNVERIFIED_CLAIM_MADE",
+      "customerSpecificInsuranceMustBeMetIfContractuallyRequired": true,
+      "releaseBlocking": false,
+      "implementationReopenRequired": false,
+      "basis": "Bounded governance: do not claim unverified coverage; residual business risk retained; customer-specific insurance clauses enforced at contract time"
+    },
+    {
+      "itemId": "RG-004",
+      "decision": "CONDITIONAL_PATH_ACTIVE",
+      "legalReviewRequired": "CONDITIONAL",
+      "legalPathStable": true,
+      "releaseBlocking": false,
+      "implementationReopenRequired": false,
+      "basis": "Preserve approved risk-based legal path; no customer-specific non-standard terms present in this phase"
+    },
+    {
+      "itemId": "RG-005",
+      "decision": "APPROVED_WITH_CONDITIONS",
+      "releaseMode": "CONTROLLED_DESIGN_PARTNER_RELEASE",
+      "initialCohortMaximum": 1,
+      "releaseBlocking": false,
+      "implementationReopenRequired": false,
+      "basis": "Approve invite-only single design-partner commercial-release model with default deny and frozen claims"
+    },
+    {
+      "itemId": "RG-006",
+      "pitrDecision": "ACCEPTED_WITH_CONDITIONS",
+      "pitrEnabled": false,
+      "pitrCustomerClaimAccurate": "PASS",
+      "ghsaDecision": "ACCEPTED_WITH_CONDITIONS",
+      "ghsaExternalStatus": "ACCEPTED_BOUNDED_RISK_CONTROLLED_INVITE_ONLY",
+      "releaseBlocking": false,
+      "implementationReopenRequired": false,
+      "basis": "Accept PITR absence and GHSA bounded risk for controlled invite-only design-partner scope with disclosure and monitoring conditions"
+    },
+    {
+      "itemId": "RG-007",
+      "decision": "RESOLVED_AUTHORITY_DESIGNATED",
+      "authorityName": "Silvestre Berso",
+      "authorityRole": "Founder, RTB Engineering & Analytics",
+      "authorityScope": "EOS_3_CONTROLLED_EXTERNAL_CUSTOMER_SOFTWARE_RELEASE_ONLY",
+      "releaseBlocking": false,
+      "implementationReopenRequired": false,
+      "basis": "Designate controlled external-customer software release authority separate from GA software authority and engineering PE authorities"
+    },
+    {
+      "itemId": "RG-008",
+      "decision": "DECISION_REQUIRED",
+      "humanGo": "NOT_ISSUED",
+      "releaseBlocking": true,
+      "basis": "Final human external-customer GO intentionally deferred to dedicated authorization phase"
+    }
+  ],
+  "releaseBlockingGovernanceItemCount": 1,
+  "onlyHumanGoRemainsAsReleaseBlocker": true
+}
