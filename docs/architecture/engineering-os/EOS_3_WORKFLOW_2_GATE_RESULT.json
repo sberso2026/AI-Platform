@@ -1,0 +1,33 @@
+{
+  "phase": "EOS-3-WORKFLOW-2-MULTI-LEVEL-MATURITY-MODEL",
+  "requiredStartHead": "42decd0910d3f31dd51c4210bd94e410ef1ccc58",
+  "endHead": "515de7b449427c428a59900269bf69aa8c188077",
+  "verdict": "PASS_WITH_LIMITATIONS",
+  "multiLevelMaturityModel": "PASS",
+  "deployedToControlledPilot": true,
+  "deploymentId": "dpl_3n6aZydMbAMGJtu13ag3hnDsD6pw",
+  "pilotAlias": "https://eos-pilot.rtbea.com.au",
+  "performance": {
+    "projectMaturityProfileP95Ms": 0.021,
+    "workPackageMaturityQueryP95Ms": 0.191,
+    "nextStageReadinessP95Ms": 0.052,
+    "deliverableMaturityQueryP95Ms": 0.002,
+    "maturityPerformanceBlockerCount": 0,
+    "homeWarmP95Ms": 270,
+    "priorHomeWarmP95Ms": 388,
+    "homePerformanceNewRegression": false,
+    "maturityQueryOnUnrelatedRouteCount": 0
+  },
+  "securityReleaseRegressionGate": "PASS",
+  "canonicalSecurityCheck": "PASS_WITH_KNOWN_MODERATE",
+  "releaseTestCount": 220,
+  "limitations": [
+    "Asset/System maturity deferred",
+    "Richer project-level reporting deferred",
+    "Enterprise issue-purpose workflow deferred",
+    "Portfolio maturity analytics deferred",
+    "Schedule integration deferred"
+  ],
+  "nextPhase": "EOS-3-UX-5-STAGE-AWARE-GUIDED-ENGINEERING",
+  "readyForNextPhase": true
+}

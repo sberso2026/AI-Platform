@@ -20,9 +20,14 @@
     "nextStageReadinessP95Ms": 0.052,
     "deliverableMaturityQueryP95Ms": 0.002,
     "maturityPerformanceBlockerCount": 0,
+    "homeWarmP95Ms": 270,
     "priorHomeWarmP95Ms": 388,
+    "homePerformanceNewRegression": false,
     "maturityQueryOnUnrelatedRouteCount": 0
   },
+  "deploymentId": "dpl_3n6aZydMbAMGJtu13ag3hnDsD6pw",
+  "endHead": "515de7b449427c428a59900269bf69aa8c188077",
+  "verdict": "PASS_WITH_LIMITATIONS",
   "artifacts": {
     "model": "docs/architecture/engineering-os/EOS_3_MULTI_LEVEL_MATURITY_MODEL.md",
     "projectProfile": "docs/architecture/engineering-os/EOS_3_PROJECT_MATURITY_PROFILE.md",
