@@ -1,0 +1,21 @@
+{
+  "phase": "EOS-3-DOMAIN-4-DECISION-AND-ASSUMPTION-LINEAGE",
+  "architectureStatus": "FROZEN_FOR_IMPLEMENTATION_VALIDATION",
+  "requiredStartHead": "95579882366beeed73e00ec993ff6214f678ab73",
+  "artifacts": {
+    "decisionModel": "docs/architecture/engineering-os/EOS_3_DECISION_CANONICAL_MODEL.md",
+    "assumptionModel": "docs/architecture/engineering-os/EOS_3_ASSUMPTION_CANONICAL_MODEL.md",
+    "lineage": "docs/architecture/engineering-os/EOS_3_DECISION_ASSUMPTION_LINEAGE.md",
+    "authority": "docs/architecture/engineering-os/EOS_3_DECISION_AUTHORITY_AND_RATIONALE.md",
+    "assumptionValidity": "docs/architecture/engineering-os/EOS_3_ASSUMPTION_VALIDITY_AND_PROVENANCE.md",
+    "uiDataContract": "docs/architecture/engineering-os/EOS_3_DECISION_ASSUMPTION_UI_DATA_CONTRACT.md",
+    "pilotValidation": "docs/architecture/engineering-os/EOS_3_DOMAIN4_PILOT_VALIDATION.md"
+  },
+  "keyCode": [
+    "apps/web/src/lib/engineering/eos3-decision-assumption-lineage.ts",
+    "apps/web/src/app/api/engineering/projects/[projectId]/decisions-assumptions/route.ts",
+    "supabase/migrations/20261030200000_eos_3_domain_4_decision_assumption_lineage.sql",
+    "apps/web/src/__tests__/eos3-domain-4-decision-assumption.test.ts"
+  ],
+  "nextPhase": "EOS-3-INTELLIGENCE-1-STALENESS-AND-IMPACT-PROPAGATION"
+}
