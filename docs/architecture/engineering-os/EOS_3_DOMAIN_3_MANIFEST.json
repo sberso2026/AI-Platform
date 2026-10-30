@@ -2,6 +2,11 @@
   "phase": "EOS-3-DOMAIN-3-RELATIONSHIP-GRAPH-CORE",
   "architectureStatus": "FROZEN_FOR_IMPLEMENTATION_VALIDATION",
   "requiredStartHead": "ecb148ca5429910ba563603ceb9c6afd8dbc68a4",
+  "endHead": "77de46acebc9959ecb87e7e71ba01f900995dfd6",
+  "commitSha": "77de46acebc9959ecb87e7e71ba01f900995dfd6",
+  "controlledPilotDeploymentId": "dpl_E5wDcqcMyoZTui7jvzL1hHuECLcH",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "verdict": "PASS",
   "artifacts": {
     "graphCore": "docs/architecture/engineering-os/EOS_3_RELATIONSHIP_GRAPH_CORE.md",
     "typeRegistry": "docs/architecture/engineering-os/EOS_3_RELATIONSHIP_TYPE_REGISTRY.md",
