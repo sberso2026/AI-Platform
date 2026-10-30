@@ -57,10 +57,17 @@ export function useResolvedEngineeringProjectId(): string | null {
 
   useEffect(() => {
     try {
-      const fromUrl = new URLSearchParams(window.location.search).get("projectId");
-      if (fromUrl && fromUrl !== "all") {
-        setUrlId(fromUrl);
-        if (stored !== fromUrl) persistEngineeringProjectFilter(fromUrl);
+      const fromQuery = new URLSearchParams(window.location.search).get("projectId");
+      const pathMatch = window.location.pathname.match(
+        /\/engineering\/projects\/([^/]+)/,
+      );
+      const fromPath =
+        pathMatch?.[1] && pathMatch[1] !== "new" ? pathMatch[1] : null;
+      const resolved =
+        fromQuery && fromQuery !== "all" ? fromQuery : fromPath;
+      if (resolved) {
+        setUrlId(resolved);
+        if (stored !== resolved) persistEngineeringProjectFilter(resolved);
         return;
       }
       setUrlId(null);

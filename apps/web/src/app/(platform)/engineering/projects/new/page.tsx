@@ -37,7 +37,7 @@ export default function NewEngineeringProjectPage() {
       if (!parsed.ok || !parsed.data?.id) {
         throw new Error(parsed.errorMessage ?? "Failed to create project");
       }
-      router.push(`/engineering/projects/${parsed.data.id}`);
+      router.push(`/engineering/projects/${parsed.data.id}/setup?checklist=1`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed");
       setLoading(false);
