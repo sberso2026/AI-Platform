@@ -1,7 +1,7 @@
 {
   "phase": "EOS-3-INTELLIGENCE-3-DYNAMIC-AFFECTED-DISCIPLINE-DISCOVERY",
   "requiredStartHead": "c634e69add855f0adbef0fc7b4f3cae3b01dbeab",
-  "endHead": "f6fe9f5c8f464120b9de074af9117c44c13ce77c",
+  "endHead": "806d4a7656f0f8325f5b29ae9d5130840ac10e3b",
   "verdict": "PASS_WITH_LIMITATIONS",
   "dynamicAffectedDisciplineDiscovery": "PASS",
   "deployedToControlledPilot": true,
