@@ -301,6 +301,14 @@ export function WorkPackagesPanel({ projectId }: { projectId: string }) {
                         .join(", ") || "—"}
                     </dd>
                   </div>
+                  <div data-testid="wp-work-type">
+                    <dt className="inline text-slate-500">Work Type: </dt>
+                    <dd className="inline font-medium text-slate-900">
+                      {contract.context.workType ??
+                        selectedWp.workType ??
+                        "—"}
+                    </dd>
+                  </div>
                   <div>
                     <dt className="inline text-slate-500">Maturity: </dt>
                     <dd className="inline font-medium text-slate-900">{contract.context.currentMaturity}</dd>

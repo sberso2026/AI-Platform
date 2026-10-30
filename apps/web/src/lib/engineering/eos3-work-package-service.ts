@@ -134,6 +134,7 @@ export type WorkPackageUiContract = {
     projectId: string;
     assetSystem: string;
     engineeringPattern: string | null;
+    workType: string | null;
     currentMaturity: WorkPackageMaturity;
     responsibleDisciplines: string[];
     userResponsibility: string | null;
@@ -271,7 +272,7 @@ export function createWorkPackage(input: CreateWorkPackageInput): WorkPackage {
     title,
     description: (input.description ?? "").trim(),
     workType: inferredLead ? `${inferredLead} modification` : null,
-    engineeringPatternRef: null, // Pattern engine is later phase
+    engineeringPatternRef: null, // Assigned by Engineering Pattern Engine (Workflow-1)
     status: "ACTIVE",
     maturity: input.maturity ?? "Initiation",
     projectLifecycleKeyPreserved: true,
@@ -677,6 +678,7 @@ export function buildWorkPackageUiContract(
       projectId: wp.projectId,
       assetSystem: wp.affectedAssets.map((a) => a.displayName).join("; ") || "Not linked",
       engineeringPattern: wp.engineeringPatternRef,
+      workType: wp.workType,
       currentMaturity: wp.maturity,
       responsibleDisciplines: disciplines,
       userResponsibility: wp.ownerName ?? wp.responsibleEngineeringLead,

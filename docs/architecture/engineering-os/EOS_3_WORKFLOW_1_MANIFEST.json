@@ -1,0 +1,34 @@
+{
+  "phase": "EOS-3-WORKFLOW-1-ENGINEERING-PATTERN-ENGINE",
+  "requiredStartHead": "2e0e4f9a15fce7c93861451d6d8c989be69b51b6",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "broadUxRedesignInThisPhase": false,
+  "currentSidebarPreserved": true,
+  "engineeringPatternEngine": true,
+  "workPackageLevel": true,
+  "oneProjectOnePatternAssumption": false,
+  "universalLifecycleAssumption": "REMOVED",
+  "futureObjectPregeneration": false,
+  "gateAutoApproval": false,
+  "databaseSchemaChanged": true,
+  "migrationCountAdded": 1,
+  "migration": "supabase/migrations/20261030220000_eos_3_workflow_1_engineering_patterns.sql",
+  "performance": {
+    "patternResolutionP95Ms": 0.24,
+    "patternReadinessP95Ms": 0.012,
+    "patternTransitionValidationP95Ms": 0.014,
+    "patternPerformanceBlockerCount": 0,
+    "priorHomeWarmP95Ms": 461,
+    "patternQueryOnUnrelatedRouteCount": 0
+  },
+  "artifacts": {
+    "engine": "docs/architecture/engineering-os/EOS_3_ENGINEERING_PATTERN_ENGINE.md",
+    "registry": "docs/architecture/engineering-os/EOS_3_ENGINEERING_PATTERN_REGISTRY.md",
+    "transitions": "docs/architecture/engineering-os/EOS_3_ENGINEERING_PATTERN_ENTRY_AND_TRANSITIONS.md",
+    "gates": "docs/architecture/engineering-os/EOS_3_ENGINEERING_PATTERN_GATE_MODEL.md",
+    "authority": "docs/architecture/engineering-os/EOS_3_ENGINEERING_PATTERN_AUTHORITY.md",
+    "pilotValidation": "docs/architecture/engineering-os/EOS_3_WORKFLOW1_PILOT_VALIDATION.md",
+    "manifest": "docs/architecture/engineering-os/EOS_3_WORKFLOW_1_MANIFEST.json"
+  },
+  "nextPhase": "EOS-3-WORKFLOW-2-MULTI-LEVEL-MATURITY-MODEL"
+}
