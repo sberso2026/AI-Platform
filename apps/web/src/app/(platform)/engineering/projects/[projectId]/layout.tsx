@@ -11,6 +11,7 @@ import {
   OperationalSkeleton,
 } from "@/components/engineering/operational";
 import { useProjectWorkspace } from "@/components/engineering/project-workspace/use-workspace";
+import { UnsavedChangesProvider } from "@/components/engineering/project-workspace/unsaved-changes-guard";
 
 export default function ProjectWorkspaceLayout({ children }: { children: ReactNode }) {
   const params = useParams();
@@ -39,7 +40,7 @@ export default function ProjectWorkspaceLayout({ children }: { children: ReactNo
     : "Project workspace";
 
   return (
-    <>
+    <UnsavedChangesProvider>
       <Header title={label} description="EOS project workspace — grouped engineering capabilities" />
       <main className="page-main flex-1 overflow-y-auto px-4 pb-8 pt-4 sm:px-6 lg:px-8" data-testid="page-main">
         {error ? <OperationalError message={error} retryHref={`/engineering/projects/${projectId}`} /> : null}
@@ -62,6 +63,6 @@ export default function ProjectWorkspaceLayout({ children }: { children: ReactNo
           </>
         ) : null}
       </main>
-    </>
+    </UnsavedChangesProvider>
   );
 }

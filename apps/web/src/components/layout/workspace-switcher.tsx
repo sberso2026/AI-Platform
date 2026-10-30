@@ -72,6 +72,11 @@ export function WorkspaceSwitcher({ compact = false }: { compact?: boolean }) {
   async function onChange(value: string) {
     const option = options.find((item) => `${item.tenantId}:${item.workspaceId}` === value);
     if (!option) return;
+    const { confirmLeaveIfUnsaved } = await import(
+      "@/components/engineering/project-workspace/unsaved-changes-guard"
+    );
+    const allowed = await confirmLeaveIfUnsaved();
+    if (!allowed) return;
     setPending(true);
     const response = await fetch("/api/platform/active-context", {
       method: "POST",

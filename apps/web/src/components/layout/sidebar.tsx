@@ -286,6 +286,11 @@ export function Sidebar() {
   }
 
   async function handleSignOut() {
+    const { confirmLeaveIfUnsaved } = await import(
+      "@/components/engineering/project-workspace/unsaved-changes-guard"
+    );
+    const allowed = await confirmLeaveIfUnsaved();
+    if (!allowed) return;
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/login");

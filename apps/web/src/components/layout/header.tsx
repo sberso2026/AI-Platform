@@ -77,13 +77,23 @@ export function Header({ title, description, showEngineeringChrome, wrapDescript
   const selectedLabel = projectOptions.find((p) => p.id === selectValue && p.id !== "all")?.label;
 
   async function handleSignOut() {
+    const { confirmLeaveIfUnsaved } = await import(
+      "@/components/engineering/project-workspace/unsaved-changes-guard"
+    );
+    const allowed = await confirmLeaveIfUnsaved();
+    if (!allowed) return;
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();
   }
 
-  function onProjectChange(value: string) {
+  async function onProjectChange(value: string) {
+    const { confirmLeaveIfUnsaved } = await import(
+      "@/components/engineering/project-workspace/unsaved-changes-guard"
+    );
+    const allowed = await confirmLeaveIfUnsaved();
+    if (!allowed) return;
     setProjectId(value);
     try {
       sessionStorage.setItem(PROJECT_FILTER_KEY, value);
@@ -153,7 +163,7 @@ export function Header({ title, description, showEngineeringChrome, wrapDescript
                 "eos-select max-w-[280px] shrink-0 px-3 text-[1rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--eos-accent)]"
               )}
               value={selectValue}
-              onChange={(e) => onProjectChange(e.target.value)}
+              onChange={(e) => void onProjectChange(e.target.value)}
               aria-label="Project"
             >
               {projectOptions.map((p) => (

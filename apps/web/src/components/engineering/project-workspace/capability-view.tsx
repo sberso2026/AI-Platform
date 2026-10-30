@@ -18,6 +18,7 @@ import {
   type ProjectWorkspaceNavItem,
 } from "@/lib/engineering/project-workspace-ia";
 import { ObjectRegisterPanel } from "./object-register";
+import { ProjectSetupPanel } from "./setup-panel";
 import { useProjectWorkspace } from "./use-workspace";
 
 export function ProjectCapabilityView({
@@ -46,7 +47,13 @@ export function ProjectCapabilityView({
   }
 
   if (slug === "setup") {
-    return <SetupPanel projectId={projectId} snapshot={snapshot} post={post} />;
+    return (
+      <ProjectSetupPanel
+        projectId={projectId}
+        snapshot={snapshot}
+        onSaved={() => reload()}
+      />
+    );
   }
   if (slug === "lifecycle") {
     return <LifecyclePanel projectId={projectId} snapshot={snapshot} post={post} />;
@@ -175,210 +182,6 @@ function BridgePanel({
       ) : (
         <EmptyOperationalState title={item.emptyTitle} description={item.emptyDescription} />
       )}
-    </section>
-  );
-}
-
-function SetupPanel({
-  projectId,
-  snapshot,
-  post,
-}: {
-  projectId: string;
-  snapshot: NonNullable<ReturnType<typeof useProjectWorkspace>["snapshot"]>;
-  post: ReturnType<typeof useProjectWorkspace>["post"];
-}) {
-  const s = snapshot.setup;
-  const [form, setForm] = useState({
-    projectCode: s.projectCode,
-    projectName: s.projectName,
-    client: s.client,
-    site: s.site,
-    location: s.location,
-    industry: s.industry,
-    projectType: s.projectType,
-    description: s.description,
-    country: s.jurisdiction.country,
-    stateRegion: s.jurisdiction.stateRegion,
-    profileName: s.jurisdiction.profileName,
-    engineeringStandards: s.standards.engineeringStandards.join(", "),
-    companyStandards: s.standards.companyStandards.join(", "),
-    codeProfiles: s.standards.codeProfiles.join(", "),
-    confidentiality: s.confidentiality,
-    roles: s.roles.join(", "),
-    disciplines: s.disciplines.join(", "),
-    lifecycleTemplate: s.lifecycleTemplate,
-    governanceProfile: s.governanceProfile,
-    qualificationContext: s.qualificationContext,
-    assetRelationship: s.assetRelationship,
-  });
-  const [msg, setMsg] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-
-  const steps = [
-    { key: "projectProfile", label: "Project Profile" },
-    { key: "jurisdiction", label: "Jurisdiction" },
-    { key: "standards", label: "Standards" },
-    { key: "lifecycle", label: "Lifecycle" },
-    { key: "roles", label: "Roles" },
-    { key: "engineeringBasis", label: "Engineering Basis" },
-    { key: "requirements", label: "Requirements" },
-    { key: "systemsInterfaces", label: "Systems / Interfaces" },
-    { key: "deliverablePlan", label: "Deliverable Plan" },
-  ] as const;
-
-  return (
-    <section data-testid="project-setup-panel" className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold text-slate-100">Project Setup</h2>
-        <p className="text-sm text-slate-400">
-          Configure governance fields after concise project creation. System generation is metadata — not an
-          engineering field.
-        </p>
-        <p className="mt-2 text-xs font-medium text-amber-200" data-testid="setup-status">
-          {snapshot.setupStatus}
-        </p>
-      </div>
-
-      <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-label="Project setup checklist">
-        {steps.map((step, idx) => (
-          <li
-            key={step.key}
-            className="rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-200"
-          >
-            <span className="text-xs text-slate-500">{idx + 1}.</span> {step.label}{" "}
-            <span className="text-xs text-slate-400">
-              {s.checklist[step.key] ? "✓" : "○"}
-            </span>
-          </li>
-        ))}
-      </ol>
-
-      <form
-        className="grid gap-3 md:grid-cols-2"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setErr(null);
-          try {
-            await post({
-              action: "update_setup",
-              setup: {
-                projectCode: form.projectCode,
-                projectName: form.projectName,
-                client: form.client,
-                site: form.site,
-                location: form.location,
-                industry: form.industry,
-                projectType: form.projectType,
-                description: form.description,
-                confidentiality: form.confidentiality,
-                lifecycleTemplate: form.lifecycleTemplate,
-                governanceProfile: form.governanceProfile,
-                qualificationContext: form.qualificationContext,
-                assetRelationship: form.assetRelationship,
-                roles: form.roles.split(",").map((x) => x.trim()).filter(Boolean),
-                disciplines: form.disciplines.split(",").map((x) => x.trim()).filter(Boolean),
-                jurisdiction: {
-                  country: form.country,
-                  stateRegion: form.stateRegion,
-                  profileName: form.profileName,
-                },
-                standards: {
-                  engineeringStandards: form.engineeringStandards
-                    .split(",")
-                    .map((x) => x.trim())
-                    .filter(Boolean),
-                  companyStandards: form.companyStandards
-                    .split(",")
-                    .map((x) => x.trim())
-                    .filter(Boolean),
-                  codeProfiles: form.codeProfiles
-                    .split(",")
-                    .map((x) => x.trim())
-                    .filter(Boolean),
-                },
-              },
-            });
-            setMsg("Setup saved");
-          } catch (ex: unknown) {
-            setErr(ex instanceof Error ? ex.message : "Save failed");
-          }
-        }}
-      >
-        {(
-          [
-            ["projectCode", "Project Code"],
-            ["projectName", "Project Name"],
-            ["client", "Client"],
-            ["site", "Site"],
-            ["location", "Location (free-text)"],
-            ["industry", "Industry"],
-            ["projectType", "Project Type"],
-            ["confidentiality", "Confidentiality / Data Classification"],
-            ["country", "Jurisdiction — Country"],
-            ["stateRegion", "Jurisdiction — State / region"],
-            ["profileName", "Jurisdiction profile"],
-            ["engineeringStandards", "Engineering standards (comma-separated)"],
-            ["companyStandards", "Company standards"],
-            ["codeProfiles", "Applicable code profiles"],
-            ["roles", "Project roles"],
-            ["disciplines", "Engineering disciplines"],
-            ["lifecycleTemplate", "Lifecycle template"],
-            ["governanceProfile", "Project governance profile"],
-            ["qualificationContext", "Qualification context"],
-            ["assetRelationship", "Asset / project relationship"],
-          ] as const
-        ).map(([key, label]) => (
-          <label key={key} className="text-xs text-slate-400">
-            {label}
-            <Input
-              className="mt-1"
-              value={form[key]}
-              onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-            />
-          </label>
-        ))}
-        <label className="text-xs text-slate-400 md:col-span-2">
-          Project Description / Purpose
-          <textarea
-            className="mt-1 min-h-20 w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-slate-100"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-          />
-        </label>
-        <p className="text-xs text-slate-500 md:col-span-2">
-          System metadata (read-only): EOS generation {snapshot.trust.generation} · {snapshot.trust.activation}
-        </p>
-        {err ? <OperationalError message={err} /> : null}
-        {msg ? <p className="text-sm text-emerald-300">{msg}</p> : null}
-        <div className="md:col-span-2">
-          <Button type="submit">Save project setup</Button>
-        </div>
-      </form>
-
-      <div className="rounded-lg border border-slate-700 p-4">
-        <h3 className="text-sm font-semibold text-slate-100">Pilot-001 seed</h3>
-        <p className="mt-1 text-xs text-slate-400">
-          Load synthetic PILOT-001 objects (REQ-001…CHG-001) into this project workspace store.
-        </p>
-        <Button
-          type="button"
-          size="sm"
-          className="mt-3"
-          onClick={async () => {
-            await post({ action: "seed_pilot_001" });
-            setMsg("PILOT-001 seeded");
-          }}
-        >
-          Seed PILOT-001 scenario
-        </Button>
-        <Link
-          href={workspaceHref(projectId, "requirements")}
-          className="ml-3 text-sm underline-offset-2 hover:underline"
-        >
-          Go to Requirements
-        </Link>
-      </div>
     </section>
   );
 }

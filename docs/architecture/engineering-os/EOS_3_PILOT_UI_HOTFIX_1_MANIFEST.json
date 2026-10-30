@@ -1,0 +1,29 @@
+{
+  "phase": "EOS-3-PILOT-UI-HOTFIX-1-PROJECT-SETUP-SAVE-AND-UNSAVED-CHANGES-PROTECTION",
+  "verdict": "PASS",
+  "requiredStartHead": "1cf41a36c28e54bd0934887929b931b07bde204f",
+  "pilotBugs": [
+    {
+      "id": "PILOT-BUG-001",
+      "class": "PROJECT_SETUP_SAVE_AUTHORIZATION_ACTION_MISMATCH",
+      "severity": "P0"
+    },
+    {
+      "id": "PILOT-BUG-002",
+      "class": "UNSAVED_PROJECT_SETUP_NAVIGATION_DATA_LOSS",
+      "severity": "P0"
+    }
+  ],
+  "rootCause": "POST workspace used projects.write (project.create) commerce for projects.get which requires project.read",
+  "authorizationBypassCreated": false,
+  "uiAuthorityExpansion": false,
+  "databaseSchemaChanged": false,
+  "duplicateCanonicalModelCreated": false,
+  "qualificationBoundaryChanged": false,
+  "releaseTestCount": 220,
+  "artifacts": {
+    "save": "docs/architecture/engineering-os/EOS_3_PILOT_UI_HOTFIX_1_PROJECT_SETUP_SAVE.md",
+    "unsaved": "docs/architecture/engineering-os/EOS_3_PILOT_UI_HOTFIX_1_UNSAVED_CHANGES_PROTECTION.md",
+    "regression": "docs/architecture/engineering-os/EOS_3_PILOT_UI_HOTFIX_1_REGRESSION_EVIDENCE.md"
+  }
+}

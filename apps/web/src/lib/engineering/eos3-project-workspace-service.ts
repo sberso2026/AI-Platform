@@ -343,6 +343,32 @@ export function snapshotProjectWorkspace(projectId: string): WorkspaceSnapshot {
   };
 }
 
+/** Hydrate in-process setup from persisted engineering_projects row / metadata. */
+export function hydrateProjectSetupFromRecord(
+  projectId: string,
+  project: Record<string, unknown>,
+): WorkspaceSnapshot {
+  const metadata =
+    project.metadata && typeof project.metadata === "object"
+      ? (project.metadata as Record<string, unknown>)
+      : {};
+  const saved = metadata.eos_project_setup;
+  if (saved && typeof saved === "object") {
+    updateProjectSetup(projectId, saved as Partial<ProjectSetupProfile>);
+  } else {
+    updateProjectSetup(projectId, {
+      projectCode: String(project.project_code ?? ""),
+      projectName: String(project.project_name ?? ""),
+      client: String(project.client_name ?? ""),
+      site: String(project.site_name ?? ""),
+      location: String(project.location ?? ""),
+      industry: String(project.industry ?? ""),
+      projectType: String(project.project_type ?? ""),
+    });
+  }
+  return snapshotProjectWorkspace(projectId);
+}
+
 export function updateProjectSetup(
   projectId: string,
   patch: Partial<ProjectSetupProfile> & { checklist?: Record<string, boolean> },

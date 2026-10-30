@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
-import { withEngineeringApiParams } from "@/lib/commerce/engineering-api";
+import {
+  authorizeEngineeringSegment,
+  withEngineeringApiParams,
+  type CommerceHandlerContext,
+} from "@/lib/commerce/engineering-api";
 import { lifecycleErrorResponse } from "@/lib/lifecycle-api";
 import type { Eos3ObjectType } from "@/lib/engineering/eos3-canonical-objects";
 import type { Eos3RelationshipType } from "@/lib/engineering/eos3-relationships";
+import type { ProjectSetupProfile } from "@/lib/engineering/eos3-project-workspace-service";
 import {
   addPilotFeedback,
   applyChangeMassPilot,
@@ -11,6 +16,7 @@ import {
   evaluateGate,
   findByStableId,
   getWorkspaceObject,
+  hydrateProjectSetupFromRecord,
   impactForChange,
   listWorkspaceObjects,
   relateWorkspaceObjects,
@@ -21,13 +27,68 @@ import {
   updateProjectSetup,
 } from "@/lib/engineering/eos3-project-workspace-service";
 
+/**
+ * PILOT-BUG-001 root cause:
+ * POST /workspace was authorized as projects.write → project.create, then called
+ * projects.get(commerce) which asserts project.read → Action mismatch: expected project.read.
+ *
+ * Fix: keep write commerce for mutations; authorize a distinct project.read commerce
+ * for existence checks / revalidation. No bypass, no RLS weakening.
+ */
+async function requireProjectRead(
+  ctx: CommerceHandlerContext["ctx"],
+  correlationId: string,
+  projectId: string,
+) {
+  const readCommerce = await authorizeEngineeringSegment(
+    ctx,
+    "projects",
+    "GET",
+    correlationId,
+  );
+  if (!readCommerce) {
+    return {
+      error: lifecycleErrorResponse(
+        "forbidden",
+        "Project setup could not be loaded. You are not authorized to read this project in the current context.",
+        403,
+        correlationId,
+        { expectedAction: "project.read" },
+      ),
+      project: null as null,
+      readCommerce: null as null,
+    };
+  }
+  const project = await ctx.engineering.projects.get(
+    readCommerce,
+    ctx.tenantId,
+    projectId,
+  );
+  if (!project) {
+    return {
+      error: lifecycleErrorResponse(
+        "not_found",
+        "Project not found",
+        404,
+        correlationId,
+      ),
+      project: null as null,
+      readCommerce: null as null,
+    };
+  }
+  return { error: null, project, readCommerce };
+}
+
 export const GET = withEngineeringApiParams(
   "projects",
   async ({ ctx, commerce, correlationId }, request, { projectId }) => {
+    // GET route commerce is already project.read — use it directly.
     const project = await ctx.engineering.projects.get(commerce, ctx.tenantId, projectId);
     if (!project) {
       return lifecycleErrorResponse("not_found", "Project not found", 404, correlationId);
     }
+
+    hydrateProjectSetupFromRecord(projectId, project as Record<string, unknown>);
 
     const url = new URL(request.url);
     const view = url.searchParams.get("view") ?? "snapshot";
@@ -60,19 +121,6 @@ export const GET = withEngineeringApiParams(
       return NextResponse.json({ data: evaluateGate(projectId, gateKey) });
     }
 
-    const snap = snapshotProjectWorkspace(projectId);
-    // Seed setup identity from project record when empty
-    if (!snap.setup.projectCode && project.project_code) {
-      updateProjectSetup(projectId, {
-        projectCode: String(project.project_code ?? ""),
-        projectName: String(project.project_name ?? ""),
-        client: String(project.client_name ?? ""),
-        site: String(project.site_name ?? ""),
-        location: String(project.location ?? ""),
-        industry: String(project.industry ?? ""),
-        projectType: String(project.project_type ?? ""),
-      });
-    }
     return NextResponse.json({ data: snapshotProjectWorkspace(projectId) });
   },
 );
@@ -80,18 +128,48 @@ export const GET = withEngineeringApiParams(
 export const POST = withEngineeringApiParams(
   "projects",
   async ({ ctx, commerce, correlationId }, request, { projectId }) => {
-    const project = await ctx.engineering.projects.get(commerce, ctx.tenantId, projectId);
-    if (!project) {
-      return lifecycleErrorResponse("not_found", "Project not found", 404, correlationId);
-    }
+    // Write path: route guard is projects.write → project.create (established update permission).
+    // Never pass write commerce into projects.get.
+    const scoped = await requireProjectRead(ctx, correlationId, projectId);
+    if (scoped.error || !scoped.project) return scoped.error!;
 
     const body = (await request.json()) as Record<string, unknown>;
     const action = String(body.action ?? "");
 
     try {
       if (action === "update_setup") {
-        const data = updateProjectSetup(projectId, body.setup as never);
-        return NextResponse.json({ data });
+        const setupInput = body.setup as Partial<ProjectSetupProfile>;
+        const data = updateProjectSetup(projectId, setupInput as never);
+
+        // Persist editable fields via established project update (asserts project.create).
+        const priorMeta =
+          scoped.project.metadata && typeof scoped.project.metadata === "object"
+            ? (scoped.project.metadata as Record<string, unknown>)
+            : {};
+        await ctx.engineering.projects.update(commerce, ctx.tenantId, projectId, {
+          projectName: data.setup.projectName || undefined,
+          clientName: data.setup.client,
+          siteName: data.setup.site,
+          location: data.setup.location,
+          industry: data.setup.industry,
+          projectType: data.setup.projectType,
+          metadata: {
+            ...priorMeta,
+            eos_project_setup: data.setup,
+          },
+        });
+
+        // Post-save revalidation uses project.read — never leak write action into read.
+        const revalidated = await requireProjectRead(ctx, correlationId, projectId);
+        if (revalidated.error || !revalidated.project) return revalidated.error!;
+        hydrateProjectSetupFromRecord(
+          projectId,
+          revalidated.project as Record<string, unknown>,
+        );
+        return NextResponse.json({
+          data: snapshotProjectWorkspace(projectId),
+          message: "Project setup saved",
+        });
       }
       if (action === "create_object") {
         const data = createWorkspaceObject(projectId, {
@@ -184,12 +262,32 @@ export const POST = withEngineeringApiParams(
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "workspace_action_failed";
       const status =
-        message.includes("authority") || message.includes("forbidden")
+        message.includes("Action mismatch") ||
+        message.includes("authority") ||
+        message.includes("forbidden") ||
+        message.includes("Commerce")
           ? 403
           : message.includes("not_found")
             ? 404
             : 422;
-      return NextResponse.json({ error: message, message }, { status });
+      console.error("[eos-pilot-ui-hotfix-1] workspace POST failed", {
+        action,
+        projectId,
+        message,
+        correlationId,
+      });
+      const userMessage =
+        action === "update_setup"
+          ? "Project setup could not be saved. Your changes have been preserved."
+          : message;
+      return NextResponse.json(
+        {
+          error: userMessage,
+          message: userMessage,
+          diagnostic: message,
+        },
+        { status },
+      );
     }
   },
 );

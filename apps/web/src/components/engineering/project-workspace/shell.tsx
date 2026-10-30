@@ -9,6 +9,7 @@ import {
 } from "@/lib/engineering/project-workspace-ia";
 import { persistEngineeringProjectFilter } from "@/hooks/use-engineering-project-filter";
 import { PilotFeedbackPanel } from "./pilot-feedback";
+import { useUnsavedChangesGuard } from "./unsaved-changes-guard";
 
 export function ProjectWorkspaceShell({
   projectId,
@@ -23,6 +24,7 @@ export function ProjectWorkspaceShell({
 }) {
   const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
+  const { isDirty, requestNavigation } = useUnsavedChangesGuard();
 
   useEffect(() => {
     persistEngineeringProjectFilter(projectId);
@@ -75,6 +77,14 @@ export function ProjectWorkspaceShell({
                 PROJECT_SETUP_INCOMPLETE
               </span>
             ) : null}
+            {isDirty ? (
+              <span
+                className="ml-2 inline-flex items-center rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-100"
+                data-testid="unsaved-dirty-indicator"
+              >
+                Unsaved changes
+              </span>
+            ) : null}
           </div>
 
           <nav className="space-y-4" aria-label="Grouped project capabilities">
@@ -98,7 +108,15 @@ export function ProjectWorkspaceShell({
                           }`}
                           aria-current={active ? "page" : undefined}
                           data-testid={`nav-${item.id}`}
-                          onClick={() => setNavOpen(false)}
+                          onClick={(e) => {
+                            if (!isDirty) {
+                              setNavOpen(false);
+                              return;
+                            }
+                            e.preventDefault();
+                            setNavOpen(false);
+                            requestNavigation(href);
+                          }}
                         >
                           {item.label}
                         </Link>
