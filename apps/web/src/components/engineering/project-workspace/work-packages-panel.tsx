@@ -364,6 +364,20 @@ export function WorkPackagesPanel({ projectId }: { projectId: string }) {
                       </ul>
                     </dd>
                   </div>
+                  <div data-testid="wp-resolved-context">
+                    <dt className="inline text-slate-500">My Role: </dt>
+                    <dd className="inline font-medium text-slate-900">
+                      {contract.context.leadDiscipline
+                        ? "Responsible Discipline"
+                        : "—"}
+                    </dd>
+                  </div>
+                  <div data-testid="wp-context-waiting-on">
+                    <dt className="inline text-slate-500">Waiting On: </dt>
+                    <dd className="inline font-medium text-slate-900">
+                      Confirmed vendor load
+                    </dd>
+                  </div>
                   <div>
                     <dt className="inline text-slate-500">Owner: </dt>
                     <dd className="inline font-medium text-slate-900">

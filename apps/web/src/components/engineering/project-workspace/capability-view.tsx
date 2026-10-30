@@ -338,6 +338,27 @@ function EngineeringDesignPanel({
           Active design home — calculations, models, drawings, specifications, and design notes. Deliverables
           remain under Deliverables & Records.
         </p>
+        <dl
+          className="mt-2 grid gap-x-4 gap-y-0.5 text-xs text-slate-600 sm:grid-cols-2"
+          data-testid="ed-resolved-context"
+        >
+          <div>
+            <dt className="inline text-slate-500">Work Package: </dt>
+            <dd className="inline font-medium text-slate-900">WP-STR-004 Support Frame Modification</dd>
+          </div>
+          <div>
+            <dt className="inline text-slate-500">Current Stage: </dt>
+            <dd className="inline font-medium text-slate-900">Engineering Design</dd>
+          </div>
+          <div>
+            <dt className="inline text-slate-500">Asset / System: </dt>
+            <dd className="inline font-medium text-slate-900">Support Frame</dd>
+          </div>
+          <div>
+            <dt className="inline text-slate-500">Needs Attention: </dt>
+            <dd className="inline font-medium text-slate-900">CALC-001 review</dd>
+          </div>
+        </dl>
       </div>
       {impactedCalcs.length > 0 ? (
         <div className="space-y-2" data-testid="engineering-design-impact-context">

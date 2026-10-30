@@ -1,0 +1,25 @@
+{
+  "phase": "EOS-3-CONTEXT-1-CONTEXT-RESOLUTION-ENGINE",
+  "requiredStartHead": "fa019d5c27283dbf17b60f83e72d3d92c3a00b00",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "broadUxRedesignInThisPhase": false,
+  "currentSidebarPreserved": true,
+  "contextResolutionRequiresLiveLlm": false,
+  "riskPrioritizedMyWorkImplemented": false,
+  "databaseSchemaChanged": true,
+  "migrationCountAdded": 1,
+  "migration": "supabase/migrations/20261030260000_eos_3_context_1_context_resolution.sql",
+  "performance": {
+    "contextPerformanceBaselineMeasured": true
+  },
+  "artifacts": {
+    "engine": "docs/architecture/engineering-os/EOS_3_CONTEXT_RESOLUTION_ENGINE.md",
+    "dimensions": "docs/architecture/engineering-os/EOS_3_CONTEXT_DIMENSION_AND_PRECEDENCE_MODEL.md",
+    "provenance": "docs/architecture/engineering-os/EOS_3_CONTEXT_PROVENANCE_AND_AMBIGUITY.md",
+    "authority": "docs/architecture/engineering-os/EOS_3_CONTEXT_AUTHORITY_AND_SECURITY.md",
+    "myWorkContract": "docs/architecture/engineering-os/EOS_3_CONTEXT_MY_WORK_DATA_CONTRACT.md",
+    "pilotValidation": "docs/architecture/engineering-os/EOS_3_CONTEXT1_PILOT_VALIDATION.md",
+    "manifest": "docs/architecture/engineering-os/EOS_3_CONTEXT_1_MANIFEST.json"
+  },
+  "nextPhase": "EOS-3-CONTEXT-2-RISK-PRIORITIZED-MY-WORK-ENGINE"
+}
