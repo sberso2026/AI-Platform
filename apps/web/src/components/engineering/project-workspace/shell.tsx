@@ -97,10 +97,10 @@ export function ProjectWorkspaceShell({
           </p>
           <p className="text-sm font-medium text-white">{projectLabel ?? projectId}</p>
           <span
-            className="inline-flex items-center rounded border border-[color:var(--eos-gold,#c4a35a)]/40 bg-[color:var(--eos-gold,#c4a35a)]/10 px-2 py-0.5 text-[11px] font-medium text-[color:var(--eos-gold,#c4a35a)]"
+            className="inline-flex items-center text-[10px] uppercase tracking-wide text-slate-500"
             data-testid="pilot-mode-indicator"
           >
-            eos-controlled-pilot
+            Controlled pilot
           </span>
           {setupStatus === "PROJECT_SETUP_INCOMPLETE" ? (
             <span

@@ -28,17 +28,16 @@ describe("EOS-SHELL-JARVIS-3 premium command shell restore", () => {
     expect(css).not.toContain("Force enterprise light shell");
   });
 
-  it("restores Command Centre composition on the live dashboard API", () => {
+  it("cuts over Home to approved engineering workspace (Command Centre no longer primary)", () => {
     const page = readApp("src/app/(platform)/engineering/page.tsx");
     expect(page).toContain("/api/engineering/dashboard");
     expect(page).not.toContain("load-command-center");
-    expect(page).toContain('title="Project Health"');
-    expect(page).toContain('title="Engineering Intelligence Core"');
-    expect(page).toContain('title="Attention Required"');
-    expect(page).toContain('title="Live Engineering Signals"');
-    expect(page).toContain("displayCount");
-    expect(page).toContain('data-testid="home-attention"');
-    expect(page).toContain('data-testid="engineering-command-center"');
+    expect(page).toContain('data-testid="engineering-approved-home"');
+    expect(page).toContain("Needs Action");
+    expect(page).not.toContain("Engineering Intelligence Core");
+    expect(page).not.toContain("Open Engineering Workbench");
+    const legacyCc = readApp("src/app/(platform)/command-centre/page.tsx");
+    expect(legacyCc).toContain('redirect("/engineering")');
   });
 
   it("keeps Engineering Systems on the certified Commerce launcher route", () => {

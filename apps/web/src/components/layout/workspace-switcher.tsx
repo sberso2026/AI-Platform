@@ -91,12 +91,16 @@ export function WorkspaceSwitcher({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <div className="border-b border-sidebar-border px-4 py-3" data-testid="workspace-switcher">
-      <label className="block text-[0.75rem] text-sidebar-foreground/70" htmlFor="active-workspace">
-        Active workspace
+    <div className="border-b border-sidebar-border px-4 py-2" data-testid="workspace-switcher">
+      <label className="block text-[0.65rem] uppercase tracking-wide text-sidebar-foreground/50" htmlFor="active-workspace">
+        Workspace
       </label>
-      <p className="truncate text-[0.8125rem] text-white" data-testid="active-workspace-label">
-        {selected ? `${selected.tenantSlug} / ${selected.slug}` : "Select a workspace"}
+      <p
+        className="truncate text-[0.75rem] text-sidebar-foreground/80"
+        data-testid="active-workspace-label"
+        title={selected ? `${selected.tenantSlug} / ${selected.slug}` : undefined}
+      >
+        {selected ? selected.slug : "Select workspace"}
       </p>
       <p className="truncate text-[0.75rem] text-sidebar-foreground/70">
         {selected ? `Role ${displayWorkspaceRole(selected.roleSlug)}` : "Role follows the selected workspace"}

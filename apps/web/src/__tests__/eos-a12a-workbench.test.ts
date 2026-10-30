@@ -22,8 +22,10 @@ describe("EOS-A12A unified workbench UX", () => {
     expect(page).toContain("No active engineering work for this project.");
     expect(page).not.toMatch(/productivity score =/i);
     expect(page).not.toContain("keystroke");
-    expect(home).toContain("Open Engineering Workbench");
-    expect(home).toContain("/engineering/work");
+    expect(home).not.toContain("Open Engineering Workbench");
+    expect(home).toContain("Open Projects");
+    const workRoute = readApp("src/app/(platform)/engineering/work/page.tsx");
+    expect(workRoute).toContain("legacy-engineering-workbench");
     expect(plan).toContain("Using EOS Default Template");
     expect(plan).not.toContain('templateCode: "EAT-IMPACT-REPORT"');
     expect(settings).toContain("OFFICIAL_TEMPLATE_REQUIRED");

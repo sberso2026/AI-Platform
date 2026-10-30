@@ -470,7 +470,7 @@ export const ENGINEERING_NAVIGATION: NavItem[] = [
     icon: "ClipboardList",
     href: "/review",
     group: "engineering_registers",
-    audience: "engineer",
+    audience: "viewer",
   },
   {
     id: "eng-changes",

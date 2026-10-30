@@ -52,11 +52,13 @@ describe("EOS-UX-1 work-first navigation", () => {
 });
 
 describe("EOS-UX-1 operational screens", () => {
-  it("Command Centre uses the composed dashboard API", () => {
+  it("approved Home uses the composed dashboard API", () => {
     const page = readApp("src/app/(platform)/engineering/page.tsx");
     expect(page).toContain("/api/engineering/dashboard");
-    expect(page).toContain("Command Centre");
-    expect(page).toContain("data-testid=\"engineering-command-center\"");
+    expect(page).toContain("Home");
+    expect(page).toContain('data-testid="engineering-approved-home"');
+    expect(page).not.toContain("Open Engineering Workbench");
+    expect(page).not.toContain("Command Centre");
   });
 
   it("project workspace GET authorizes asset and document reads separately", () => {
