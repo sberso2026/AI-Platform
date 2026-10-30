@@ -8,11 +8,13 @@
 
 ## Evidence
 
-Fresh Home screenshot after UX-1C deploy:
+Fresh Home screenshot after UX-1C deploy (`dpl_92DDcQgEtTH91S4A9t2AFUjmT18P`, `?va=1c-home-lock`):
 
 `docs/architecture/engineering-os/visual-acceptance/ux-foundation-1c/01-home.webp`
 
-Fixed acceptance viewport target: **1536 × 1024**.
+Captured from live `https://eos-pilot.rtbea.com.au/engineering` — **not** reused from UX-1A or pre-1C UX-1B builds.
+
+Fixed acceptance viewport target: **1536 × 1024** (capture on desktop pilot session approximating reference).
 
 ## Geometry checklist (implementation self-check)
 
