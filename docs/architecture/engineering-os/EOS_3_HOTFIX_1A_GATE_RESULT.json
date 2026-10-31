@@ -30,8 +30,10 @@
     "knownModerateAdvisory": "GHSA-w5hq-g745-h8pq,GHSA-g3hv-75wg-m249",
     "releaseTestCount": 220
   },
-  "deployedToControlledPilot": false,
+  "deployedToControlledPilot": true,
   "pilotAlias": "https://eos-pilot.rtbea.com.au",
   "blocker": null,
-  "readyForManualContinuation": true
+  "readyForManualContinuation": true,
+  "deploymentId": "dpl_67BLiTwK74MLwbLJ3pLn94gEqiVX",
+  "endHead": "PENDING_CLOSEOUT"
 }

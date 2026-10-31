@@ -14,5 +14,6 @@
     "manifest": "docs/architecture/engineering-os/EOS_3_HOTFIX_1A_MANIFEST.json",
     "gateResult": "docs/architecture/engineering-os/EOS_3_HOTFIX_1A_GATE_RESULT.json",
     "tests": "apps/web/src/__tests__/eos3-hotfix-1a-guided-residual-ui-isolation.test.ts"
-  }
+  },
+  "deploymentId": "dpl_67BLiTwK74MLwbLJ3pLn94gEqiVX"
 }
