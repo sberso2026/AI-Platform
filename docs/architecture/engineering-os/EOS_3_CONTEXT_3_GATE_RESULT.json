@@ -1,7 +1,7 @@
 {
   "phase": "EOS-3-CONTEXT-3-ADAPTIVE-ENGINEERING-COCKPIT-INTEGRATION",
   "requiredStartHead": "ddb0cb4aee09893db77fb7fd8eb186eda8c75941",
-  "endHead": "2341c2d0476b76e58692731f784b4a5b471db15a",
+  "endHead": "931734dacfb47642e3a7cac44eb36d0a143bc0b3",
   "verdict": "PASS_WITH_LIMITATIONS",
   "adaptiveEngineeringCockpit": "PASS",
   "deployedToControlledPilot": true,
