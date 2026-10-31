@@ -1,6 +1,8 @@
-/** Intelligence-2: dependency signals may fill Waiting categories; no risk ranking / layout redesign. */
+/** Intelligence-2: dependency signals may fill Waiting categories; Contextual enrichment only. */
 export const MY_WORK_DEPENDENCY_UI_CONTEXTUAL_ONLY = true as const;
-export const EOS_RISK_PRIORITIZED_MY_WORK_IMPLEMENTED = false as const;
+/** Context-2: governed engineering-consequence priority (not layout redesign). */
+export const EOS_RISK_PRIORITIZED_MY_WORK_IMPLEMENTED = true as const;
+export const MY_WORK_PRIORITY_BANDS = ["CRITICAL", "HIGH", "MEDIUM", "LOW"] as const;
 
 /** Approved My Work category contract (populate only when deterministic data exists). */
 export const MY_WORK_CATEGORIES = [

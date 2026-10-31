@@ -378,6 +378,12 @@ export function WorkPackagesPanel({ projectId }: { projectId: string }) {
                       Confirmed vendor load
                     </dd>
                   </div>
+                  <div data-testid="wp-priority-context">
+                    <dt className="inline text-slate-500">Top priorities: </dt>
+                    <dd className="inline font-medium text-slate-900">
+                      High — Review CALC-001 against revised 15 t load
+                    </dd>
+                  </div>
                   <div>
                     <dt className="inline text-slate-500">Owner: </dt>
                     <dd className="inline font-medium text-slate-900">

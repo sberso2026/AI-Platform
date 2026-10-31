@@ -1,0 +1,21 @@
+{
+  "phase": "EOS-3-CONTEXT-2-RISK-PRIORITIZED-MY-WORK-ENGINE",
+  "requiredStartHead": "5a99c04aadaf8289ee533aea5eefed4b2df16d7a",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "broadUxRedesignInThisPhase": false,
+  "currentSidebarPreserved": true,
+  "priorityRequiresLiveLlm": false,
+  "databaseSchemaChanged": true,
+  "migrationCountAdded": 1,
+  "migration": "supabase/migrations/20261030270000_eos_3_context_2_my_work_priority.sql",
+  "artifacts": {
+    "engine": "docs/architecture/engineering-os/EOS_3_RISK_PRIORITIZED_MY_WORK_ENGINE.md",
+    "signals": "docs/architecture/engineering-os/EOS_3_ENGINEERING_PRIORITY_SIGNAL_MODEL.md",
+    "explainability": "docs/architecture/engineering-os/EOS_3_MY_WORK_PRIORITY_EXPLAINABILITY.md",
+    "authority": "docs/architecture/engineering-os/EOS_3_MY_WORK_PRIORITY_AUTHORITY.md",
+    "performance": "docs/architecture/engineering-os/EOS_3_MY_WORK_PRIORITY_PERFORMANCE.md",
+    "pilotValidation": "docs/architecture/engineering-os/EOS_3_CONTEXT2_PILOT_VALIDATION.md",
+    "manifest": "docs/architecture/engineering-os/EOS_3_CONTEXT_2_MANIFEST.json"
+  },
+  "nextPhase": "EOS-3-CONTEXT-3-OR-NEXT-GOVERNED-PHASE"
+}

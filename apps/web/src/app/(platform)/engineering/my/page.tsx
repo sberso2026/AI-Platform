@@ -16,6 +16,7 @@ import { useExperiencePerf } from "@/hooks/use-experience-perf";
 import {
   isMyWorkCategoryId,
   MY_WORK_CATEGORIES,
+  MY_WORK_PRIORITY_BANDS,
   type MyWorkCategoryId,
 } from "@/lib/engineering/eos3-my-work-ui";
 
@@ -49,9 +50,18 @@ function MyWorkInner() {
   const searchParams = useSearchParams();
   const projectId = useEngineeringProjectFilter();
   const catParam = searchParams.get("cat");
+  const priorityParam = searchParams.get("priority");
   const activeCat: MyWorkCategoryId | "all" = isMyWorkCategoryId(catParam)
     ? catParam
     : "all";
+  const activePriority =
+    priorityParam &&
+    MY_WORK_PRIORITY_BANDS.includes(
+      priorityParam.toUpperCase() as (typeof MY_WORK_PRIORITY_BANDS)[number],
+    )
+      ? priorityParam.toUpperCase()
+      : "all";
+  const sortMode = searchParams.get("sort") === "due" ? "due" : "priority";
   const [query, setQuery] = useState("");
   const [actions, setActions] = useState<Row[]>([]);
   const [tqs, setTqs] = useState<Row[]>([]);
@@ -59,6 +69,7 @@ function MyWorkInner() {
   const [reviews, setReviews] = useState<Row[]>([]);
   const [changes, setChanges] = useState<Row[]>([]);
   const [risks, setRisks] = useState<Row[]>([]);
+  const [priorityRows, setPriorityRows] = useState<Row[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -83,14 +94,23 @@ function MyWorkInner() {
       fetch(withProjectQuery("/api/engineering/risks", projectId)).then((r) =>
         parseApiJsonResponse(r),
       ),
+      fetch(
+        withProjectQuery(
+          `/api/engineering/my-work/priority?view=list${projectId ? `&projectId=${encodeURIComponent(projectId)}` : ""}`,
+          projectId,
+        ),
+      )
+        .then((r) => parseApiJsonResponse(r))
+        .catch(() => ({ ok: false, data: [] })),
     ])
-      .then(([a, t, d, r, c, risk]) => {
+      .then(([a, t, d, r, c, risk, pri]) => {
         setActions(asRecordArray(a.data).slice(0, 40));
         setTqs(asRecordArray(t.data).slice(0, 40));
         setDecisions(asRecordArray(d.data).slice(0, 40));
         setReviews(asRecordArray(r.data).slice(0, 40));
         setChanges(asRecordArray(c.data).slice(0, 40));
         setRisks(asRecordArray(risk.data).slice(0, 40));
+        setPriorityRows(asRecordArray(pri.data).slice(0, 80));
         if (![a, t, d, r, c, risk].some((x) => x.ok)) {
           setError("Some work queues could not be loaded.");
         } else {
@@ -177,21 +197,70 @@ function MyWorkInner() {
     ];
   }, [actions, tqs, changes, reviews, decisions, risks]);
 
+  const priorityByObject = useMemo(() => {
+    const m = new Map<string, Row>();
+    for (const row of priorityRows) {
+      const key = String(row.objectStableId ?? row.stable_id ?? row.id ?? "");
+      if (key) m.set(key, row);
+    }
+    return m;
+  }, [priorityRows]);
+
   const visible = useMemo(() => {
     const filtered =
       activeCat === "all" ? sections : sections.filter((s) => s.id === activeCat);
     const q = query.trim().toLowerCase();
-    if (!q) return filtered;
-    return filtered.map((s) => ({
-      ...s,
-      rows: s.rows.filter((row) => JSON.stringify(row).toLowerCase().includes(q)),
-    }));
-  }, [sections, activeCat, query]);
+    return filtered.map((s) => {
+      let rows = s.rows;
+      if (q) {
+        rows = rows.filter((row) => JSON.stringify(row).toLowerCase().includes(q));
+      }
+      if (activePriority !== "all") {
+        rows = rows.filter((row) => {
+          const key = String(row.stable_id ?? row.stableId ?? row.id ?? "");
+          const pri = priorityByObject.get(key);
+          const band = String(pri?.priorityBand ?? s.priority).toUpperCase();
+          return band === activePriority;
+        });
+      }
+      // Default sort by governed priority; due sort does not rewrite canonical priority
+      if (sortMode === "priority" && priorityRows.length > 0) {
+        const rank: Record<string, number> = {
+          CRITICAL: 4,
+          HIGH: 3,
+          MEDIUM: 2,
+          LOW: 1,
+        };
+        rows = [...rows].sort((a, b) => {
+          const ka = String(a.stable_id ?? a.stableId ?? a.id ?? "");
+          const kb = String(b.stable_id ?? b.stableId ?? b.id ?? "");
+          const pa = String(priorityByObject.get(ka)?.priorityBand ?? s.priority).toUpperCase();
+          const pb = String(priorityByObject.get(kb)?.priorityBand ?? s.priority).toUpperCase();
+          return (rank[pb] ?? 0) - (rank[pa] ?? 0);
+        });
+      } else if (sortMode === "due") {
+        rows = [...rows].sort((a, b) =>
+          String(a.due_date ?? a.required_by ?? "9999").localeCompare(
+            String(b.due_date ?? b.required_by ?? "9999"),
+          ),
+        );
+      }
+      return { ...s, rows };
+    });
+  }, [sections, activeCat, query, activePriority, sortMode, priorityByObject, priorityRows.length]);
 
   function setCategory(id: MyWorkCategoryId | "all") {
     const params = new URLSearchParams(searchParams.toString());
     if (id === "all") params.delete("cat");
     else params.set("cat", id);
+    const qs = params.toString();
+    router.push(qs ? `/engineering/my?${qs}` : "/engineering/my");
+  }
+
+  function setPriorityFilter(band: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (band === "all") params.delete("priority");
+    else params.set("priority", band);
     const qs = params.toString();
     router.push(qs ? `/engineering/my?${qs}` : "/engineering/my");
   }
@@ -228,7 +297,42 @@ function MyWorkInner() {
             placeholder="Search work items…"
             className="min-h-10 min-w-[220px] flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900"
           />
+          <div
+            className="flex flex-wrap gap-1"
+            data-testid="my-work-priority-filter"
+            aria-label="Priority filter"
+          >
+            <button
+              type="button"
+              className={`min-h-9 rounded border px-2 text-xs ${
+                activePriority === "all"
+                  ? "border-[color:var(--eos-navy,#0b1f3a)] bg-[color:var(--eos-navy,#0b1f3a)] text-white"
+                  : "border-slate-300 bg-white text-slate-700"
+              }`}
+              onClick={() => setPriorityFilter("all")}
+            >
+              All priorities
+            </button>
+            {MY_WORK_PRIORITY_BANDS.map((b) => (
+              <button
+                key={b}
+                type="button"
+                data-testid={`my-work-priority-${b.toLowerCase()}`}
+                className={`min-h-9 rounded border px-2 text-xs ${
+                  activePriority === b
+                    ? "border-[color:var(--eos-navy,#0b1f3a)] bg-[color:var(--eos-navy,#0b1f3a)] text-white"
+                    : "border-slate-300 bg-white text-slate-700"
+                }`}
+                onClick={() => setPriorityFilter(b)}
+              >
+                {b.charAt(0) + b.slice(1).toLowerCase()}
+              </button>
+            ))}
+          </div>
         </div>
+        <p className="sr-only" data-testid="my-work-default-priority-sort">
+          Default sort: engineering priority
+        </p>
 
         <nav
           className="mb-4 flex flex-wrap gap-2 text-xs"
@@ -303,6 +407,7 @@ function MyWorkInner() {
                     <thead className="bg-slate-50 text-[11px] uppercase text-slate-500">
                       <tr>
                         <th className="px-3 py-2">Priority</th>
+                        <th className="px-3 py-2">Why</th>
                         <th className="px-3 py-2">Work Item</th>
                         <th className="px-3 py-2">Project / Work Package</th>
                         <th className="px-3 py-2">Asset / System</th>
@@ -311,8 +416,17 @@ function MyWorkInner() {
                         <th className="px-3 py-2">Next Action</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody data-testid="my-work-priority-enriched">
                       {section.rows.map((row) => {
+                        const key = String(row.stable_id ?? row.stableId ?? row.id ?? "");
+                        const pri = priorityByObject.get(key);
+                        const band = String(
+                          pri?.priorityBand ?? section.priority,
+                        );
+                        const why = String(pri?.reason ?? "");
+                        const nextLabel = String(
+                          pri?.nextRecommendedAction ?? "Open",
+                        );
                         const openHref = String(
                           row.href ??
                             row.url ??
@@ -321,9 +435,20 @@ function MyWorkInner() {
                         return (
                           <tr key={idOf(row)} className="border-t border-slate-100 text-slate-800">
                             <td className="px-3 py-2">
-                              <span className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[11px] text-amber-900">
-                                {section.priority}
+                              <span
+                                className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[11px] text-amber-900"
+                                data-testid="my-work-priority-band"
+                                title={why || undefined}
+                              >
+                                {band.charAt(0) + band.slice(1).toLowerCase()}
                               </span>
+                            </td>
+                            <td
+                              className="max-w-[180px] truncate px-3 py-2 text-xs text-slate-600"
+                              data-testid="my-work-priority-why"
+                              title={why || undefined}
+                            >
+                              {why || "—"}
                             </td>
                             <td className="px-3 py-2 font-medium">
                               <span className="mr-2 font-mono text-[11px] text-slate-500">
@@ -333,7 +458,8 @@ function MyWorkInner() {
                             </td>
                             <td className="px-3 py-2 text-xs text-slate-600">
                               {String(
-                                row.work_package_id ??
+                                pri?.workPackageStableId ??
+                                  row.work_package_id ??
                                   row.workPackageId ??
                                   row.project_code ??
                                   projectId ??
@@ -341,11 +467,22 @@ function MyWorkInner() {
                               )}
                             </td>
                             <td className="px-3 py-2 text-xs text-slate-600">
-                              {String(row.asset_name ?? row.system_name ?? row.asset ?? "—")}
+                              {String(
+                                pri?.assetSystem ??
+                                  row.asset_name ??
+                                  row.system_name ??
+                                  row.asset ??
+                                  "—",
+                              )}
                             </td>
                             <td className="px-3 py-2 text-xs">{section.typeLabel}</td>
                             <td className="px-3 py-2 text-xs">
-                              {String(row.due_date ?? row.required_by ?? "—")}
+                              {String(
+                                pri?.dueOrRequiredBy ??
+                                  row.due_date ??
+                                  row.required_by ??
+                                  "—",
+                              )}
                             </td>
                             <td className="px-3 py-2">
                               <Link
@@ -353,7 +490,7 @@ function MyWorkInner() {
                                 className="inline-flex min-h-8 items-center rounded border border-slate-300 bg-white px-2 text-xs font-medium text-slate-800 hover:border-[color:var(--eos-gold,#c4a35a)]"
                                 data-testid="my-work-next-action"
                               >
-                                Open
+                                {nextLabel === "Open" ? "Open" : nextLabel}
                               </Link>
                             </td>
                           </tr>
