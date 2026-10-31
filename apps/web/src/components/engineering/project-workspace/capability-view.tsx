@@ -367,6 +367,30 @@ function EngineeringDesignPanel({
             Next Action: Review CALC-001 against revised 15 t equipment load
           </span>
         </div>
+        <div
+          className="mt-2 rounded-md border border-slate-100 bg-slate-50/80 p-3 text-xs text-slate-800"
+          data-testid="ed-stage-guidance"
+          data-eos-stage-progressive="yes"
+        >
+          <p data-testid="ed-stage-current">
+            <span className="font-semibold text-slate-500">Current Stage: </span>
+            Engineering Design
+          </p>
+          <p className="mt-1 font-semibold text-slate-500">Required Now</p>
+          <ul className="mt-0.5 list-inside list-disc" data-testid="ed-stage-required-now">
+            <li>Review revised vendor load</li>
+            <li>Update CALC-001</li>
+            <li>Resolve ASM-001</li>
+          </ul>
+          <p className="mt-1" data-testid="ed-stage-next-checkpoint">
+            <span className="font-semibold text-slate-500">Next Checkpoint: </span>
+            Verification
+          </p>
+          <p className="mt-1" data-testid="ed-stage-blocking">
+            <span className="font-semibold text-slate-500">Blocking: </span>
+            CALC-001 review · DEC-001 reassessment
+          </p>
+        </div>
       </div>
       {impactedCalcs.length > 0 ? (
         <div className="space-y-2" data-testid="engineering-design-impact-context">

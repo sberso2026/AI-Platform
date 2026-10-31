@@ -1,0 +1,21 @@
+{
+  "phase": "EOS-3-UX-5-STAGE-AWARE-GUIDED-ENGINEERING",
+  "requiredStartHead": "9bc52a2ec14a4db947e68c03b0cb72523f2495d8",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "broadUxRedesignInThisPhase": false,
+  "currentSidebarPreserved": true,
+  "primaryNavigationChanged": false,
+  "databaseSchemaChanged": false,
+  "migrationCountAdded": 0,
+  "stageGuidanceRequiresLiveLlm": false,
+  "artifacts": {
+    "stageAware": "docs/architecture/engineering-os/EOS_3_STAGE_AWARE_GUIDED_ENGINEERING.md",
+    "relevantContent": "docs/architecture/engineering-os/EOS_3_STAGE_RELEVANT_CONTENT_MODEL.md",
+    "jit": "docs/architecture/engineering-os/EOS_3_JUST_IN_TIME_OBJECT_GENERATION.md",
+    "authority": "docs/architecture/engineering-os/EOS_3_STAGE_GUIDANCE_AUTHORITY_MODEL.md",
+    "performance": "docs/architecture/engineering-os/EOS_3_STAGE_GUIDANCE_PERFORMANCE.md",
+    "pilotValidation": "docs/architecture/engineering-os/EOS_3_UX5_PILOT_VALIDATION.md",
+    "manifest": "docs/architecture/engineering-os/EOS_3_UX_5_MANIFEST.json"
+  },
+  "nextPhase": "EOS-3-NEXT-GOVERNED-PHASE"
+}

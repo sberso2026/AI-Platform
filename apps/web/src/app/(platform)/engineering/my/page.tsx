@@ -446,6 +446,7 @@ function MyWorkInner() {
                             <td
                               className="max-w-[180px] truncate px-3 py-2 text-xs text-slate-600"
                               data-testid="my-work-priority-why"
+                              data-eos-my-work-stage-enrichment="yes"
                               title={why || undefined}
                             >
                               {why || "—"}

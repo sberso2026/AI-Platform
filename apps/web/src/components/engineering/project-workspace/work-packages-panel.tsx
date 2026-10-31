@@ -492,6 +492,29 @@ export function WorkPackagesPanel({ projectId }: { projectId: string }) {
                         Civil is waiting on revised foundation reactions
                       </p>
                     </div>
+                    <div
+                      className="sm:col-span-2 rounded-md border border-slate-100 bg-slate-50/80 p-3"
+                      data-testid="wp-stage-guidance"
+                      data-eos-stage-progressive="yes"
+                    >
+                      <p className="text-[11px] font-semibold uppercase text-slate-500">
+                        Required Now
+                      </p>
+                      <ul className="mt-1 space-y-0.5 text-xs text-slate-800" data-testid="wp-stage-required-now">
+                        <li>Review revised vendor load</li>
+                        <li>Update CALC-001</li>
+                        <li>Resolve ASM-001</li>
+                      </ul>
+                      <p className="mt-2 text-[11px] text-slate-600" data-testid="wp-stage-missing-info">
+                        Missing Information: Confirmed vendor operating mass (15 t)
+                      </p>
+                      <p className="mt-1 text-[11px] text-slate-600" data-testid="wp-stage-completion">
+                        Stage completion: CALC-001 review · DEC-001 reassessment
+                      </p>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        Create Draft offered for missing deliverables — never auto-issued.
+                      </p>
+                    </div>
                     <Card title="Key information" testId="wp-card-key">
                       <ul className="space-y-1 text-xs text-slate-700">
                         {contract.cards.keyInformation.map((k) => (
