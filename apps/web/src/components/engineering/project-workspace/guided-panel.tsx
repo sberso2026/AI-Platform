@@ -5,12 +5,14 @@ import { useCallback, useEffect, useState } from "react";
 import { Button, Input } from "@rtb/ui";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import { workspaceHref } from "@/lib/engineering/project-workspace-ia";
-import type {
-  GuidedGenerationResult,
-  GuidedProposal,
-  NextBestAction,
-  SimplifiedGateReadiness,
-  GuidedTask,
+import {
+  engineerFacingExplanation,
+  engineerFacingLifecycleLabel,
+  type GuidedGenerationResult,
+  type GuidedProposal,
+  type NextBestAction,
+  type SimplifiedGateReadiness,
+  type GuidedTask,
 } from "@/lib/engineering/eos3-guided-engineering";
 
 type GuidedView = {
@@ -23,20 +25,18 @@ type GuidedView = {
   setup: { description: string; projectType: string; industry: string };
 };
 
-const PILOT_OBJECTIVE =
-  "Install a new 12 t process equipment module on an existing steel-framed platform while minimising operational disruption.";
+const CHANGE_INPUT_PLACEHOLDER =
+  "Describe an actual engineering change, such as revised vendor data, changed operating conditions, or updated site information.";
 
 export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [objective, setObjective] = useState(PILOT_OBJECTIVE);
+  const [objective, setObjective] = useState("");
   const [whyNeeded, setWhyNeeded] = useState("");
   const [docs, setDocs] = useState("");
   const [generation, setGeneration] = useState<GuidedGenerationResult | null>(null);
   const [proposals, setProposals] = useState<GuidedProposal[]>([]);
   const [view, setView] = useState<GuidedView | null>(null);
-  const [utterance, setUtterance] = useState(
-    "Vendor increased equipment mass from 12 t to 15 t.",
-  );
+  const [utterance, setUtterance] = useState("");
   const [changeResult, setChangeResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -303,7 +303,7 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
             />
             <Stat
               label="Lifecycle"
-              value={generation.setup.lifecycleTemplate || "—"}
+              value={engineerFacingLifecycleLabel(generation.setup.lifecycleTemplate)}
             />
           </div>
 
@@ -342,14 +342,14 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
                   {material ? (
                     <details className="mt-1 text-xs text-slate-500" open data-testid="explainability-prominent">
                       <summary>Why?</summary>
-                      <p className="mt-1">{p.whySuggested}</p>
+                      <p className="mt-1">{engineerFacingExplanation(p.whySuggested)}</p>
                       <p>Source: {p.provenance.source}</p>
                       {p.uncertainty ? <p>Uncertainty: {p.uncertainty}</p> : null}
                     </details>
                   ) : (
                     <details className="mt-1 text-xs text-slate-500" data-testid="explainability-compact">
                       <summary>Why?</summary>
-                      <p className="mt-1">{p.whySuggested}</p>
+                      <p className="mt-1">{engineerFacingExplanation(p.whySuggested)}</p>
                       <p>Source: {p.provenance.source}</p>
                     </details>
                   )}
@@ -490,8 +490,16 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
               className="min-h-16 w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-slate-100"
               value={utterance}
               onChange={(e) => setUtterance(e.target.value)}
+              placeholder={CHANGE_INPUT_PLACEHOLDER}
+              data-testid="guided-change-input"
+              aria-label="Natural engineering change"
             />
-            <Button type="button" size="sm" disabled={busy} onClick={() => void captureChange()}>
+            <Button
+              type="button"
+              size="sm"
+              disabled={busy || !utterance.trim()}
+              onClick={() => void captureChange()}
+            >
               Capture change
             </Button>
             {changeResult ? (
@@ -501,30 +509,13 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
             ) : null}
           </div>
 
-          <div className="rounded-lg border border-slate-700 p-4">
-            <h3 className="text-sm font-semibold text-slate-100">Contextual assumption</h3>
+          <div className="rounded-lg border border-slate-700 p-4" data-testid="guided-information-gap-panel">
+            <h3 className="text-sm font-semibold text-slate-100">Information gap</h3>
             <p className="text-xs text-slate-400">
-              Equipment dynamic load has not been provided. Record this as an assumption pending vendor confirmation?
+              Equipment operating, test or dynamic load information has not been provided. EOS keeps this as an
+              information gap rather than inventing an assumption. An assumption is only appropriate when an
+              engineer explicitly proposes a provisional engineering value and basis.
             </p>
-            <Button
-              type="button"
-              size="sm"
-              className="mt-2"
-              onClick={() =>
-                void fetch(`/api/engineering/projects/${projectId}/workspace`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    action: "contextual_assumption",
-                    title: "Dynamic load pending vendor confirmation",
-                    statement: "Dynamic load not provided — assumed pending vendor data.",
-                    stableObjectId: "ASM-DYNAMIC-001",
-                  }),
-                })
-              }
-            >
-              Record as assumption
-            </Button>
           </div>
         </section>
       ) : null}

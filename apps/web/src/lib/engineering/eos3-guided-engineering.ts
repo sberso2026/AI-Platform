@@ -23,6 +23,33 @@ import { getOrCreateProjectWorkspace } from "./eos3-project-workspace-service";
 
 export const EOS_DEFAULT_USER_MODE = "GUIDED_ENGINEERING" as const;
 
+/** Canonical lifecycle template key remains in backend; engineer UI uses the mapped label. */
+export const EOS_DEFAULT_LIFECYCLE_TEMPLATE_KEY = "pilot-default-p0-g6" as const;
+
+export function engineerFacingLifecycleLabel(
+  templateKey: string | null | undefined,
+): string {
+  if (!templateKey || templateKey === EOS_DEFAULT_LIFECYCLE_TEMPLATE_KEY) {
+    return "Opportunity / Concept Definition";
+  }
+  return templateKey
+    .replace(/^pilot-default-/i, "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/** Strip internal rule identifiers from engineer-facing copy (defense in depth). */
+export function engineerFacingExplanation(text: string): string {
+  if (!text) return text;
+  if (/EOS_MISSING_EVIDENCE_CREATES_GAP_NOT_FAKE_FACT/i.test(text)) {
+    return "Required information has not yet been provided. EOS has recorded an information gap rather than assuming a value.";
+  }
+  if (/EOS_INTERFACE_EVIDENCE_REQUIREMENT/i.test(text)) {
+    return "A discipline pair alone does not confirm an interface. EOS recorded a potential coordination requirement until evidence or a canonical relation exists.";
+  }
+  return text.replace(/\bEOS_[A-Z0-9_]+\b/g, "").replace(/\s{2,}/g, " ").trim();
+}
+
 export type ExperienceLevel = "GUIDED" | "ENGINEERING_WORKSPACE" | "GOVERNANCE_WORKSPACE";
 
 export type Confidence = "HIGH" | "MEDIUM" | "LOW";
@@ -340,7 +367,9 @@ function inferProfile(
   }>;
 } {
   const text = `${ctx.objective} ${ctx.whyNeeded}`.toLowerCase();
-  const australia = /australia|qld|queensland|au\b|kgp/.test(text);
+  const explicitGeography = /\baustralia\b|\bqueensland\b|\baustralian\b/.test(text);
+  const contextInferredAu = /\bkgp\b|\bqld\b|\bau\b/.test(text);
+  const australia = explicitGeography || contextInferredAu;
   const inferences: Array<{
     field: string;
     value: string;
@@ -384,25 +413,27 @@ function inferProfile(
     why: "Candidate affected disciplines from objective keywords — not confirmed involvement.",
   });
 
-  const country = australia ? "AU" : "AU";
+  const country = "AU";
   inferences.push({
     field: "jurisdiction.country",
     value: country,
-    confidence: australia ? "HIGH" : "MEDIUM",
+    confidence: explicitGeography ? "HIGH" : "MEDIUM",
     materiality: "HIGH",
-    why: australia
+    why: explicitGeography
       ? "Explicit geography in current project input."
-      : "Pilot default AU pending confirmation (material regulatory field).",
+      : contextInferredAu
+        ? "Candidate jurisdiction inferred from current project context — confirm before relying."
+        : "Candidate jurisdiction AU pending confirmation (material regulatory field).",
   });
 
-  // Standards: only as candidates — confirm applicability
+  // Standards: structural candidates only — not the full multidisciplinary set
   if (ctx.candidateDisciplines.includes("Structural") || /structural|foundation|support/.test(text)) {
     inferences.push({
       field: "standards",
-      value: "AS/NZS 1170, AS 4100 (candidate — confirm applicability)",
+      value: "Structural candidate standards: AS/NZS 1170, AS 4100 — confirm applicability",
       confidence: "MEDIUM",
       materiality: "HIGH",
-      why: "Candidate structural standards for AU work — confirm before relying.",
+      why: "Structural candidate standards only — not a complete multidisciplinary project standards set. Confirm before relying.",
     });
   }
 
@@ -428,7 +459,7 @@ function inferProfile(
         ? ctx.candidateDisciplines
         : ["Multidiscipline"],
       confidentiality: "Internal",
-      lifecycleTemplate: "pilot-default-p0-g6",
+      lifecycleTemplate: EOS_DEFAULT_LIFECYCLE_TEMPLATE_KEY,
       governanceProfile: "eos-controlled-pilot",
       qualificationContext: "D1 QUALIFIED_BOUNDED; non-D1 NOT_QUALIFIED",
       roles: ["Project Lead", "Engineering Lead", "Reviewer"],
@@ -994,7 +1025,7 @@ export function generateGuidedProjectState(
         basis: "Discipline pair alone does not create a confirmed Interface.",
         confidence: "MEDIUM",
         materiality: "HIGH",
-        why: "EOS_INTERFACE_EVIDENCE_REQUIREMENT — require canonical relation or sufficient evidence.",
+        why: "A discipline pair alone does not confirm an interface. EOS recorded a potential coordination requirement until evidence or a canonical relation exists.",
         bulkSafe: false,
       }),
     );
@@ -1088,7 +1119,7 @@ export function generateGuidedProjectState(
         basis: "Just-in-time gap from current project scope — not an invented fact.",
         confidence: "HIGH",
         materiality: "HIGH",
-        why: "EOS_MISSING_EVIDENCE_CREATES_GAP_NOT_FAKE_FACT",
+        why: "Required information has not yet been provided. EOS has recorded an information gap rather than assuming a value.",
         bulkSafe: false,
       }),
     );

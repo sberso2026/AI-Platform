@@ -1,0 +1,18 @@
+{
+  "phase": "EOS-3-HOTFIX-1A-GUIDED-ENGINEERING-RESIDUAL-UI-ISOLATION",
+  "requiredStartHead": "6740c9da2eb0bb91bb54f5e7536e995ef55d1635",
+  "verdict": "PASS",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "databaseSchemaChanged": false,
+  "migrationCountAdded": 0,
+  "qualificationBoundaryChanged": false,
+  "preservesHotfix1": true,
+  "releaseTestCount": 220,
+  "securityReleaseRegressionGate": "PASS",
+  "artifacts": {
+    "doc": "docs/architecture/engineering-os/EOS_3_HOTFIX_1A_GUIDED_RESIDUAL_UI_ISOLATION.md",
+    "manifest": "docs/architecture/engineering-os/EOS_3_HOTFIX_1A_MANIFEST.json",
+    "gateResult": "docs/architecture/engineering-os/EOS_3_HOTFIX_1A_GATE_RESULT.json",
+    "tests": "apps/web/src/__tests__/eos3-hotfix-1a-guided-residual-ui-isolation.test.ts"
+  }
+}
