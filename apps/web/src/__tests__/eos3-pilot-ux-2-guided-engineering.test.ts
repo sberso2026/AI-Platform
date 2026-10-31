@@ -47,13 +47,17 @@ describe("EOS-3-PILOT-UX-2 guided engineering / minimum viable input", () => {
     expect(result.proposals.length).toBeGreaterThan(5);
     expect(findByStableId(PROJECT_ID, "EB-001")?.payload.approvalState).toBe("NOT_APPROVED");
     expect(findByStableId(PROJECT_ID, "REQ-001")?.payload.status).toBe("PROPOSED");
+    // Mass only because literally present in objective
     expect(findByStableId(PROJECT_ID, "ASM-001")?.payload.equipmentMass).toBe("12 t");
-    expect(findByStableId(PROJECT_ID, "SYS-STR-001")).toBeTruthy();
-    expect(findByStableId(PROJECT_ID, "INT-001")).toBeTruthy();
-    expect(findByStableId(PROJECT_ID, "DEL-001")).toBeTruthy();
-    expect(result.options).toHaveLength(3);
+    expect(findByStableId(PROJECT_ID, "ASM-001")?.payload.sourcedFrom).toBe(
+      "current-project-objective",
+    );
     expect(result.duplicateInputRequestCount).toBe(0);
     expect(result.manualInputReductionPercent).toBeGreaterThanOrEqual(70);
+    // HOTFIX-1: no premature structural solution options / calc / decision
+    expect(result.options).toHaveLength(0);
+    expect(findByStableId(PROJECT_ID, "CALC-001")).toBeFalsy();
+    expect(findByStableId(PROJECT_ID, "DEC-001")).toBeFalsy();
     expect(wall).toBeLessThan(5 * 60 * 1000);
     expect(measureTimeToFirstValue(result)).toMatch(/s|m/);
     expect(embeddingsAreGraphAuthority()).toBe(false);
@@ -64,11 +68,13 @@ describe("EOS-3-PILOT-UX-2 guided engineering / minimum viable input", () => {
       objective: "Install a new 12 t process equipment module on an existing steel-framed platform.",
       ownerId: "e1",
     });
-    for (const id of ["EB-001", "REQ-001", "ASM-001", "DEC-001", "CALC-001", "REV-001"]) {
+    for (const id of ["EB-001", "REQ-001", "ASM-001", "REV-001"]) {
       const obj = findByStableId(PROJECT_ID, id)!;
-      expect(obj.payload.approvalState === "NOT_APPROVED" || obj.payload.aiMayApprove === false || obj.payload.status === "PROPOSED").toBe(
-        true,
-      );
+      expect(
+        obj.payload.approvalState === "NOT_APPROVED" ||
+          obj.payload.aiMayApprove === false ||
+          obj.payload.status === "PROPOSED",
+      ).toBe(true);
       expect(obj.payload.aiIsAuthority).not.toBe(true);
     }
   });
@@ -84,6 +90,7 @@ describe("EOS-3-PILOT-UX-2 guided engineering / minimum viable input", () => {
     expect(gate.primaryActionLabel).toBe("Review readiness");
     expect(gate.advancedHrefSlug).toBe("lifecycle");
     expect(gate.evaluation).toBeTruthy();
+    expect(gate.readinessExplainable).toBe(true);
   });
 
   it("captures natural mass change and maintains relationships", () => {
@@ -97,7 +104,7 @@ describe("EOS-3-PILOT-UX-2 guided engineering / minimum viable input", () => {
       "e1",
     );
     expect(change.changeStableId).toBe("CHG-001");
-    expect(change.affected.length).toBeGreaterThanOrEqual(3);
+    expect(change.affected.length).toBeGreaterThanOrEqual(1);
     expect(change.provenance.humanConfirmationStatus).toBe("PENDING");
     expect(findByStableId(PROJECT_ID, "ASM-001")?.payload.equipmentMass).toBe("15 t");
     const snap = snapshotProjectWorkspace(PROJECT_ID);
@@ -112,9 +119,9 @@ describe("EOS-3-PILOT-UX-2 guided engineering / minimum viable input", () => {
       ownerId: "e1",
     });
     const { accepted, skipped } = bulkAcceptSafeProposals(PROJECT_ID, result.proposals, "e1");
-    expect(skipped.some((id) => id === "ASM-001" || id.startsWith("ASM") || id === "DEC-001" || id === "RISK-001")).toBe(
-      true,
-    );
+    expect(
+      skipped.some((id) => id === "ASM-001" || id.startsWith("ASM") || id === "RISK-001"),
+    ).toBe(true);
     for (const id of accepted) {
       const p = result.proposals.find((x) => x.stableObjectId === id);
       expect(p?.bulkSafe).toBe(true);
@@ -140,5 +147,6 @@ describe("EOS-3-PILOT-UX-2 guided engineering / minimum viable input", () => {
     expect(result.tasks.length).toBeGreaterThan(5);
     expect(result.tasks.every((t) => t.interactionsEstimate <= 3)).toBe(true);
     expect(result.nextActions.length).toBeGreaterThan(0);
+    expect(result.tasks.every((t) => !/12 t → 15 t|PILOT-001/i.test(t.description))).toBe(true);
   });
 });

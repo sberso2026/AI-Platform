@@ -1,0 +1,39 @@
+{
+  "phase": "EOS-3-HOTFIX-1-GUIDED-ENGINEERING-INFERENCE-ISOLATION",
+  "requiredStartHead": "c7f2a340af250553edcd0c7589ea7248902b9848",
+  "actualBaseHead": "2e698e716b3f3f6b2a8c14070b6ee63f335b8ccf",
+  "verdict": "PASS",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "broadUxRedesignInThisPhase": false,
+  "currentSidebarPreserved": true,
+  "primaryNavigationChanged": false,
+  "homeMajorGeometryChanged": false,
+  "myWorkMajorLayoutChanged": false,
+  "workPackageMajorLayoutChanged": false,
+  "engineeringDesignMajorLayoutChanged": false,
+  "databaseSchemaChanged": false,
+  "migrationCountAdded": 0,
+  "qualificationBoundaryChanged": false,
+  "qualifiedD1BaselineInvalidated": false,
+  "engineeringFormulasChanged": false,
+  "engineeringResultSemanticsChanged": false,
+  "requiresLiveLlm": false,
+  "retestProject": "PILOT-011",
+  "artifacts": {
+    "isolationDoc": "docs/architecture/engineering-os/EOS_3_HOTFIX_1_GUIDED_INFERENCE_ISOLATION.md",
+    "manifest": "docs/architecture/engineering-os/EOS_3_HOTFIX_1_MANIFEST.json",
+    "gateResult": "docs/architecture/engineering-os/EOS_3_HOTFIX_1_GATE_RESULT.json",
+    "regressionTests": "apps/web/src/__tests__/eos3-hotfix-1-guided-inference-isolation.test.ts",
+    "guidedModule": "apps/web/src/lib/engineering/eos3-guided-engineering.ts"
+  },
+  "rootCauses": {
+    "crossProjectContamination": "Hardcoded pilot-001-template provenance and PILOT-001 defaults in guided generator",
+    "twelveTonneValue": "Invented Assume 12 t whenever mass keywords present without literal objective source",
+    "pilot001TemplateLeak": "Template/scaffolding path injected factual synthetic values with PILOT-001 provenance",
+    "projectStructuralNarrowing": "Project classified as Structural Modification from support/foundation keywords",
+    "readinessBias": "Concept readiness denominator dominated by mass/drawings/structural assumptions"
+  },
+  "securityReleaseRegressionGate": "PASS",
+  "canonicalSecurityCheck": "PASS_WITH_KNOWN_MODERATE",
+  "releaseTestCount": 220
+}

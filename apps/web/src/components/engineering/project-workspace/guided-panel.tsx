@@ -404,9 +404,14 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
           {gate ? (
             <div className="rounded-lg border border-slate-700 bg-slate-900/50 p-4" data-testid="simplified-gate">
               <p className="text-lg font-semibold text-slate-100">
-                {gate.percentReady}% ready for Concept Definition
+                {gate.percentReady === null
+                  ? gate.readinessMessage ?? "Readiness cannot yet be reliably calculated"
+                  : `${gate.percentReady}% ready for Concept Definition`}
               </p>
               <p className="text-xs text-slate-400">{gate.stageLabel}</p>
+              {gate.percentReady !== null && gate.readinessMessage ? (
+                <p className="text-xs text-slate-500">{gate.readinessMessage}</p>
+              ) : null}
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div>
                   <p className="text-xs font-semibold text-emerald-300">Completed</p>
