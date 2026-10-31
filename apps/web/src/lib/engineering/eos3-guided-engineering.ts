@@ -932,7 +932,7 @@ export function generateGuidedProjectState(
   const massFact = ctx.extractedNumerics.find((n) => /^t|tonnes?$/i.test(n.unit));
   const prematureCalculationCount = 0;
   const prematureDecisionCount = 0;
-  let prematureSolutionOptionCount = 0;
+  const prematureSolutionOptionCount = 0;
 
   if (massFact) {
     ensureObject(
@@ -1096,10 +1096,7 @@ export function generateGuidedProjectState(
 
   // Options empty until structural (or other) finding exists
   const options: Array<{ id: string; label: string; status: "PROPOSED" }> = [];
-  if (ctx.structuralFindingExists) {
-    // gated path — not taken at concept start
-    prematureSolutionOptionCount = 0;
-  }
+  // structuralFindingExists remains false at concept start — no premature options
 
   // Light relationships among created concept objects only
   const by = (id: string) => findByStableId(projectId, id);
