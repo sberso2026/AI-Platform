@@ -930,8 +930,8 @@ export function generateGuidedProjectState(
 
   // Assumption ONLY when numeric mass literally in current objective
   const massFact = ctx.extractedNumerics.find((n) => /^t|tonnes?$/i.test(n.unit));
-  let prematureCalculationCount = 0;
-  let prematureDecisionCount = 0;
+  const prematureCalculationCount = 0;
+  const prematureDecisionCount = 0;
   let prematureSolutionOptionCount = 0;
 
   if (massFact) {
