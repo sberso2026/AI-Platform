@@ -359,6 +359,14 @@ function EngineeringDesignPanel({
             <dd className="inline font-medium text-slate-900">CALC-001 review</dd>
           </div>
         </dl>
+        <div
+          className="mt-2 text-xs text-slate-700"
+          data-testid="ed-cockpit-context"
+        >
+          <span data-testid="ed-cockpit-next-action">
+            Next Action: Review CALC-001 against revised 15 t equipment load
+          </span>
+        </div>
       </div>
       {impactedCalcs.length > 0 ? (
         <div className="space-y-2" data-testid="engineering-design-impact-context">

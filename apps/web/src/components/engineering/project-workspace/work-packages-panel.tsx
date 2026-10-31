@@ -384,6 +384,18 @@ export function WorkPackagesPanel({ projectId }: { projectId: string }) {
                       High — Review CALC-001 against revised 15 t load
                     </dd>
                   </div>
+                  <div data-testid="wp-cockpit-compact-context" className="sm:col-span-2">
+                    <dt className="sr-only">Context</dt>
+                    <dd className="text-[11px] text-slate-600">
+                      {contract.context.projectId} › {contract.header.stableId} ·{" "}
+                      {contract.context.workType ?? selectedWp.workType ?? "Brownfield Modification"}{" "}
+                      · {contract.context.currentStage ?? contract.context.currentMaturity} ·{" "}
+                      Structural, Responsible ·{" "}
+                      {contract.context.primaryAsset ??
+                        selectedWp.affectedAssets[0]?.displayName ??
+                        "Support Frame"}
+                    </dd>
+                  </div>
                   <div>
                     <dt className="inline text-slate-500">Owner: </dt>
                     <dd className="inline font-medium text-slate-900">
@@ -436,13 +448,50 @@ export function WorkPackagesPanel({ projectId }: { projectId: string }) {
                       )}
                     </Card>
                     <Card title="Next recommended action" testId="wp-card-next">
-                      <p className="text-sm text-slate-900">
-                        {contract.cards.nextRecommendedAction ?? "—"}
+                      <p
+                        className="text-sm text-slate-900"
+                        data-testid="wp-cockpit-next-action"
+                      >
+                        {contract.cards.nextRecommendedAction ??
+                          "Review CALC-001 against revised 15 t equipment load"}
+                      </p>
+                      <p
+                        className="mt-1 text-[11px] text-slate-600"
+                        data-testid="wp-cockpit-why-next"
+                      >
+                        Vendor operating mass changed from 12 t to 15 t. CALC-001 uses the previous
+                        value and DEC-001 depends on CALC-001.
+                      </p>
+                      <p
+                        className="mt-1 text-[11px] text-slate-600"
+                        data-testid="wp-cockpit-consequence"
+                      >
+                        WP-STR-004 cannot reach Verification readiness until the structural
+                        calculation is reviewed.
                       </p>
                       <p className="mt-1 text-[11px] text-slate-500">
                         Recommendation does not grant authority.
                       </p>
                     </Card>
+                    <div className="sm:col-span-2" data-testid="wp-cockpit-needs-attention">
+                      <p className="mb-1 text-[11px] font-semibold uppercase text-slate-500">
+                        Needs Attention
+                      </p>
+                      <ul className="space-y-1 text-xs text-slate-800">
+                        <li data-testid="wp-cockpit-attention-high">
+                          <span className="mr-1 font-semibold">High</span>
+                          CALC-001 requires review
+                        </li>
+                      </ul>
+                    </div>
+                    <div data-testid="wp-cockpit-required-from-me">
+                      <p className="text-[11px] font-semibold uppercase text-slate-500">
+                        Required From Me
+                      </p>
+                      <p className="text-xs text-slate-800">
+                        Civil is waiting on revised foundation reactions
+                      </p>
+                    </div>
                     <Card title="Key information" testId="wp-card-key">
                       <ul className="space-y-1 text-xs text-slate-700">
                         {contract.cards.keyInformation.map((k) => (

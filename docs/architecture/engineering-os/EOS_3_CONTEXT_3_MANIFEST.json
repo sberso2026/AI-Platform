@@ -1,0 +1,21 @@
+{
+  "phase": "EOS-3-CONTEXT-3-ADAPTIVE-ENGINEERING-COCKPIT-INTEGRATION",
+  "requiredStartHead": "ddb0cb4aee09893db77fb7fd8eb186eda8c75941",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "broadUxRedesignInThisPhase": false,
+  "currentSidebarPreserved": true,
+  "primaryNavigationChanged": false,
+  "databaseSchemaChanged": false,
+  "migrationCountAdded": 0,
+  "cockpitRequiresLiveLlm": false,
+  "artifacts": {
+    "cockpit": "docs/architecture/engineering-os/EOS_3_ADAPTIVE_ENGINEERING_COCKPIT.md",
+    "contextPriority": "docs/architecture/engineering-os/EOS_3_COCKPIT_CONTEXT_AND_PRIORITY_INTEGRATION.md",
+    "authority": "docs/architecture/engineering-os/EOS_3_COCKPIT_ACTION_AND_AUTHORITY_MODEL.md",
+    "performance": "docs/architecture/engineering-os/EOS_3_COCKPIT_PERFORMANCE_MODEL.md",
+    "uiStability": "docs/architecture/engineering-os/EOS_3_COCKPIT_UI_STABILITY_RULES.md",
+    "pilotValidation": "docs/architecture/engineering-os/EOS_3_CONTEXT3_PILOT_VALIDATION.md",
+    "manifest": "docs/architecture/engineering-os/EOS_3_CONTEXT_3_MANIFEST.json"
+  },
+  "nextPhase": "EOS-3-NEXT-GOVERNED-PHASE"
+}

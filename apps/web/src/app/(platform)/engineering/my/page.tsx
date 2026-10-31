@@ -486,9 +486,14 @@ function MyWorkInner() {
                             </td>
                             <td className="px-3 py-2">
                               <Link
-                                href={openHref}
+                                href={
+                                  pri?.href
+                                    ? String(pri.href)
+                                    : openHref
+                                }
                                 className="inline-flex min-h-8 items-center rounded border border-slate-300 bg-white px-2 text-xs font-medium text-slate-800 hover:border-[color:var(--eos-gold,#c4a35a)]"
                                 data-testid="my-work-next-action"
+                                data-eos-my-work-context-nav="yes"
                               >
                                 {nextLabel === "Open" ? "Open" : nextLabel}
                               </Link>
