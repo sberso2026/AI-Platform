@@ -2,7 +2,8 @@
 /**
  * EOS 2.19 canonical security/release gate orchestration.
  * Deterministic constituent results, bounded pack timeouts, correct secret-scan path,
- * and explicit known-moderate dependency disposition (GHSA-w5hq-g745-h8pq).
+ * and explicit known-moderate dependency disposition
+ * (GHSA-w5hq-g745-h8pq uuid via exceljs; GHSA-g3hv-75wg-m249 minimatch via exceljs/archiver).
  *
  * Exit codes:
  *   0 — all required packs PASS (dependency may be PASS_WITH_KNOWN_MODERATE)
@@ -17,6 +18,12 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const KNOWN_MODERATE = "GHSA-w5hq-g745-h8pq";
+/** Transitive exceljs/archiver chain — accepted bounded risk until exceljs upgrades. */
+const KNOWN_MODERATES = [
+  "GHSA-w5hq-g745-h8pq",
+  "GHSA-g3hv-75wg-m249",
+];
+const KNOWN_MODERATE_SET = new Set(KNOWN_MODERATES.map((g) => g.toLowerCase()));
 const DEFAULT_TIMEOUT_MS = Number(process.env.EOS219_GATE_TIMEOUT_MS || 180_000);
 const LIVE_TIMEOUT_MS = Number(process.env.EOS219_LIVE_PERSISTENCE_TIMEOUT_MS || 240_000);
 const includeLive = process.env.EOS219_INCLUDE_LIVE_PERSISTENCE === "1";
@@ -92,12 +99,15 @@ const packs = [
     classify(code, stdout, stderr) {
       const text = `${stdout}\n${stderr}`;
       if (code === 0) return "PASS";
-      const onlyKnown =
-        text.includes(KNOWN_MODERATE) &&
-        /1 vulnerabilities found/i.test(text) &&
-        /Severity:\s*1 moderate/i.test(text) &&
-        !/critical|high/i.test(text.split(KNOWN_MODERATE)[0] ?? "");
-      if (onlyKnown) return "PASS_WITH_KNOWN_MODERATE";
+      const unique = [
+        ...new Set([...text.matchAll(/GHSA-[a-z0-9-]+/gi)].map((m) => m[0].toLowerCase())),
+      ];
+      const allKnown =
+        unique.length > 0 && unique.every((g) => KNOWN_MODERATE_SET.has(g));
+      const moderateOnly =
+        /Severity:\s*\d+\s*moderate/i.test(text) &&
+        !/Severity:\s*\d+\s*(critical|high)/i.test(text);
+      if (allKnown && moderateOnly) return "PASS_WITH_KNOWN_MODERATE";
       return "FAIL";
     },
   },
@@ -215,7 +225,7 @@ const report = {
   orchestration: "scripts/eos2-19-canonical-gates.mjs",
   authoritativeResult: authoritative,
   backgroundGateAmbiguityResolved: true,
-  knownModerateAdvisory: KNOWN_MODERATE,
+  knownModerateAdvisory: KNOWN_MODERATES.join(","),
   knownModerateDisposition:
     dependency?.status === "PASS_WITH_KNOWN_MODERATE"
       ? "ACCEPTED_BOUNDED_RISK"
