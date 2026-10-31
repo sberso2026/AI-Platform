@@ -15,5 +15,7 @@
     "manifest": "docs/architecture/engineering-os/EOS_3_HOTFIX_1B_MANIFEST.json",
     "gateResult": "docs/architecture/engineering-os/EOS_3_HOTFIX_1B_GATE_RESULT.json",
     "tests": "apps/web/src/__tests__/eos3-hotfix-1b-guided-interaction-freeze.test.ts"
-  }
+  },
+  "endHead": "e0b193791131dcb87f4dc773ccf79eadc4057c86",
+  "deploymentId": "dpl_9bK56BwCRcJcHp2Qk1xTFL35zLns"
 }
