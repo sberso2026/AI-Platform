@@ -4,7 +4,7 @@
   "requiredStartHead": "c7f2a340af250553edcd0c7589ea7248902b9848",
   "startHeadVerifiedAncestor": true,
   "actualBaseHead": "2e698e716b3f3f6b2a8c14070b6ee63f335b8ccf",
-  "endHead": "97b8937022e023cae99aa4a8d966b34d42a9289f",
+  "endHead": "28c0b67d5143181fa9d6531d203275a9267aeb31",
   "worktreeCleanAtStart": true,
   "rootCauses": {
     "crossProjectContamination": "Guided generator hardcoded source pilot-001-template and PILOT-001 defaults into unrelated projects",
