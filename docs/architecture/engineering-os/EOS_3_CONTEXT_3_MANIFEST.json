@@ -1,13 +1,34 @@
 {
   "phase": "EOS-3-CONTEXT-3-ADAPTIVE-ENGINEERING-COCKPIT-INTEGRATION",
   "requiredStartHead": "ddb0cb4aee09893db77fb7fd8eb186eda8c75941",
+  "endHead": "54f8ca7a25d0567470cdfc414bbba82b6e3e101d",
+  "verdict": "PASS_WITH_LIMITATIONS",
   "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "deploymentId": "dpl_6E2Ri9FHKG9EoQRFXLxV9V5LtGLg",
   "broadUxRedesignInThisPhase": false,
   "currentSidebarPreserved": true,
   "primaryNavigationChanged": false,
   "databaseSchemaChanged": false,
   "migrationCountAdded": 0,
   "cockpitRequiresLiveLlm": false,
+  "cockpitShadowEngineeringStateCreated": false,
+  "performance": {
+    "homeWarmP95Ms": 361,
+    "homeWarmP50Ms": 180,
+    "myWorkWarmP95Ms": 232,
+    "myWorkWarmP50Ms": 173,
+    "workPackageWarmP95Ms": 615,
+    "workPackageWarmP50Ms": 179,
+    "engineeringDesignWarmP95Ms": 590,
+    "engineeringDesignWarmP50Ms": 175,
+    "homeMeasurementMethod": "unauth_GET_/engineering_post_settle_n15_gap200ms",
+    "myWorkMeasurementMethod": "unauth_GET_/engineering/my_post_settle_n15_gap200ms",
+    "homeMeasurementSampleCount": 15,
+    "homeCockpitRegression": false,
+    "myWorkCockpitRegression": false,
+    "homeDeepCockpitQueryCount": 0,
+    "nPlusOneQueryCount": 0
+  },
   "artifacts": {
     "cockpit": "docs/architecture/engineering-os/EOS_3_ADAPTIVE_ENGINEERING_COCKPIT.md",
     "contextPriority": "docs/architecture/engineering-os/EOS_3_COCKPIT_CONTEXT_AND_PRIORITY_INTEGRATION.md",
@@ -15,7 +36,8 @@
     "performance": "docs/architecture/engineering-os/EOS_3_COCKPIT_PERFORMANCE_MODEL.md",
     "uiStability": "docs/architecture/engineering-os/EOS_3_COCKPIT_UI_STABILITY_RULES.md",
     "pilotValidation": "docs/architecture/engineering-os/EOS_3_CONTEXT3_PILOT_VALIDATION.md",
-    "manifest": "docs/architecture/engineering-os/EOS_3_CONTEXT_3_MANIFEST.json"
+    "manifest": "docs/architecture/engineering-os/EOS_3_CONTEXT_3_MANIFEST.json",
+    "gateResult": "docs/architecture/engineering-os/EOS_3_CONTEXT_3_GATE_RESULT.json"
   },
   "nextPhase": "EOS-3-NEXT-GOVERNED-PHASE"
 }
