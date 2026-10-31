@@ -151,6 +151,13 @@ export function ProjectSetupPanel({
     setDirty(dirty);
   }, [dirty, setDirty]);
 
+  useEffect(() => {
+    return () => {
+      // Prevent orphan dirty locks from freezing Guided Engineering / other routes.
+      setDirty(false);
+    };
+  }, [setDirty]);
+
   const save = useCallback(async (): Promise<boolean> => {
     if (saving) return false;
     setSaving(true);

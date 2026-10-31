@@ -1,0 +1,19 @@
+{
+  "phase": "EOS-3-HOTFIX-1B-GUIDED-ENGINEERING-INTERACTION-FREEZE",
+  "verdict": "PASS",
+  "startHead": "3ea604c88d223fb09d773fcc139285c77f2858b2",
+  "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "databaseSchemaChanged": false,
+  "migrationCountAdded": 0,
+  "qualificationBoundaryChanged": false,
+  "preservesHotfix1": true,
+  "preservesHotfix1A": true,
+  "releaseTestCount": 220,
+  "securityReleaseRegressionGate": "PASS",
+  "artifacts": {
+    "doc": "docs/architecture/engineering-os/EOS_3_HOTFIX_1B_GUIDED_INTERACTION_FREEZE.md",
+    "manifest": "docs/architecture/engineering-os/EOS_3_HOTFIX_1B_MANIFEST.json",
+    "gateResult": "docs/architecture/engineering-os/EOS_3_HOTFIX_1B_GATE_RESULT.json",
+    "tests": "apps/web/src/__tests__/eos3-hotfix-1b-guided-interaction-freeze.test.ts"
+  }
+}

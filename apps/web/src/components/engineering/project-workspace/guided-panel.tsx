@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Input } from "@rtb/ui";
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import { workspaceHref } from "@/lib/engineering/project-workspace-ia";
@@ -14,6 +14,7 @@ import {
   type SimplifiedGateReadiness,
   type GuidedTask,
 } from "@/lib/engineering/eos3-guided-engineering";
+import { useUnsavedChangesGuard } from "./unsaved-changes-guard";
 
 type GuidedView = {
   mode: string;
@@ -39,22 +40,35 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
   const [utterance, setUtterance] = useState("");
   const [changeResult, setChangeResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  /** Local action lock only — never applied as a page-wide pointer-events overlay. */
+  const [preparing, setPreparing] = useState(false);
+  const [capturing, setCapturing] = useState(false);
   const [experienceLevel, setExperienceLevel] = useState<
     "GUIDED" | "ENGINEERING_WORKSPACE" | "GOVERNANCE_WORKSPACE"
   >("GUIDED");
+  const mountedRef = useRef(true);
+  const { setDirty } = useUnsavedChangesGuard();
 
   const loadView = useCallback(async () => {
     const res = await fetch(
       `/api/engineering/projects/${projectId}/workspace?view=guided`,
     );
     const parsed = await parseApiJsonResponse<GuidedView>(res);
+    if (!mountedRef.current) return;
     if (parsed.ok && parsed.data) setView(parsed.data);
   }, [projectId]);
 
   useEffect(() => {
+    mountedRef.current = true;
+    // Clear orphan dirty locks left by other workspace panels (e.g. Setup).
+    setDirty(false);
     void loadView();
-  }, [loadView]);
+    return () => {
+      mountedRef.current = false;
+      setPreparing(false);
+      setCapturing(false);
+    };
+  }, [loadView, setDirty]);
 
   useEffect(() => {
     const existing = view?.setup?.description?.trim();
@@ -64,7 +78,7 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
   }, [view?.setup?.description]);
 
   async function generate() {
-    setBusy(true);
+    setPreparing(true);
     setError(null);
     try {
       const res = await fetch(`/api/engineering/projects/${projectId}/workspace`, {
@@ -83,9 +97,9 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
       const parsed = await parseApiJsonResponse<{
         timeToFirstValue?: string;
       } & GuidedGenerationResult>(res);
+      if (!mountedRef.current) return;
       if (!parsed.ok || !parsed.data) {
         setError(parsed.errorMessage ?? "Could not generate project definition");
-        setBusy(false);
         return;
       }
       setGeneration(parsed.data);
@@ -93,42 +107,60 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
       setStep(2);
       await loadView();
     } catch (e: unknown) {
+      if (!mountedRef.current) return;
       setError(e instanceof Error ? e.message : "Generation failed");
     } finally {
-      setBusy(false);
+      if (mountedRef.current) setPreparing(false);
     }
   }
 
   async function decide(stableObjectId: string, decision: "CONFIRMED" | "REJECTED") {
-    await fetch(`/api/engineering/projects/${projectId}/workspace`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "guided_accept_proposal",
-        stableObjectId,
-        decision,
-      }),
-    });
-    setProposals((prev) =>
-      prev.map((p) =>
-        p.stableObjectId === stableObjectId
-          ? { ...p, accepted: decision === "CONFIRMED" }
-          : p,
-      ),
-    );
+    setError(null);
+    try {
+      const res = await fetch(`/api/engineering/projects/${projectId}/workspace`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "guided_accept_proposal",
+          stableObjectId,
+          decision,
+        }),
+      });
+      if (!mountedRef.current) return;
+      if (!res.ok) {
+        setError(`Could not ${decision === "CONFIRMED" ? "accept" : "reject"} draft (${res.status})`);
+        return;
+      }
+      setProposals((prev) =>
+        prev.map((p) =>
+          p.stableObjectId === stableObjectId
+            ? { ...p, accepted: decision === "CONFIRMED" }
+            : p,
+        ),
+      );
+    } catch (e: unknown) {
+      if (!mountedRef.current) return;
+      setError(e instanceof Error ? e.message : "Draft decision failed");
+    }
   }
 
   async function bulkSafe() {
-    const res = await fetch(`/api/engineering/projects/${projectId}/workspace`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "guided_bulk_accept_safe",
-        proposals,
-      }),
-    });
-    const parsed = await parseApiJsonResponse<{ accepted: string[]; skipped: string[] }>(res);
-    if (parsed.ok && parsed.data) {
+    setError(null);
+    try {
+      const res = await fetch(`/api/engineering/projects/${projectId}/workspace`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "guided_bulk_accept_safe",
+          proposals,
+        }),
+      });
+      const parsed = await parseApiJsonResponse<{ accepted: string[]; skipped: string[] }>(res);
+      if (!mountedRef.current) return;
+      if (!parsed.ok || !parsed.data) {
+        setError(parsed.errorMessage ?? "Bulk accept failed");
+        return;
+      }
       setProposals((prev) =>
         prev.map((p) =>
           parsed.data!.accepted.includes(p.stableObjectId)
@@ -136,39 +168,55 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
             : p,
         ),
       );
+    } catch (e: unknown) {
+      if (!mountedRef.current) return;
+      setError(e instanceof Error ? e.message : "Bulk accept failed");
     }
   }
 
   async function captureChange() {
-    setBusy(true);
+    setCapturing(true);
     setChangeResult(null);
-    const res = await fetch(`/api/engineering/projects/${projectId}/workspace`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "guided_natural_change",
-        utterance,
-      }),
-    });
-    const parsed = await parseApiJsonResponse<{
-      interpretedAs?: string;
-      affected?: unknown[];
-    }>(res);
-    setBusy(false);
-    if (parsed.ok && parsed.data?.interpretedAs) {
-      setChangeResult(
-        `${parsed.data.interpretedAs} · affected ${parsed.data.affected?.length ?? 0} objects (not auto-approved)`,
-      );
-      await loadView();
-    } else {
-      setError(parsed.errorMessage ?? "Change capture failed");
+    setError(null);
+    try {
+      const res = await fetch(`/api/engineering/projects/${projectId}/workspace`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "guided_natural_change",
+          utterance,
+        }),
+      });
+      const parsed = await parseApiJsonResponse<{
+        interpretedAs?: string;
+        affected?: unknown[];
+      }>(res);
+      if (!mountedRef.current) return;
+      if (parsed.ok && parsed.data?.interpretedAs) {
+        setChangeResult(
+          `${parsed.data.interpretedAs} · affected ${parsed.data.affected?.length ?? 0} objects (not auto-approved)`,
+        );
+        await loadView();
+      } else {
+        setError(parsed.errorMessage ?? "Change capture failed");
+      }
+    } catch (e: unknown) {
+      if (!mountedRef.current) return;
+      setError(e instanceof Error ? e.message : "Change capture failed");
+    } finally {
+      if (mountedRef.current) setCapturing(false);
     }
   }
 
   const gate = generation?.gate ?? view?.gate;
 
   return (
-    <div className="space-y-6" data-testid="guided-engineering-panel">
+    <div
+      className="relative z-0 space-y-6"
+      data-testid="guided-engineering-panel"
+      data-guided-interaction="ready"
+      data-guided-page-wide-pointer-lock="false"
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-200">
@@ -271,15 +319,45 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
               placeholder="scope brief, datasheet, existing drawings…"
             />
           </label>
-          {error ? <p className="text-sm text-rose-300">{error}</p> : null}
-          <Button type="button" disabled={busy || !objective.trim()} onClick={() => void generate()}>
-            {busy ? "Preparing…" : "Prepare project definition"}
+          {error ? (
+            <p className="text-sm text-rose-300" role="alert" data-testid="guided-error">
+              {error}
+            </p>
+          ) : null}
+          <Button
+            type="button"
+            disabled={preparing || !objective.trim()}
+            data-testid="guided-prepare-definition"
+            className="disabled:border-slate-500 disabled:bg-slate-700 disabled:text-slate-100 disabled:opacity-100"
+            onClick={() => void generate()}
+          >
+            {preparing ? "Preparing…" : "Prepare project definition"}
           </Button>
         </section>
       ) : null}
 
       {step >= 2 && generation ? (
         <section className="space-y-4" data-testid="guided-step-2">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              data-testid="guided-return-step-1"
+              className="border-slate-500 bg-slate-100 text-slate-900 hover:bg-white disabled:opacity-100"
+              onClick={() => {
+                setError(null);
+                setStep(1);
+              }}
+            >
+              Edit project definition
+            </Button>
+          </div>
+          {error ? (
+            <p className="text-sm text-rose-300" role="alert" data-testid="guided-error">
+              {error}
+            </p>
+          ) : null}
           <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-100">
             First useful engineering state ready in{" "}
             <strong data-testid="time-to-first-value">
@@ -504,10 +582,12 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
             <Button
               type="button"
               size="sm"
-              disabled={busy || !utterance.trim()}
+              disabled={capturing || !utterance.trim()}
+              data-testid="guided-capture-change"
+              className="disabled:border-slate-500 disabled:bg-slate-700 disabled:text-slate-100 disabled:opacity-100"
               onClick={() => void captureChange()}
             >
-              Capture change
+              {capturing ? "Capturing…" : "Capture change"}
             </Button>
             {changeResult ? (
               <p className="text-sm text-emerald-300" data-testid="natural-change-result">

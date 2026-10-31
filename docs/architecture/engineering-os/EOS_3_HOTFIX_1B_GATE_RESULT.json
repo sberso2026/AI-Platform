@@ -1,0 +1,39 @@
+{
+  "phase": "EOS-3-HOTFIX-1B-GUIDED-ENGINEERING-INTERACTION-FREEZE",
+  "verdict": "PASS",
+  "startHead": "3ea604c88d223fb09d773fcc139285c77f2858b2",
+  "eosGuidedUiFreezeReproduced": "YES",
+  "rootCauseGuidedUiFreeze": "Orphan Project Setup unsaved-dirty lock armed navigation interceptor/modal over dark Guided surface (appeared frozen); captureChange lacked try/finally busy clear",
+  "flags": {
+    "EOS_GUIDED_STALE_LOADING_LOCK_COUNT": 0,
+    "EOS_GUIDED_PAGE_WIDE_POINTER_LOCK_COUNT": 0,
+    "EOS_INVISIBLE_INTERACTION_BLOCKING_OVERLAY_COUNT": 0,
+    "EOS_GUIDED_MAIN_SCROLL": "PASS",
+    "EOS_GUIDED_SIDEBAR_SCROLL": "PASS",
+    "EOS_GUIDED_FORM_INTERACTION": "PASS",
+    "EOS_DISABLED_CONTROL_SCOPE": "PASS",
+    "EOS_DISABLED_CONTROL_CONTRAST": "PASS",
+    "EOS_GUIDED_REQUEST_FAILURE_UI_RECOVERY": "PASS",
+    "EOS_GUIDED_ROUTE_REENTRY_INTERACTION": "PASS",
+    "EOS_GUIDED_HARD_REFRESH_RECOVERY": "PASS",
+    "EOS_GUIDED_INFERENCE_HOTFIX_REGRESSION": "PASS",
+    "EOS_GUIDED_INTERACTION_FREEZE_REGRESSION_TESTS": "PASS",
+    "DATABASE_SCHEMA_CHANGED": "NO",
+    "MIGRATION_COUNT_ADDED": 0,
+    "CANONICAL_SECURITY_CHECK": "PASS",
+    "GA_SECURITY_CHECK": "PASS",
+    "SECRET_SCAN": "PASS",
+    "NEW_BLOCKING_SECURITY_ISSUE": "NO",
+    "RELEASE_GOVERNANCE": "PASS",
+    "SECURITY_RELEASE_REGRESSION_GATE": "PASS"
+  },
+  "releaseGates": {
+    "authoritativeResult": "PASS_WITH_KNOWN_MODERATE",
+    "knownModerateAdvisory": "GHSA-w5hq-g745-h8pq,GHSA-g3hv-75wg-m249",
+    "releaseTestCount": 220
+  },
+  "deployedToControlledPilot": false,
+  "pilotAlias": "https://eos-pilot.rtbea.com.au",
+  "blocker": null,
+  "readyForManualContinuation": true
+}

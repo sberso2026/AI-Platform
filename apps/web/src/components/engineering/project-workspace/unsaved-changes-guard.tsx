@@ -288,13 +288,14 @@ export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
     const handler = saveHandlerRef.current;
     if (!handler) {
       setSaving(false);
-      setSaveError("No save handler registered for this form.");
+      setSaveError(
+        "No save handler is available for this page. Discard changes or keep editing to restore interaction.",
+      );
       return;
     }
     try {
       const ok = await handler();
       if (!ok) {
-        setSaving(false);
         setSaveError(
           "Project setup could not be saved. Your changes have been preserved.",
         );
@@ -303,12 +304,13 @@ export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
       }
       await proceed(pending);
     } catch (e: unknown) {
-      setSaving(false);
       const technical = e instanceof Error ? e.message : "save_failed";
       console.error("[eos-unsaved-guard] save failed", technical);
       setSaveError(
         "Project setup could not be saved. Your changes have been preserved.",
       );
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -321,9 +323,10 @@ export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
       {children}
       {open ? (
         <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/70 p-4"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-4"
           data-testid="unsaved-changes-modal-backdrop"
           role="presentation"
+          aria-hidden={false}
         >
           <div
             ref={dialogRef}
@@ -332,16 +335,16 @@ export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
             aria-labelledby={titleId}
             aria-describedby={descId}
             data-testid="unsaved-changes-modal"
-            className="w-full max-w-md rounded-lg border border-slate-600 bg-slate-900 p-5 shadow-xl"
+            className="w-full max-w-md rounded-lg border-2 border-amber-400/80 bg-slate-100 p-5 text-slate-900 shadow-2xl"
           >
-            <h2 id={titleId} className="text-base font-semibold text-slate-100">
+            <h2 id={titleId} className="text-base font-semibold text-slate-900">
               Unsaved changes
             </h2>
-            <p id={descId} className="mt-2 text-sm text-slate-300">
+            <p id={descId} className="mt-2 text-sm text-slate-700">
               You have unsaved changes. Save them before leaving this page?
             </p>
             {saveError ? (
-              <p className="mt-3 text-sm text-rose-300" data-testid="unsaved-save-error" role="alert">
+              <p className="mt-3 text-sm text-rose-700" data-testid="unsaved-save-error" role="alert">
                 {saveError}
               </p>
             ) : null}
@@ -350,6 +353,7 @@ export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
                 type="button"
                 size="sm"
                 disabled={saving}
+                className="bg-slate-900 text-slate-50 hover:bg-slate-800 disabled:bg-slate-500 disabled:text-slate-100 disabled:opacity-100"
                 onClick={() => void onSaveAndContinue()}
                 data-testid="unsaved-save-and-continue"
               >
@@ -360,6 +364,7 @@ export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
                 size="sm"
                 variant="outline"
                 disabled={saving}
+                className="border-slate-600 bg-white text-slate-900 hover:bg-slate-50 disabled:border-slate-400 disabled:bg-slate-200 disabled:text-slate-700 disabled:opacity-100"
                 onClick={() => void onDiscard()}
                 data-testid="unsaved-discard"
               >
@@ -369,7 +374,8 @@ export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                disabled={saving}
+                disabled={false}
+                className="text-slate-800 hover:bg-slate-200"
                 onClick={closeModal}
                 data-testid="unsaved-keep-editing"
               >
