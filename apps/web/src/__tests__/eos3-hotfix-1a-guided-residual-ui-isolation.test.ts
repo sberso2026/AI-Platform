@@ -179,4 +179,26 @@ describe("EOS-3-HOTFIX-1A Guided Engineering Residual UI Isolation", () => {
     expect(existsSync(resolve(DOCS, "EOS_3_HOTFIX_1A_GUIDED_RESIDUAL_UI_ISOLATION.md"))).toBe(true);
     expect(existsSync(resolve(DOCS, "EOS_3_HOTFIX_1A_MANIFEST.json"))).toBe(true);
   });
+
+  it("keeps Guided bulk-accept button text readable (WCAG AA contrast classes)", () => {
+    const panel = readFileSync(
+      resolve(WEB_ROOT, "src/components/engineering/project-workspace/guided-panel.tsx"),
+      "utf8",
+    );
+    const bulkIdx = panel.indexOf('data-testid="guided-bulk-accept-safe"');
+    expect(bulkIdx).toBeGreaterThan(-1);
+    const snippet = panel.slice(Math.max(0, bulkIdx - 120), bulkIdx + 900);
+    expect(snippet).toContain("Bulk accept low-risk administrative proposals only");
+    expect(snippet).toContain("onClick={() => void bulkSafe()}");
+    expect(snippet).toContain("bg-slate-100");
+    expect(snippet).toContain("text-slate-900");
+    expect(snippet).toContain("hover:bg-white");
+    expect(snippet).toContain("hover:text-slate-950");
+    expect(snippet).toContain("active:bg-slate-200");
+    expect(snippet).toContain("focus-visible:ring-amber-300");
+    expect(snippet).toContain("disabled:bg-slate-700");
+    expect(snippet).toContain("disabled:text-slate-100");
+    expect(snippet).toContain("disabled:opacity-100");
+    expect(snippet).not.toContain("disabled:opacity-50");
+  });
 });

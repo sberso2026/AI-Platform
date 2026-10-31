@@ -377,7 +377,14 @@ export function GuidedEngineeringPanel({ projectId }: { projectId: string }) {
               })}
             </ul>
             {step === 3 ? (
-              <Button type="button" size="sm" className="mt-3" variant="outline" onClick={() => void bulkSafe()}>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                data-testid="guided-bulk-accept-safe"
+                className="mt-3 border-slate-500 bg-slate-100 text-slate-900 hover:bg-white hover:text-slate-950 focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 active:bg-slate-200 active:text-slate-950 disabled:pointer-events-none disabled:border-slate-500 disabled:bg-slate-700 disabled:text-slate-100 disabled:opacity-100"
+                onClick={() => void bulkSafe()}
+              >
                 Bulk accept low-risk administrative proposals only
               </Button>
             ) : null}
