@@ -1,7 +1,10 @@
 {
   "phase": "EOS-3-VALIDATION-1-END-TO-END-ENGINEERING-WORK-PACKAGE-EXECUTION",
   "requiredStartHead": "c7f2a340af250553edcd0c7589ea7248902b9848",
+  "endHead": "729e19e345ddfd19a97717084c350b30e6c5ec67",
+  "verdict": "PASS_WITH_LIMITATIONS",
   "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "deploymentId": "dpl_QuTbEcCnnN4EBtz7bxVPjdb11yMN",
   "broadUxRedesignInThisPhase": false,
   "currentSidebarPreserved": true,
   "primaryNavigationChanged": false,
@@ -9,6 +12,14 @@
   "migrationCountAdded": 0,
   "parallelWorkflowImplementationCreated": false,
   "requiresLiveLlm": false,
+  "performance": {
+    "homeWarmP95Ms": 343,
+    "myWorkWarmP95Ms": 226,
+    "workPackageWarmP95Ms": 324,
+    "engineeringDesignWarmP95Ms": 293,
+    "interactionJourneyP95Ms": 1665,
+    "measurementMethod": "unauth_GET_post_settle_n15_gap200ms"
+  },
   "artifacts": {
     "validation": "docs/architecture/engineering-os/EOS_3_END_TO_END_ENGINEERING_VALIDATION.md",
     "scenario": "docs/architecture/engineering-os/EOS_3_E2E_ENGINEERING_SCENARIO.md",
@@ -17,6 +28,7 @@
     "performance": "docs/architecture/engineering-os/EOS_3_E2E_PERFORMANCE_VALIDATION.md",
     "defectRegister": "docs/architecture/engineering-os/EOS_3_E2E_DEFECT_REGISTER.md",
     "manifest": "docs/architecture/engineering-os/EOS_3_VALIDATION_1_MANIFEST.json",
+    "gateResult": "docs/architecture/engineering-os/EOS_3_VALIDATION_1_GATE_RESULT.json",
     "screenEvidence": "docs/architecture/engineering-os/e2e-validation-1-evidence/"
   },
   "nextPhase": "EOS-3-NEXT-GOVERNED-PHASE"
