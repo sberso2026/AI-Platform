@@ -1,7 +1,7 @@
 {
   "phase": "EOS-3-CONTEXT-3-ADAPTIVE-ENGINEERING-COCKPIT-INTEGRATION",
   "requiredStartHead": "ddb0cb4aee09893db77fb7fd8eb186eda8c75941",
-  "endHead": "54f8ca7a25d0567470cdfc414bbba82b6e3e101d",
+  "endHead": "2341c2d0476b76e58692731f784b4a5b471db15a",
   "verdict": "PASS_WITH_LIMITATIONS",
   "adaptiveEngineeringCockpit": "PASS",
   "deployedToControlledPilot": true,
@@ -25,7 +25,7 @@
     "priorContext2HomeWarmP95Ms": 334,
     "priorContext2HomeWarmP50Ms": 189,
     "homeCockpitRegression": false,
-    "homeRegressionNote": "P50 improved 189→180; P95 334→361 (+27ms) within edge noise for comparable n=15 warm method; no Home deep cockpit queries.",
+    "homeRegressionNote": "P50 improved 189Ã¢â€ â€™180; P95 334Ã¢â€ â€™361 (+27ms) within edge noise for comparable n=15 warm method; no Home deep cockpit queries.",
     "myWorkWarmP95Ms": 232,
     "myWorkWarmP50Ms": 173,
     "myWorkMeasurementMethod": "unauth_GET_/engineering/my_post_settle_n15_gap200ms",
