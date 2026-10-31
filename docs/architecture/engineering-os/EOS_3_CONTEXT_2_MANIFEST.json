@@ -1,13 +1,31 @@
 {
   "phase": "EOS-3-CONTEXT-2-RISK-PRIORITIZED-MY-WORK-ENGINE",
   "requiredStartHead": "5a99c04aadaf8289ee533aea5eefed4b2df16d7a",
+  "endHead": "6512123bbe4376011f5941195151f133f2ecea2c",
+  "verdict": "PASS_WITH_LIMITATIONS",
   "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "deploymentId": "dpl_2qNZXnTpqcQTUSM92X7nBKeG2aQx",
   "broadUxRedesignInThisPhase": false,
   "currentSidebarPreserved": true,
   "priorityRequiresLiveLlm": false,
   "databaseSchemaChanged": true,
   "migrationCountAdded": 1,
   "migration": "supabase/migrations/20261030270000_eos_3_context_2_my_work_priority.sql",
+  "performance": {
+    "myWorkPriorityBuildP95Ms": 1.239,
+    "myWorkPriorityQueryP95Ms": 1.747,
+    "priorityExplanationP95Ms": 0.048,
+    "priorityRecomputeP95Ms": 1.331,
+    "myWorkWarmP95Ms": 454,
+    "myWorkWarmP50Ms": 178,
+    "homeWarmP95Ms": 334,
+    "homeWarmP50Ms": 189,
+    "homeMeasurementMethod": "unauth_GET_/engineering_post_settle_n15_gap200ms",
+    "homeMeasurementSampleCount": 15,
+    "homePerformanceMeasurementComparable": true,
+    "homeMyWorkEngineRegression": false,
+    "fullPriorityQueryOnHomeRenderCount": 0
+  },
   "artifacts": {
     "engine": "docs/architecture/engineering-os/EOS_3_RISK_PRIORITIZED_MY_WORK_ENGINE.md",
     "signals": "docs/architecture/engineering-os/EOS_3_ENGINEERING_PRIORITY_SIGNAL_MODEL.md",
@@ -17,5 +35,5 @@
     "pilotValidation": "docs/architecture/engineering-os/EOS_3_CONTEXT2_PILOT_VALIDATION.md",
     "manifest": "docs/architecture/engineering-os/EOS_3_CONTEXT_2_MANIFEST.json"
   },
-  "nextPhase": "EOS-3-CONTEXT-3-OR-NEXT-GOVERNED-PHASE"
+  "nextPhase": "EOS-3-NEXT-GOVERNED-PHASE"
 }

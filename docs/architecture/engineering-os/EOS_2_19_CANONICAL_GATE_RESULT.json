@@ -3,7 +3,7 @@
   "orchestration": "scripts/eos2-19-canonical-gates.mjs",
   "authoritativeResult": "PASS_WITH_KNOWN_MODERATE",
   "backgroundGateAmbiguityResolved": true,
-  "knownModerateAdvisory": "GHSA-w5hq-g745-h8pq",
+  "knownModerateAdvisory": "GHSA-w5hq-g745-h8pq,GHSA-g3hv-75wg-m249",
   "knownModerateDisposition": "ACCEPTED_BOUNDED_RISK",
   "releaseTestCount": 220,
   "includeLivePersistence": false,
@@ -65,5 +65,5 @@
       "timeoutMs": 120000
     }
   ],
-  "generatedAt": "2026-10-30T16:41:11.194Z"
+  "generatedAt": "2026-10-31T01:19:25.032Z"
 }
