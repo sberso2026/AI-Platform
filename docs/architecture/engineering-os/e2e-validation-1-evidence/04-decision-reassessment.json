@@ -1,0 +1,19 @@
+{
+  "capturedAt": "2026-10-31T03:34:20.294Z",
+  "build": "validation-1",
+  "name": "04-decision-reassessment",
+  "body": [
+    {
+      "step": 5,
+      "id": "EOS_E2E_STEP5_DECISION",
+      "pass": true,
+      "detail": "DEC-001 status=REASSESSMENT_REQUIRED lineage refs present"
+    },
+    {
+      "step": 16,
+      "id": "EOS_E2E_STEP16_DECISION_REASSESSMENT",
+      "pass": true,
+      "detail": "DEC reassessment by TA; rev=Rev 2"
+    }
+  ]
+}

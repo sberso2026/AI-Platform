@@ -1,0 +1,31 @@
+{
+  "capturedAt": "2026-10-31T03:34:20.294Z",
+  "build": "validation-1",
+  "name": "06-readiness-restored",
+  "body": [
+    {
+      "step": 9,
+      "id": "EOS_E2E_STEP9_MATURITY_READINESS",
+      "pass": true,
+      "detail": "stage=Engineering Design ready%=85 blockers=27"
+    },
+    {
+      "step": 21,
+      "id": "EOS_E2E_STEP21_READINESS_RECOMPUTATION",
+      "pass": true,
+      "detail": "ready%=85 blockers=21"
+    },
+    {
+      "step": 22,
+      "id": "EOS_E2E_STEP22_NEXT_CHECKPOINT",
+      "pass": true,
+      "detail": "next=M0 Modification Authorized autoGate=NO"
+    },
+    {
+      "step": 25,
+      "id": "EOS_E2E_STEP25_EXECUTION_READINESS",
+      "pass": true,
+      "detail": "Ready for Construction / IFC stage reached; construction module NOT implemented"
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "capturedAt": "2026-10-31T03:34:20.293Z",
+  "build": "validation-1",
+  "name": "02-wp-before-resolution",
+  "body": [
+    {
+      "step": 1,
+      "id": "EOS_E2E_STEP1_CONTEXT",
+      "pass": true,
+      "detail": "WP=WP-STR-004 workType=BROWNFIELD_MODIFICATION stage=engineering_design asset=Existing steel-framed process plant platform / support structure"
+    },
+    {
+      "step": 2,
+      "id": "EOS_E2E_STEP2_SCOPE_DESIGN_BASIS",
+      "pass": true,
+      "detail": "REQ-001, EB-001, SYS-STR-001, ASM-001 present"
+    },
+    {
+      "step": 3,
+      "id": "EOS_E2E_STEP3_ASSUMPTION",
+      "pass": true,
+      "detail": "ASM-001 value=12 rev=Rev 1 status=SUPERSEDED historyRows=11"
+    },
+    {
+      "step": 4,
+      "id": "EOS_E2E_STEP4_CALCULATION",
+      "pass": true,
+      "detail": "CALC-001 edges=7 qualification not expanded"
+    },
+    {
+      "step": 5,
+      "id": "EOS_E2E_STEP5_DECISION",
+      "pass": true,
+      "detail": "DEC-001 status=REASSESSMENT_REQUIRED lineage refs present"
+    },
+    {
+      "step": 6,
+      "id": "EOS_E2E_STEP6_DELIVERABLE",
+      "pass": true,
+      "detail": "DEL-001 maturity=IN_DEVELOPMENT review=NOT_STARTED issue≠approval"
+    },
+    {
+      "step": 7,
+      "id": "EOS_E2E_STEP7_INTERDISCIPLINARY_DEPENDENCY",
+      "pass": true,
+      "detail": "deps=32 civil=true"
+    },
+    {
+      "step": 7,
+      "id": "EOS_E2E_PIPING_COORDINATION",
+      "pass": true,
+      "detail": "Piping involved=true"
+    },
+    {
+      "step": 8,
+      "id": "EOS_E2E_STEP8_REVIEW",
+      "pass": true,
+      "detail": "REV-001 status=open"
+    },
+    {
+      "step": 8,
+      "id": "EOS_E2E_REVIEW_APPROVAL_SEPARATION",
+      "pass": true,
+      "detail": "Review ≠ automatic engineering approval"
+    },
+    {
+      "step": 9,
+      "id": "EOS_E2E_STEP9_MATURITY_READINESS",
+      "pass": true,
+      "detail": "stage=Engineering Design ready%=85 blockers=27"
+    },
+    {
+      "step": 10,
+      "id": "EOS_E2E_STEP10_VENDOR_CHANGE",
+      "pass": true,
+      "detail": "12→15 applied; autoApproval=false"
+    },
+    {
+      "step": 10,
+      "id": "EOS_E2E_VENDOR_REVISION_HISTORY_PRESERVED",
+      "pass": true,
+      "detail": "Prior 12 t basis preserved"
+    },
+    {
+      "step": 11,
+      "id": "EOS_E2E_STEP11_IMPACT_PROPAGATION",
+      "pass": true,
+      "detail": "activeImpacts=25 calc=true dec=true autoInvalidity=false"
+    },
+    {
+      "step": 12,
+      "id": "EOS_E2E_STEP12_STRUCTURAL_MY_WORK",
+      "pass": true,
+      "detail": "str items=17"
+    },
+    {
+      "step": 12,
+      "id": "EOS_E2E_TECHNICAL_AUTHORITY_MY_WORK",
+      "pass": true,
+      "detail": "ta items=17"
+    },
+    {
+      "step": 12,
+      "id": "EOS_E2E_CIVIL_MY_WORK",
+      "pass": true,
+      "detail": "civil items=5 waiting/reactions context available"
+    },
+    {
+      "step": 13,
+      "id": "EOS_E2E_STEP13_ADAPTIVE_COCKPIT",
+      "pass": true,
+      "detail": "attention=17 next=ambiguous/none"
+    },
+    {
+      "step": 14,
+      "id": "EOS_E2E_STEP14_STAGE_GUIDANCE",
+      "pass": true,
+      "detail": "requiredNow=11 prematureAdv=false"
+    }
+  ]
+}

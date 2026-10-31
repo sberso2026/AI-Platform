@@ -1,0 +1,31 @@
+{
+  "capturedAt": "2026-10-31T03:34:20.293Z",
+  "build": "validation-1",
+  "name": "03-engineering-design-impact",
+  "body": [
+    {
+      "step": 4,
+      "id": "EOS_E2E_STEP4_CALCULATION",
+      "pass": true,
+      "detail": "CALC-001 edges=7 qualification not expanded"
+    },
+    {
+      "step": 11,
+      "id": "EOS_E2E_STEP11_IMPACT_PROPAGATION",
+      "pass": true,
+      "detail": "activeImpacts=25 calc=true dec=true autoInvalidity=false"
+    },
+    {
+      "step": 19,
+      "id": "EOS_E2E_STEP19_IMPACT_RESOLUTION",
+      "pass": true,
+      "detail": "resolved=20 remainingActive=5 history preserved"
+    },
+    {
+      "step": 26,
+      "id": "EOS_E2E_SITE_CHANGE_IMPACT",
+      "pass": true,
+      "detail": "Site change impact without auto-approval"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "capturedAt": "2026-10-31T03:34:20.295Z",
+  "build": "validation-1",
+  "name": "07-completion-closeout",
+  "body": [
+    {
+      "step": 25,
+      "id": "EOS_E2E_STEP25_EXECUTION_READINESS",
+      "pass": true,
+      "detail": "Ready for Construction / IFC stage reached; construction module NOT implemented"
+    },
+    {
+      "step": 26,
+      "id": "EOS_E2E_STEP26_SITE_CHANGE",
+      "pass": true,
+      "detail": "site change recorded; impacts=0"
+    },
+    {
+      "step": 26,
+      "id": "EOS_E2E_SITE_CHANGE_IMPACT",
+      "pass": true,
+      "detail": "Site change impact without auto-approval"
+    },
+    {
+      "step": 27,
+      "id": "EOS_E2E_STEP27_HANDOVER_STATE",
+      "pass": true,
+      "detail": "As-built / handover stage; full commissioning product NOT built"
+    },
+    {
+      "step": 28,
+      "id": "EOS_E2E_STEP28_WORK_PACKAGE_COMPLETION",
+      "pass": true,
+      "detail": "closed; history events=4"
+    },
+    {
+      "step": 28,
+      "id": "EOS_E2E_NAVIGATION_CONTEXT_PRESERVATION",
+      "pass": true,
+      "detail": "href+nav context preserved"
+    },
+    {
+      "step": 28,
+      "id": "EOS_E2E_DEEP_LINK_CONTEXT_RECONSTRUCTION",
+      "pass": true,
+      "detail": "deep link reconstructs CALC-001 context"
+    }
+  ]
+}

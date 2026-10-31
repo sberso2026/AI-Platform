@@ -1,0 +1,25 @@
+{
+  "capturedAt": "2026-10-31T03:34:20.292Z",
+  "build": "validation-1",
+  "name": "01-my-work-prioritized",
+  "body": [
+    {
+      "step": 12,
+      "id": "EOS_E2E_STEP12_STRUCTURAL_MY_WORK",
+      "pass": true,
+      "detail": "str items=17"
+    },
+    {
+      "step": 12,
+      "id": "EOS_E2E_TECHNICAL_AUTHORITY_MY_WORK",
+      "pass": true,
+      "detail": "ta items=17"
+    },
+    {
+      "step": 12,
+      "id": "EOS_E2E_CIVIL_MY_WORK",
+      "pass": true,
+      "detail": "civil items=5 waiting/reactions context available"
+    }
+  ]
+}

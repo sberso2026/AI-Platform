@@ -1,0 +1,37 @@
+{
+  "capturedAt": "2026-10-31T03:34:20.294Z",
+  "build": "validation-1",
+  "name": "05-revised-review",
+  "body": [
+    {
+      "step": 6,
+      "id": "EOS_E2E_STEP6_DELIVERABLE",
+      "pass": true,
+      "detail": "DEL-001 maturity=IN_DEVELOPMENT review=NOT_STARTED issue≠approval"
+    },
+    {
+      "step": 8,
+      "id": "EOS_E2E_STEP8_REVIEW",
+      "pass": true,
+      "detail": "REV-001 status=open"
+    },
+    {
+      "step": 8,
+      "id": "EOS_E2E_REVIEW_APPROVAL_SEPARATION",
+      "pass": true,
+      "detail": "Review ≠ automatic engineering approval"
+    },
+    {
+      "step": 17,
+      "id": "EOS_E2E_STEP17_DELIVERABLE_REVISION",
+      "pass": true,
+      "detail": "DEL Rev B; no automatic IFC"
+    },
+    {
+      "step": 18,
+      "id": "EOS_E2E_STEP18_UPDATED_REVIEW",
+      "pass": true,
+      "detail": "REV-002 complete; ≠ approval"
+    }
+  ]
+}
