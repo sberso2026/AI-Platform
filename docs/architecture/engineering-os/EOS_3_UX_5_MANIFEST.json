@@ -1,7 +1,7 @@
 {
   "phase": "EOS-3-UX-5-STAGE-AWARE-GUIDED-ENGINEERING",
   "requiredStartHead": "9bc52a2ec14a4db947e68c03b0cb72523f2495d8",
-  "endHead": "401d6072ba4d51c5b105e51298c06035876a12dd",
+  "endHead": "e8bcbd7d531d6587b5d0c06dcca98a3d1700a363",
   "verdict": "PASS_WITH_LIMITATIONS",
   "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
   "deploymentId": "dpl_4x6FUK9xAAq9smwJLTWQpPap7yoA",
