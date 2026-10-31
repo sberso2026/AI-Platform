@@ -1,13 +1,31 @@
 {
   "phase": "EOS-3-UX-5-STAGE-AWARE-GUIDED-ENGINEERING",
   "requiredStartHead": "9bc52a2ec14a4db947e68c03b0cb72523f2495d8",
+  "endHead": "401d6072ba4d51c5b105e51298c06035876a12dd",
+  "verdict": "PASS_WITH_LIMITATIONS",
   "controlledPilotAlias": "https://eos-pilot.rtbea.com.au",
+  "deploymentId": "dpl_4x6FUK9xAAq9smwJLTWQpPap7yoA",
   "broadUxRedesignInThisPhase": false,
   "currentSidebarPreserved": true,
   "primaryNavigationChanged": false,
   "databaseSchemaChanged": false,
   "migrationCountAdded": 0,
   "stageGuidanceRequiresLiveLlm": false,
+  "performance": {
+    "homeWarmP95Ms": 445,
+    "homeWarmP50Ms": 194,
+    "myWorkWarmP95Ms": 218,
+    "myWorkWarmP50Ms": 191,
+    "workPackageWarmP95Ms": 212,
+    "workPackageWarmP50Ms": 198,
+    "engineeringDesignWarmP95Ms": 244,
+    "engineeringDesignWarmP50Ms": 193,
+    "measurementMethod": "unauth_GET_post_settle_n15_gap200ms",
+    "measurementSampleCount": 15,
+    "stagePerformanceNewRegression": false,
+    "homeDeepStageQueryCount": 0,
+    "networkWaterfallCount": 0
+  },
   "artifacts": {
     "stageAware": "docs/architecture/engineering-os/EOS_3_STAGE_AWARE_GUIDED_ENGINEERING.md",
     "relevantContent": "docs/architecture/engineering-os/EOS_3_STAGE_RELEVANT_CONTENT_MODEL.md",
@@ -15,7 +33,8 @@
     "authority": "docs/architecture/engineering-os/EOS_3_STAGE_GUIDANCE_AUTHORITY_MODEL.md",
     "performance": "docs/architecture/engineering-os/EOS_3_STAGE_GUIDANCE_PERFORMANCE.md",
     "pilotValidation": "docs/architecture/engineering-os/EOS_3_UX5_PILOT_VALIDATION.md",
-    "manifest": "docs/architecture/engineering-os/EOS_3_UX_5_MANIFEST.json"
+    "manifest": "docs/architecture/engineering-os/EOS_3_UX_5_MANIFEST.json",
+    "gateResult": "docs/architecture/engineering-os/EOS_3_UX_5_GATE_RESULT.json"
   },
   "nextPhase": "EOS-3-NEXT-GOVERNED-PHASE"
 }
