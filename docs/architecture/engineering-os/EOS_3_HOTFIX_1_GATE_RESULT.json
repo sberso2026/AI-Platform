@@ -4,6 +4,7 @@
   "requiredStartHead": "c7f2a340af250553edcd0c7589ea7248902b9848",
   "startHeadVerifiedAncestor": true,
   "actualBaseHead": "2e698e716b3f3f6b2a8c14070b6ee63f335b8ccf",
+  "endHead": "PENDING_CLOSEOUT",
   "worktreeCleanAtStart": true,
   "rootCauses": {
     "crossProjectContamination": "Guided generator hardcoded source pilot-001-template and PILOT-001 defaults into unrelated projects",
@@ -99,9 +100,13 @@
     "ux2TestCount": 8
   },
   "retestProject": "PILOT-011 — KGP Compressor Upgrade Retest",
-  "deployedToControlledPilot": false,
+  "deployedToControlledPilot": true,
+  "deploymentId": "dpl_9c63ZWja15XDBTAG5diJKGxYCCEG",
   "pilotAlias": "https://eos-pilot.rtbea.com.au",
-  "limitations": [],
+  "limitations": [
+    "Richer multidisciplinary concept-option libraries deferred",
+    "Broader live-workspace RLS live-probe beyond unit isolation deferred"
+  ],
   "blocker": null,
   "readyForManualRetest": true
 }
